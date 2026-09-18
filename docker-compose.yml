@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  # =========================================================================
+  # 1. Database: Microsoft SQL Server 2022
+  # =========================================================================
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: lowland-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=YourStrong@Password123!
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'YourStrong@Password123!' -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - lowland-network
+
+  # =========================================================================
+  # 2. Backend: .NET 8 Web API (Repository Pattern & Business Logic)
+  # =========================================================================
+  lowland-api:
+    build:
+      context: .
+      dockerfile: src/LowLandCoffee.Api/Dockerfile
+    container_name: lowland-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=LowLandCoffeeDb;User Id=sa;Password=YourStrong@Password123!;TrustServerCertificate=True;
+    ports:
+      - "5001:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - lowland-network
+
+  # =========================================================================
+  # 3. API Gateway: YARP (Yet Another Reverse Proxy)
+  # =========================================================================
+  lowland-gateway:
+    build:
+      context: .
+      dockerfile: src/LowLandCoffee.ApiGateway/Dockerfile
+    container_name: lowland-gateway
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ReverseProxy__Clusters__apiCluster__Destinations__destination1__Address=http://lowland-api:8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - lowland-api
+    networks:
+      - lowland-network
+
+  # =========================================================================
+  # 4. Frontend: ASP.NET Core Razor Pages Web
+  # =========================================================================
+  lowland-web:
+    build:
+      context: .
+      dockerfile: src/LowLandCoffee.Web/Dockerfile
+    container_name: lowland-web
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ApiGateway__BaseUrl=http://lowland-gateway:8080
+    ports:
+      - "5000:8080"
+    depends_on:
+      - lowland-gateway
+    networks:
+      - lowland-network
+
+networks:
+  lowland-network:
+    driver: bridge
+
+volumes:
+  sqlserver-data:
+    driver: local
