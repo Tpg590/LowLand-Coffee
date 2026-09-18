@@ -1,0 +1,105 @@
+## =========================================================================
+## 1. Build Results & Binaries (.NET, Blazor, C#)
+## =========================================================================
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## =========================================================================
+## 2. Package Managers & Dependencies
+## =========================================================================
+*.nuget.props
+*.nuget.targets
+project.lock.json
+project.assets.json
+packages/
+*.nupkg
+
+# Node modules (nếu Blazor có dùng thêm Tailwind, Bootstrap build tool, Libman)
+node_modules/
+npm-debug.log*
+
+## =========================================================================
+## 3. IDE & Editors
+## =========================================================================
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+UpgradeLog.htm
+UpgradeLog.XML
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+## =========================================================================
+## 4. Docker & Container Environments
+## =========================================================================
+docker-compose.override.yml
+
+# Thư mục volume bind-mount từ database container (tránh push data local lên Git)
+sql_data/
+mongo_data/
+postgres_data/
+redis_data/
+rabbitmq_data/
+
+## =========================================================================
+## 5. Security, Secrets & Environment Variables
+## =========================================================================
+# Không bao giờ commit file chứa secrets/connection strings cá nhân
+*.env
+*.env.local
+*.env.*.local
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+
+# Chứng chỉ SSL/HTTPS tự sinh cho dev
+*.pfx
+*.p12
+*.cer
+*.crt
+*.key
+
+## =========================================================================
+## 6. OS Generated Files
+## =========================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+[Tt]humbs.db
+
+
+# Scoped CSS bundle của Blazor (file tự sinh khi build CSS riêng cho từng Razor component)
+*.rz.scp.css
+
+# EF Core Migrations bundle (file binary exe tự sinh nếu dùng dotnet ef migrations bundle)
+bundle.exe
+bundle.crt
