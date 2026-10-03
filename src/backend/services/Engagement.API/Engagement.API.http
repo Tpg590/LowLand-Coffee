@@ -1,0 +1,6 @@
+@Engagement.API_HostAddress = http://localhost:5237
+
+GET {{Engagement.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

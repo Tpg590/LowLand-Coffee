@@ -1,103 +1,100 @@
-# 01-architecture.md - Kiến Trúc Hệ Thống LowLand Coffee
+# 01-architecture.md - Kiến Trúc Hệ Thống LowLand Coffee (PRN232)
 
-Tài liệu này mô tả chi tiết kiến trúc tổng thể, sơ đồ phân tầng, luồng dữ liệu và cơ chế giao tiếp giữa các thành phần trong hệ thống **LowLand Coffee** (.NET 8 Web API, YARP Gateway, ASP.NET Core Razor Pages, SQL Server và Docker).
+Tài liệu này mô tả chi tiết kiến trúc tổng thể, sơ đồ phân tầng, mô hình Microservices, luồng dữ liệu và cơ chế giao tiếp giữa các thành phần trong hệ thống **LowLand Coffee** (.NET 8 Web API, YARP Gateway, ASP.NET Core Razor Pages, SignalR, SQL Server và Docker).
 
 ---
 
-## 1. Sơ Đồ Kiến Trúc Tổng Thể (High-Level Architecture)
+## 1. Sơ Đồ Kiến Trúc Tổng Thể (Microservices Architecture)
 
-Toàn bộ client bên ngoài chỉ tương tác qua **API Gateway (YARP)** hoặc truy cập giao diện từ **Web App (Razor Pages)**. Hệ thống backend và database được cô lập trong mạng nội bộ của Docker:
+Toàn bộ client bên ngoài chỉ tương tác qua **API Gateway (YARP - Port 5000)** hoặc truy cập giao diện từ **Web Razor Pages (Port 5000/5001)**. Toàn bộ 5 Microservices và SQL Server được cô lập trong mạng nội bộ của Docker:
 
 ```text
-[ Trình Duyệt / Người Dùng (Browser) ]
-                 │
-                 │ HTTP (Port 5000)
-                 ▼
-        ┌──────────────────┐
-        │  LowLand WebApp  │ (ASP.NET Core Razor Pages .NET 8)
-        └────────┬─────────┘
-                 │
-                 │ HTTP / REST (Port 8080)
-                 ▼
-        ┌──────────────────┐
-        │   API Gateway    │ (YARP Reverse Proxy - Port 8080)
-        │  - Reverse Proxy │
-        │  - Central CORS  │
-        │  - Route Map     │
-        └────────┬─────────┘
-                 │
-                 │ HTTP (Mạng nội bộ Docker / Localhost Port 5001)
-                 ▼
-        ┌──────────────────┐
-        │  LowLandCoffee   │ (.NET 8 Web API)
-        │       .Api       │ - Controllers (Categories, Products, Orders)
-        │                  │ - Repository Pattern & Unit of Work
-        └────────┬─────────┘
-                 │
-                 │ TCP Connection (Port 1433) / EF Core 8
-                 ▼
-        ┌──────────────────┐
-        │ Microsoft SQL    │ (Database: LowLandCoffeeDb)
-        │   Server 2022    │ - Quản lý bằng SSMS
-        └──────────────────┘
+               ┌─────────────────────────────────────────┐
+               │    Trình Duyệt Người Dùng (Browser)    │
+               │      (Guest, Customer, Staff, Admin)    │
+               └────────────────────┬────────────────────┘
+                                    │
+                                    │ HTTP / HTTPS (Port 5000)
+                                    ▼
+               ┌─────────────────────────────────────────┐
+               │       CoffeeShop.WebRazorPages          │
+               │   (ASP.NET Core Razor Pages .NET 8)     │
+               │  - Feature Folders (Auth, Menu, Orders) │
+               │  - SignalR Client (Nhận tin Realtime)   │
+               └────────────────────┬────────────────────┘
+                                    │
+                                    │ HTTP / REST / WebSocket (Port 5000)
+                                    ▼
+               ┌─────────────────────────────────────────┐
+               │              ApiGateway                 │
+               │    (YARP Reverse Proxy - Port 5000)     │
+               │  - Single Entry Point                   │
+               │  - Centralized CORS & Routing           │
+               │  - JWT Validation & WebSocket Forwarding│
+               └────────────────────┬────────────────────┘
+                                    │
+       ┌──────────────┬─────────────┼──────────────┬──────────────┐
+       │ (Port 5001)  │ (Port 5002) │ (Port 5003)  │ (Port 5004)  │ (Port 5005)
+       ▼              ▼             ▼              ▼              ▼
+┌──────────────┐┌──────────────┐┌──────────────┐┌──────────────┐┌──────────────┐
+│   Auth.API   ││ Product.API  ││  Order.API   ││Engagement.API││Notification  │
+│(Khang - Auth)││ (Phú - Menu) ││(Tuấn - Order)││(Trí - Loyalty││    .API      │
+│              ││              ││  & Payment)  ││  & Voucher)  ││(Thành-SignalR)
+└──────┬───────┘└──────┬───────┘└──────┬───────┘└──────┬───────┘└──────┬───────┘
+       │               │               │               │               │
+       │ (TCP 1433)    │ (TCP 1433)    │ (TCP 1433)    │ (TCP 1433)    │ (TCP 1433)
+       ▼               ▼               ▼               ▼               ▼
+┌──────────────┐┌──────────────┐┌──────────────┐┌──────────────┐┌──────────────┐
+│Coffee_AuthDB ││Coffee_Product││Coffee_OrderDB││Coffee_Engage ││Coffee_Notifi │
+│              ││      DB      ││              ││    mentDB    ││   cationDB   │
+└──────────────┴┴──────────────┴┴──────────────┴┴──────────────┴┴──────────────┘
+                       (Chạy trên SQL Server 2022 Container)
 ```
 
 ---
 
 ## 2. Các Thành Phần Trong Hệ Thống (System Components)
 
-### 2.1. Frontend Client (`LowLandCoffee.Web`)
+### 2.1. Frontend Client (`CoffeeShop.WebRazorPages`)
 * **Nền tảng:** ASP.NET Core Razor Pages (.NET 8).
+* **Mô hình:** Server-side rendering (SSR), tổ chức theo **Feature Folders** (`Pages/Auth`, `Pages/Menu`, `Pages/Orders`, `Pages/Customer`, `Pages/Staff`, `Pages/Admin`).
 * **Trách nhiệm:**
-  * Render giao diện Server-side rendering (SSR), tối ưu SEO và tốc độ tải trang.
-  * Đóng gói request HTTP qua `HttpClient` tập trung gửi về API Gateway (Port 8080).
-  * Quản lý giỏ hàng, thông tin đặt hàng qua Session và Cookies.
+  * Hiển thị giao diện cho 4 Actor: Khách vãng lai (Guest), Khách hàng (Customer), Nhân viên (Staff), Quản trị viên (Admin).
+  * Gọi API qua tầng `Services/` (`IAuthHttpService`, `IProductHttpService`, `IOrderHttpService`, `IEngagementHttpService`, `INotificationHttpService`) thông qua ApiGateway.
+  * Lắng nghe thông báo đơn hàng thời gian thực qua **SignalR Client**.
 
-### 2.2. API Gateway (`LowLandCoffee.ApiGateway`)
-* **Nền tảng:** YARP (Yet Another Reverse Proxy) trên nền .NET 8.
+### 2.2. API Gateway (`ApiGateway`)
+* **Nền tảng:** YARP (Yet Another Reverse Proxy) trên nền .NET 8 (Port 5000).
 * **Trách nhiệm:**
-  * **Reverse Proxy & Routing:** Làm điểm tiếp nhận duy nhất (Single Entry Point), định tuyến các request từ Frontend Web tới đúng Backend API.
-  * **CORS Management:** Thiết lập chính sách CORS tập trung cho các Web Client.
-  * **Network Isolation:** Ẩn toàn bộ địa chỉ IP và port nội bộ của các services phía sau.
+  * **Single Entry Point:** Điểm tiếp nhận duy nhất cho toàn bộ request từ Client.
+  * **Định tuyến (Routing):** Phân luồng request đến đúng Microservice tương ứng.
+  * **CORS & Bảo mật:** Cấu hình CORS tập trung và kiểm tra tính hợp lệ của Header JWT Token.
+  * **WebSocket Proxy:** Chuyển tiếp kết nối SignalR từ Client tới `Notification.API`.
 
-### 2.3. Backend API (`LowLandCoffee.Api`)
-* **Nền tảng:** ASP.NET Core Web API (.NET 8).
-* **Trách nhiệm:**
-  * Xử lý toàn bộ logic nghiệp vụ (quản lý món, menu, đơn hàng, giỏ hàng).
-  * Triển khai kiến trúc phân tầng kết hợp **Repository Pattern & Unit of Work**.
-  * Cung cấp Swagger OpenAPI để kiểm thử API.
+### 2.3. Cụm 5 Microservices Backend (.NET 8 Web API)
+Áp dụng mô hình chuẩn 4 lớp: **`Controller ➔ Service ➔ Repository ➔ DbContext`**:
 
-### 2.4. Cơ Sở Dữ Liệu (`SQL Server 2022`)
-* **Engine:** Microsoft SQL Server 2022 (chạy container trên Docker hoặc bản cài đặt local).
-* **Database chính:** `LowLandCoffeeDb`.
-* **Công cụ quản trị:** SQL Server Management Studio (SSMS) / Azure Data Studio.
+1. **`Auth.API` (Khang - Port 5001):** Quản lý người dùng, đăng ký, đăng nhập JWT, cấp lại Refresh Token, khôi phục mật khẩu qua mã OTP Email, phân quyền 3 Role (`Customer`, `Staff`, `Admin`).
+2. **`Product.API` (Phú - Port 5002):** Quản lý danh mục, menu đồ uống, kích cỡ (Size S/M/L), topping, tìm kiếm & bộ lọc, bật/tắt nhanh trạng thái Còn/Hết hàng.
+3. **`Order.API` (Tuấn - Port 5003):** Tạo giỏ hàng, đặt món, tính tiền tự động theo size/topping, quản lý vòng đời trạng thái đơn hàng, thanh toán tiền mặt & cổng thanh toán trực tuyến **VNPay QR Code**.
+4. **`Engagement.API` (Trí - Port 5004):** Quản lý mã giảm giá (CRUD Voucher), hệ thống tích điểm thưởng (10k = 1 điểm) và quản lý đặc quyền 4 hạng thẻ thành viên (**Đồng, Bạc, Vàng, Kim Cương**).
+5. **`Notification.API` (Thành - Port 5005):** Đẩy thông báo thời gian thực (**SignalR**), phát chuông báo POS khi có đơn mới, gửi thông báo khuyến mãi hàng loạt (Broadcast) và lưu nhật ký (Logs).
+
+### 2.4. Cơ Sở Dữ Liệu (Database-per-Service)
+* **Hệ quản trị:** Microsoft SQL Server 2022 (chạy Docker Container `sqlserver:1433`).
+* **5 Database độc lập:** `Coffee_AuthDB`, `Coffee_ProductDB`, `Coffee_OrderDB`, `Coffee_EngagementDB`, `Coffee_NotificationDB`.
 
 ---
 
 ## 3. Luồng Xử Lý Nghiệp Vụ Chính (Data Flows)
 
-### 3.1. Luồng Lấy Danh Sách Thực Đơn (Menu Query Flow)
-1. Người dùng truy cập trang Thực đơn: `GET http://localhost:5000/Menu`.
-2. `LowLandCoffee.Web` gửi request qua `HttpClient`: `GET http://localhost:8080/api/products?categoryId=1`.
-3. YARP Gateway tiếp nhận tại port `8080`, kiểm tra định tuyến và forward request sang Backend API (`http://lowland-api:8080/api/products?categoryId=1` trong Docker hoặc `http://localhost:5001` trên local).
-4. `LowLandCoffee.Api` xử lý qua `ProductsController` $\rightarrow$ `UnitOfWork` $\rightarrow$ `ProductRepository` $\rightarrow$ truy vấn `AppDbContext` lấy dữ liệu từ `SQL Server`.
-5. Kết quả bọc trong `ApiResponse<T>` được trả về Gateway $\rightarrow$ Frontend Web $\rightarrow$ Render giao diện HTML trả về trình duyệt người dùng.
+### 3.1. Luồng Duyệt Menu & Đặt Món
+1. Khách hàng truy cập `/Menu` ➔ Web gọi `GET http://localhost:5000/api/products` qua ApiGateway.
+2. Gateway forward sang `Product.API` ➔ lấy danh sách món từ `Coffee_ProductDB`.
+3. Khách chọn món, size, topping, nhập mã Voucher ➔ Web gửi `POST http://localhost:5000/api/orders`.
+4. Gateway forward sang `Order.API` ➔ tính toán tổng tiền, lưu đơn hàng vào `Coffee_OrderDB`.
 
-### 3.2. Luồng Đặt Hàng (Checkout Flow)
-1. Người dùng bấm "Đặt Hàng" trên giao diện giỏ hàng.
-2. Web gửi request `POST http://localhost:8080/api/orders` kèm thông tin khách hàng và danh sách món.
-3. Gateway forward request đến Backend API.
-4. Backend API thực hiện lưu đơn hàng vào `Orders` và `OrderItems` trong database thông qua transaction của `UnitOfWork`.
-5. Backend trả mã đơn hàng và thông báo thành công về cho Web.
-
----
-
-## 4. Cấu Hình Mạng Container (Docker Networking)
-
-Trong môi trường Docker Compose, toàn bộ container được kết nối thông qua một mạng bridge duy nhất (`lowland-network`):
-
-* **Internal DNS:** Các container giao tiếp với nhau bằng tên service trong `docker-compose.yml` (ví dụ: `http://lowland-api:8080`), không dùng `localhost`.
-* **External Exposure:**
-  * **Port 5000:** Mở cho trình duyệt truy cập giao diện Web Razor Pages.
-  * **Port 8080:** Mở cho truy cập API Gateway.
-  * **Port 1433:** SQL Server mở ở môi trường Development để kết nối bằng SSMS.
+### 3.2. Luồng Thông Báo Realtime & Tích Điểm
+1. Khi đơn hàng đổi trạng thái (*Đã tiếp nhận ➔ Đang pha chế ➔ Hoàn thành*), `Order.API` gọi `Notification.API`.
+2. `Notification.API` đẩy thông báo realtime qua **SignalR Hub** tới trình duyệt của Khách hàng và phát chuông cho Nhân viên.
+3. Khi đơn hoàn thành, `Order.API` gọi `Engagement.API` để cộng điểm thưởng vào tài khoản khách hàng theo cấp bậc thẻ thành viên.

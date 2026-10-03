@@ -1,135 +1,86 @@
-# 05-api-backend.md - Thiết Kế Backend Web API & Repository Pattern
+# 05-api-backend.md - Thiết Kế Phân Tầng Microservices Web API (PRN232)
 
-Tài liệu thiết kế chi tiết kiến trúc, mô hình dữ liệu, **Repository Pattern**, **Unit of Work** và các quy chuẩn triển khai cho dịch vụ `LowLandCoffee.Api` (.NET 8).
-
----
-
-## 1. Tổng Quan & Tech Stack
-
-* **Runtime:** .NET 8 (C# 12) Web API
-* **ORM:** Entity Framework Core 8
-* **Database:** Microsoft SQL Server 2022
-* **Kiến trúc:** Clean Layered Architecture kết hợp **Repository Pattern & Unit of Work**
-* **Tài liệu hóa:** Swagger / OpenAPI
-* **Mục tiêu:** Cung cấp RESTful API xử lý toàn bộ logic nghiệp vụ (quản lý món, menu, đơn hàng, danh mục) cho hệ thống LowLand Coffee.
+Tài liệu thiết kế chi tiết kiến trúc phân tầng chuẩn **`Controller ➔ Service ➔ Repository ➔ DbContext`** áp dụng đồng nhất cho cả **5 Microservices Backend** trên nền tảng .NET 8.
 
 ---
 
-## 2. Cấu Trúc Thư Mục Chuẩn (`src/LowLandCoffee.Api`)
+## 1. Tổng Quan Kiến Trúc Phân Tầng
+
+Mỗi Microservice được xây dựng độc lập với 4 tầng trách nhiệm rõ ràng:
 
 ```text
-src/LowLandCoffee.Api/
-├── Controllers/                         # RESTful API Endpoints
-│   ├── CategoriesController.cs          # Quản lý danh mục
-│   ├── ProductsController.cs            # Quản lý sản phẩm món
-│   └── OrdersController.cs              # Quản lý đơn đặt hàng
-├── Core/                                # Domain Entities & Interfaces
-│   ├── Entities/
-│   │   ├── BaseEntity.cs                # Id, CreatedAt, UpdatedAt, IsDeleted
-│   │   ├── Category.cs                  # Tên, mô tả, ảnh, thứ tự
-│   │   ├── Product.cs                   # Tên, giá, ảnh, trạng thái, danh mục
-│   │   ├── Order.cs                     # Khách hàng, địa chỉ, tổng tiền, trạng thái
-│   │   └── OrderItem.cs                 # Số lượng, đơn giá, sản phẩm
-│   └── Interfaces/
-│       ├── IGenericRepository.cs        # Định nghĩa CRUD generic
-│       ├── IProductRepository.cs        # Truy vấn sản phẩm mở rộng
-│       └── IUnitOfWork.cs               # Quản lý transaction và các repositories
-├── Infrastructure/                      # Tầng triển khai dữ liệu & Database
-│   ├── Data/
-│   │   ├── AppDbContext.cs              # EF Core DbContext & Fluent API
-│   │   └── DbInitializer.cs             # Khởi tạo dữ liệu đồ uống mẫu
-│   └── Repositories/
-│       ├── GenericRepository.cs         # Triển khai CRUD generic với EF Core
-│       ├── ProductRepository.cs         # Triển khai truy vấn sản phẩm
-│       └── UnitOfWork.cs                # Triển khai Commit/Rollback SaveChangesAsync
-├── Application/                         # Tầng ứng dụng & DTOs
-│   ├── DTOs/
-│   │   ├── ApiResponse.cs               # Wrapper chuẩn hóa JSON trả về
-│   │   ├── ProductDtos.cs               # ProductDto, CreateProductDto, UpdateProductDto
-│   │   └── CategoryDtos.cs              # CategoryDto, CreateCategoryDto
-│   └── Services/                        # Business logic services
-├── appsettings.json                     # Chuỗi kết nối DB và cấu hình
-└── Program.cs                           # Cấu hình DI, DbContext, Swagger
+[ HTTP Request từ API Gateway ]
+               │
+               ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 1. Tầng Controllers (RESTful API Endpoints)                │
+│    - Tiếp nhận HTTP Request, Model Validation               │
+│    - Gọi tầng Service và trả về ApiResponse<T>             │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 2. Tầng Services (Business Logic & Workflow)                │
+│    - Xử lý nghiệp vụ (tính toán giá, mã hóa mật khẩu, OTP)  │
+│    - Gọi Repositories và điều phối các thao tác dữ liệu     │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 3. Tầng Repositories (Data Access Layer)                    │
+│    - Thực hiện các truy vấn dữ liệu CRUD qua EF Core        │
+│    - Tách biệt logic truy vấn khỏi tầng nghiệp vụ           │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 4. Tầng Data / DbContext (Entity Framework Core 8)          │
+│    - Quản lý kết nối tới Database riêng của service đó      │
+│    - Cấu hình Entity, Fluent API và Migrations              │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 3. Chi Tiết Triển Khai Repository Pattern & Unit of Work
+## 2. Danh Sách 5 Microservices & Database Tương Ứng
 
-### 3.1. `IGenericRepository<T>` Interface
-```csharp
-public interface IGenericRepository<T> where T : BaseEntity
-{
-    Task<IReadOnlyList<T>> GetAllAsync();
-    Task<IReadOnlyList<T>> GetAsync(Expression<Func<T, bool>> predicate);
-    Task<T?> GetByIdAsync(int id);
-    Task<T> AddAsync(T entity);
-    Task UpdateAsync(T entity);
-    Task DeleteAsync(T entity);
-}
-```
+| Microservice | Phụ trách | Cấu trúc Project | Database riêng |
+| :--- | :---: | :--- | :--- |
+| **Auth.API** | **Khang** | `src/Backend/Services/Auth.API` | `Coffee_AuthDB` |
+| **Product.API** | **Phú** | `src/Backend/Services/Product.API` | `Coffee_ProductDB` |
+| **Order.API** | **Tuấn** | `src/Backend/Services/Order.API` | `Coffee_OrderDB` |
+| **Engagement.API** | **Trí** | `src/Backend/Services/Engagement.API` | `Coffee_EngagementDB` |
+| **Notification.API** | **Thành** | `src/Backend/Services/Notification.API` | `Coffee_NotificationDB` |
 
-### 3.2. `IUnitOfWork` Interface
-```csharp
-public interface IUnitOfWork : IDisposable
-{
-    IProductRepository Products { get; }
-    IGenericRepository<Category> Categories { get; }
-    IGenericRepository<Order> Orders { get; }
-    IGenericRepository<OrderItem> OrderItems { get; }
+---
 
-    Task<int> CompleteAsync();
-}
-```
+## 3. Quy Chuẩn Đặt Tên & Cấu Trúc Mã Nguồn Trong Mỗi Service
 
-### 3.3. Đăng ký Dependency Injection trong `Program.cs`
-```csharp
-// Đăng ký EF Core với SQL Server
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// Đăng ký Repositories & Unit of Work
-builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-builder.Services.AddScoped<IProductRepository, ProductRepository>();
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+Ví dụ cấu trúc trong dự án `Product.API`:
+```text
+Product.API/
+├── Controllers/                 # ProductController.cs, CategoryController.cs
+├── Services/                    # IProductService.cs, ProductService.cs
+├── Repositories/                # IProductRepository.cs, ProductRepository.cs
+├── Data/                        # ProductDbContext.cs
+├── DTOs/                        # ProductDto.cs, CreateProductRequest.cs
+├── Entities/                    # Product.cs, Category.cs, ProductSize.cs, Topping.cs
+├── Program.cs                   # Đăng ký DI, EF Core DbContext, Swagger
+└── appsettings.json             # Chuỗi kết nối Database Coffee_ProductDB
 ```
 
 ---
 
 ## 4. Chuẩn Hóa Định Dạng Phản Hồi (ApiResponse Wrapper)
 
-Mọi API endpoint đều trả về cấu trúc JSON thống nhất:
+Mọi API endpoint trong 5 service đều chuẩn hóa cấu trúc JSON trả về:
 
 ```json
 {
   "isSuccess": true,
   "statusCode": 200,
-  "message": "Lấy danh sách sản phẩm thành công",
-  "data": [
-    {
-      "id": 1,
-      "name": "Phin Sữa Đá LowLand",
-      "price": 29000,
-      "categoryName": "Cà Phê Truyền Thống",
-      "isAvailable": true
-    }
-  ],
+  "message": "Thao tác thành công",
+  "data": { },
   "errors": null
 }
 ```
-
----
-
-## 5. Danh Sách RESTful API Endpoints Chính
-
-| HTTP Method | Endpoint | Mô Tả Nghiệp Vụ |
-| :--- | :--- | :--- |
-| `GET` | `/api/categories` | Lấy danh sách danh mục đồ uống |
-| `GET` | `/api/categories/{id}` | Lấy thông tin chi tiết một danh mục |
-| `POST` | `/api/categories` | Tạo danh mục mới |
-| `GET` | `/api/products` | Lấy danh sách sản phẩm (hỗ trợ lọc `categoryId`, `featuredOnly`) |
-| `GET` | `/api/products/{id}` | Lấy chi tiết sản phẩm và danh mục |
-| `POST` | `/api/products` | Tạo sản phẩm đồ uống mới |
-| `PUT` | `/api/products/{id}` | Cập nhật thông tin sản phẩm |
-| `DELETE` | `/api/products/{id}` | Xóa mềm sản phẩm (`IsDeleted = true`) |
-| `POST` | `/api/orders` | Đặt hàng và lưu thông tin chi tiết |

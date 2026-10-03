@@ -1,5 +1,5 @@
 ## =========================================================================
-## 1. Build Results & Binaries (.NET, Blazor, C#)
+## 1. Build Results & Binaries (.NET, C#, Razor Pages)
 ## =========================================================================
 [Dd]ebug/
 [Dd]ebugPublic/
@@ -14,6 +14,8 @@ bld/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
+publish/
+dist/
 
 ## =========================================================================
 ## 2. Package Managers & Dependencies
@@ -25,12 +27,16 @@ project.assets.json
 packages/
 *.nupkg
 
-# Node modules (nếu Blazor có dùng thêm Tailwind, Bootstrap build tool, Libman)
+# Node & Frontend Build Tools (nếu dùng thêm npm/yarn/pnpm)
 node_modules/
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.eslintcache
 
 ## =========================================================================
-## 3. IDE & Editors
+## 3. IDE, Editors & Tooling
 ## =========================================================================
 
 # Visual Studio
@@ -51,16 +57,44 @@ UpgradeLog.XML
 !.vscode/extensions.json
 *.code-workspace
 
-# JetBrains Rider
+# JetBrains (Rider, ReSharper)
 .idea/
 *.sln.iml
+_ReSharper*/
+*.DotSettings.user
+
+# Vim / Nano / Temporary swap files
+*~
+*.swp
+*.swo
 
 ## =========================================================================
-## 4. Docker & Container Environments
+## 4. Test Results & Code Coverage
 ## =========================================================================
-docker-compose.override.yml
+[Tt]est[Rr]esult*/
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+coverage.cobertura.xml
 
-# Thư mục volume bind-mount từ database container (tránh push data local lên Git)
+## =========================================================================
+## 5. Databases & Local Attachments
+## =========================================================================
+# SQL Server local database files & backups
+*.mdf
+*.ldf
+*.ndf
+*.bak
+
+# SQLite local databases
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Thư mục volume bind-mount từ database container
 sql_data/
 mongo_data/
 postgres_data/
@@ -68,10 +102,17 @@ redis_data/
 rabbitmq_data/
 
 ## =========================================================================
-## 5. Security, Secrets & Environment Variables
+## 6. Docker & Container Environments
+## =========================================================================
+docker-compose.override.yml
+.docker/
+
+## =========================================================================
+## 7. Security, Secrets & Environment Variables
 ## =========================================================================
 # Không bao giờ commit file chứa secrets/connection strings cá nhân
 *.env
+!.env.example
 *.env.local
 *.env.*.local
 appsettings.Development.json
@@ -86,20 +127,24 @@ secrets.json
 *.key
 
 ## =========================================================================
-## 6. OS Generated Files
+## 8. EF Core & Frontend Generated Bundles
 ## =========================================================================
+*.rz.scp.css
+bundle.exe
+bundle.crt
+
+## =========================================================================
+## 9. OS Generated Files
+## =========================================================================
+# macOS
 .DS_Store
 .DS_Store?
 ._*
 .Spotlight-V100
 .Trashes
-ehthumbs.db
+
+# Windows
 [Tt]humbs.db
-
-
-# Scoped CSS bundle của Blazor (file tự sinh khi build CSS riêng cho từng Razor component)
-*.rz.scp.css
-
-# EF Core Migrations bundle (file binary exe tự sinh nếu dùng dotnet ef migrations bundle)
-bundle.exe
-bundle.crt
+ehthumbs.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
