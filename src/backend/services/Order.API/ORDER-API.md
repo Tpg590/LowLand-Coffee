@@ -1,6 +1,6 @@
 # 🧾 ORDER-API.md - Order & Payment Service Specification
 
-- **Phụ trách:** **Tuấn**
+- **Phụ trách:** **Tuấn (Team Leader)**
 - **Database:** `Coffee_OrderDB` (SQL Server - bao gồm bảng Orders, OrderItems, Payments)
 - **Port nội bộ Docker:** `5003`
 - **Công nghệ:** ASP.NET Core Web API (.NET 8), Entity Framework Core, VNPay SDK / HTTP Client

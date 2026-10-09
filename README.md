@@ -35,9 +35,9 @@ docker compose down
 
 | Thành Viên | Vai Trò | Module Phụ Trách | Cổng | Database Riêng |
 | :--- | :--- | :--- | :--- | :--- |
-| **Khang** | Leader / Gateway & Auth | `ApiGateway` & `Auth.API` | `5000` / `5001` | `Coffee_AuthDB` |
+| **Tuấn** | Leader / Order & Payment | `Order.API` | `5003` | `Coffee_OrderDB` |
+| **Khang** | Gateway & Auth | `ApiGateway` & `Auth.API` | `5000` / `5001` | `Coffee_AuthDB` |
 | **Phú** | Catalog & Product | `Product.API` | `5002` | `Coffee_ProductDB` |
-| **Tuấn** | Order & Payment | `Order.API` | `5003` | `Coffee_OrderDB` |
 | **Trí** | Loyalty & Voucher | `Engagement.API` | `5004` | `Coffee_EngagementDB` |
 | **Thành** | Notification & Realtime | `Notification.API` | `5005` | `Coffee_NotificationDB` |
 
