@@ -15,13 +15,17 @@
 Yêu cầu máy tính đã cài đặt **Docker Desktop** (hoặc Docker Engine):
 
 ```bash
-# 1. Khởi động toàn bộ cụm container (SQL Server, Gateway, 5 Microservices, Web Razor)
+# 1. Tạo file cấu hình môi trường từ template mẫu
+cp .env.example .env          # Trên Linux / macOS
+# copy .env.example .env      # Trên Windows CMD / PowerShell
+
+# 2. Khởi động toàn bộ cụm container (SQL Server, Gateway, 5 Microservices, Web Razor)
 docker compose up -d --build
 
-# 2. Theo dõi log hoạt động thời gian thực
+# 3. Theo dõi log hoạt động thời gian thực
 docker compose logs -f
 
-# 3. Dừng toàn bộ hệ thống
+# 4. Dừng toàn bộ hệ thống
 docker compose down
 ```
 

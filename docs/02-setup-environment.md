@@ -23,11 +23,15 @@ Tài liệu này hướng dẫn chi tiết quy trình chuẩn bị môi trườn
 git clone https://github.com/Tpg590/LowLand-Coffee.git
 cd LowLand-Coffee
 
-# 2. Kiểm tra phiên bản .NET SDK (yêu cầu 8.0.x)
+# 2. Tạo file cấu hình môi trường (.env) từ file mẫu (.env.example)
+cp .env.example .env          # Linux / macOS
+# copy .env.example .env      # Windows CMD / PowerShell
+
+# 3. Kiểm tra phiên bản .NET SDK (yêu cầu 8.0.x)
 dotnet --version
 
-# 3. Khôi phục packages cho Backend Solution
-dotnet restore src/Backend/CoffeeShop.Backend.sln
+# 4. Khôi phục packages cho toàn bộ Solution
+dotnet restore src/CoffeeShop.sln
 ```
 
 ---
@@ -77,10 +81,10 @@ docker compose down
 ## 5. Cách 2: Khởi Chạy Bằng Visual Studio 2022 (Để Debug)
 
 1. Đảm bảo container `sqlserver` đang chạy (`docker compose up -d sqlserver`).
-2. Mở file `src/Backend/CoffeeShop.Backend.sln` trong Visual Studio 2022.
-3. Click chuột phải vào **Solution 'CoffeeShop.Backend'** $\rightarrow$ chọn **Properties**.
-4. Chọn **Startup Project** $\rightarrow$ chọn **Multiple startup projects**.
-5. Cấu hình **Action** thành **Start** cho các project bạn đang phát triển (ví dụ: `ApiGateway` + `Auth.API` + `Product.API`).
+2. Mở file `src/CoffeeShop.sln` trong Visual Studio 2022 / Rider.
+3. Click chuột phải vào **Solution 'CoffeeShop'** $\rightarrow$ chọn **Configure Startup Projects...**
+4. Chọn **Multiple startup projects**.
+5. Cấu hình **Action** thành **Start** cho các project muốn chạy (ví dụ: `ApiGateway` + `Auth.API` + `Product.API` + `CoffeeShop.WebRazorPages`).
 6. Nhấn **F5** để khởi chạy các dự án cùng lúc và bắt đầu đặt breakpoint debug.
 
 ---

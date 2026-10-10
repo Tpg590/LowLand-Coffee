@@ -28,28 +28,29 @@ LowLand-Coffee/
 ├── CONTRIBUTING.md                      # Quy định nhánh Git Flow & chuẩn commit
 ├── README.md                            # Trang tài liệu trung tâm (Landing Page)
 │
-└── src/
-    ├── backend/                         # Solution Backend (Microservices + Gateway)
-    │   ├── CoffeeShop.backend.sln       # Solution quản lý toàn bộ dự án Backend
-    │   ├── README.md                    # Tổng quan Backend & lệnh tạo dự án
-    │   │
-    │   ├── gateways/
-    │   │   ├── ApiGateway/              # YARP Reverse Proxy Service (Port 5000)
-    │   │   └── API-GATEWAY.md           # [Khang] Đặc tả YARP Gateway
-    │   │
-    │   └── services/
-    │       ├── Auth.API/                # [Khang] Authentication & Account Service (Port 5001)
-    │       │   └── AUTH-API.md
-    │       ├── Product.API/             # [Phú] Catalog & Product Service (Port 5002)
-    │       │   └── PRODUCT-API.md
-    │       ├── Order.API/               # [Tuấn] Order, Cart & Payment Service (Port 5003)
-    │       │   └── ORDER-API.md
-    │       ├── Engagement.API/          # [Trí] Promotion, Voucher & Loyalty Service (Port 5004)
-    │       │   └── ENGAGEMENT-API.md
-    │       └── Notification.API/        # [Thành] Notification & SignalR Hub Service (Port 5005)
-    │           └── NOTIFICATION-API.md
-    │
-    └── frontend/                        # Solution Frontend (Razor Pages Web App)
+├── src/
+│   ├── CoffeeShop.sln                   # Solution hợp nhất quản lý toàn bộ Backend + Frontend
+│   │
+│   ├── backend/                         # Backend (Microservices + Gateway)
+│   │   ├── README.md                    # Tổng quan Backend & lệnh tạo dự án
+│   │   │
+│   │   ├── gateways/
+│   │   │   ├── ApiGateway/              # YARP Reverse Proxy Service (Port 5000)
+│   │   │   └── API-GATEWAY.md           # [Khang] Đặc tả YARP Gateway
+│   │   │
+│   │   └── services/
+│   │       ├── Auth.API/                # [Khang] Authentication & Account Service (Port 5001)
+│   │       │   └── AUTH-API.md
+│   │       ├── Product.API/             # [Phú] Catalog & Product Service (Port 5002)
+│   │       │   └── PRODUCT-API.md
+│   │       ├── Order.API/               # [Tuấn] Order, Cart & Payment Service (Port 5003)
+│   │       │   └── ORDER-API.md
+│   │       ├── Engagement.API/          # [Trí] Promotion, Voucher & Loyalty Service (Port 5004)
+│   │       │   └── ENGAGEMENT-API.md
+│   │       └── Notification.API/        # [Thành] Notification & SignalR Hub Service (Port 5005)
+│   │           └── NOTIFICATION-API.md
+│   │
+│   └── frontend/                        # Frontend (Razor Pages Web App)
         ├── README.md                    # Tổng quan Frontend
         ├── WEB-RAZOR-PAGES.md           # Đặc tả Web Razor Pages (Feature Folders & 4 Actor)
         └── CoffeeShop.WebRazorPages/    # Dự án ASP.NET Core Razor Pages

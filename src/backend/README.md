@@ -8,8 +8,6 @@ Hệ thống Backend được xây dựng theo kiến trúc **Microservices** tr
 
 ```text
 Backend/
-├── CoffeeShop.Backend.sln               # Solution quản lý toàn bộ các dự án Backend
-│
 ├── Gateways/
 │   └── ApiGateway/                      # [Khang] YARP Gateway - Port 5000 (Single Entry Point)
 │       ├── Program.cs                   # Pipeline đăng ký YARP Reverse Proxy & CORS
@@ -100,35 +98,35 @@ Mọi yêu cầu từ Frontend hoặc Client gửi về Gateway (`http://localho
 ```bash
 # 1. Tạo Auth.API
 dotnet new webapi -n Auth.API -o src/backend/services/Auth.API --framework net8.0 --use-controllers
-dotnet sln src/backend/CoffeeShop.backend.sln add src/backend/services/Auth.API/Auth.API.csproj
+dotnet sln src/CoffeeShop.sln add src/backend/services/Auth.API/Auth.API.csproj --solution-folder "backend/services"
 
 # 2. Tạo ApiGateway
 dotnet new web -n ApiGateway -o src/backend/gateways/ApiGateway --framework net8.0
-dotnet sln src/backend/CoffeeShop.backend.sln add src/backend/gateways/ApiGateway/ApiGateway.csproj
+dotnet sln src/CoffeeShop.sln add src/backend/gateways/ApiGateway/ApiGateway.csproj --solution-folder "backend/gateways"
 ```
 
 ### 2. [Phú] Khởi tạo `Product.API`:
 ```bash
 dotnet new webapi -n Product.API -o src/backend/services/Product.API --framework net8.0 --use-controllers
-dotnet sln src/backend/CoffeeShop.backend.sln add src/backend/services/Product.API/Product.API.csproj
+dotnet sln src/CoffeeShop.sln add src/backend/services/Product.API/Product.API.csproj --solution-folder "backend/services"
 ```
 
 ### 3. [Tuấn] Khởi tạo `Order.API`:
 ```bash
 dotnet new webapi -n Order.API -o src/backend/services/Order.API --framework net8.0 --use-controllers
-dotnet sln src/backend/CoffeeShop.backend.sln add src/backend/services/Order.API/Order.API.csproj
+dotnet sln src/CoffeeShop.sln add src/backend/services/Order.API/Order.API.csproj --solution-folder "backend/services"
 ```
 
 ### 4. [Trí] Khởi tạo `Engagement.API`:
 ```bash
 dotnet new webapi -n Engagement.API -o src/backend/services/Engagement.API --framework net8.0 --use-controllers
-dotnet sln src/backend/CoffeeShop.backend.sln add src/backend/services/Engagement.API/Engagement.API.csproj
+dotnet sln src/CoffeeShop.sln add src/backend/services/Engagement.API/Engagement.API.csproj --solution-folder "backend/services"
 ```
 
 ### 5. [Thành] Khởi tạo `Notification.API`:
 ```bash
 dotnet new webapi -n Notification.API -o src/backend/services/Notification.API --framework net8.0 --use-controllers
-dotnet sln src/backend/CoffeeShop.backend.sln add src/backend/services/Notification.API/Notification.API.csproj
+dotnet sln src/CoffeeShop.sln add src/backend/services/Notification.API/Notification.API.csproj --solution-folder "backend/services"
 ```
 
 👉 Xem thêm các lệnh cài đặt NuGet, EF Core Migrations tại: [**`10-cli-instructions.md`**](file:///home/bettercallkhang/Github/LowLand-Coffee/docs/10-cli-instructions.md)

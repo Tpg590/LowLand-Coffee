@@ -18,9 +18,9 @@ Tài liệu tổng hợp đầy đủ các lệnh .NET CLI, EF Core, Docker Comp
 
 > Chạy từ thư mục gốc của repository: `LowLand-Coffee/`
 
-### 🔹 Khởi tạo file Solution Backend:
+### 🔹 Khởi tạo file Solution tổng hợp (Frontend + Backend):
 ```bash
-dotnet new sln -n CoffeeShop.backend -o src/backend
+dotnet new sln -n CoffeeShop -o src
 ```
 
 ### 🔹 Khởi tạo Web API Service (.NET 8):
@@ -30,41 +30,38 @@ dotnet new webapi -n <TênProject> -o src/backend/services/<TênProject> --frame
 
 # 1. Khởi tạo Auth.API (Khang):
 dotnet new webapi -n Auth.API -o src/backend/services/Auth.API --framework net8.0 --use-controllers
-dotnet sln src/backend/CoffeeShop.backend.sln add src/backend/services/Auth.API/Auth.API.csproj
+dotnet sln src/CoffeeShop.sln add src/backend/services/Auth.API/Auth.API.csproj --solution-folder "backend/services"
 
 # 2. Khởi tạo Product.API (Phú):
 dotnet new webapi -n Product.API -o src/backend/services/Product.API --framework net8.0 --use-controllers
-dotnet sln src/backend/CoffeeShop.backend.sln add src/backend/services/Product.API/Product.API.csproj
+dotnet sln src/CoffeeShop.sln add src/backend/services/Product.API/Product.API.csproj --solution-folder "backend/services"
 
 # 3. Khởi tạo Order.API (Tuấn):
 dotnet new webapi -n Order.API -o src/backend/services/Order.API --framework net8.0 --use-controllers
-dotnet sln src/backend/CoffeeShop.backend.sln add src/backend/services/Order.API/Order.API.csproj
+dotnet sln src/CoffeeShop.sln add src/backend/services/Order.API/Order.API.csproj --solution-folder "backend/services"
 
 # 4. Khởi tạo Engagement.API (Trí):
 dotnet new webapi -n Engagement.API -o src/backend/services/Engagement.API --framework net8.0 --use-controllers
-dotnet sln src/backend/CoffeeShop.backend.sln add src/backend/services/Engagement.API/Engagement.API.csproj
+dotnet sln src/CoffeeShop.sln add src/backend/services/Engagement.API/Engagement.API.csproj --solution-folder "backend/services"
 
 # 5. Khởi tạo Notification.API (Thành):
 dotnet new webapi -n Notification.API -o src/backend/services/Notification.API --framework net8.0 --use-controllers
-dotnet sln src/backend/CoffeeShop.backend.sln add src/backend/services/Notification.API/Notification.API.csproj
+dotnet sln src/CoffeeShop.sln add src/backend/services/Notification.API/Notification.API.csproj --solution-folder "backend/services"
 ```
 
 ### 🔹 Khởi tạo API Gateway (YARP):
 ```bash
 dotnet new web -n ApiGateway -o src/backend/gateways/ApiGateway --framework net8.0
-dotnet sln src/backend/CoffeeShop.backend.sln add src/backend/gateways/ApiGateway/ApiGateway.csproj
+dotnet sln src/CoffeeShop.sln add src/backend/gateways/ApiGateway/ApiGateway.csproj --solution-folder "backend/gateways"
 ```
 
 ### 🔹 Khởi tạo Web Frontend (Razor Pages):
 ```bash
-# 1. Tạo file Solution Frontend:
-dotnet new sln -n CoffeeShop.frontend -o src/frontend
-
-# 2. Tạo project Web Razor Pages:
+# 1. Tạo project Web Razor Pages:
 dotnet new webapp -n CoffeeShop.WebRazorPages -o src/frontend/CoffeeShop.WebRazorPages --framework net8.0
 
-# 3. Thêm project vào Solution Frontend:
-dotnet sln src/frontend/CoffeeShop.frontend.sln add src/frontend/CoffeeShop.WebRazorPages/CoffeeShop.WebRazorPages.csproj
+# 2. Thêm project vào Solution tổng:
+dotnet sln src/CoffeeShop.sln add src/frontend/CoffeeShop.WebRazorPages/CoffeeShop.WebRazorPages.csproj --solution-folder "frontend"
 ```
 
 ---
@@ -117,8 +114,8 @@ dotnet run --project src/backend/services/auth.api/Auth.API.csproj
 # Chạy Hot Reload:
 dotnet watch --project src/frontend/CoffeeShop.WebRazorPages/CoffeeShop.WebRazorPages.csproj
 
-# Build toàn bộ Backend:
-dotnet build src/backend/CoffeeShop.backend.sln
+# Build toàn bộ Solution (Backend + Frontend):
+dotnet build src/CoffeeShop.sln
 ```
 
 ---
@@ -126,6 +123,10 @@ dotnet build src/backend/CoffeeShop.backend.sln
 ## 5. Docker & Docker Compose
 
 ```bash
+# 0. Tạo file .env từ template (nếu chưa có):
+cp .env.example .env          # Linux / macOS
+# copy .env.example .env      # Windows CMD / PowerShell
+
 # Khởi động toàn bộ container chạy ngầm:
 docker compose up -d
 

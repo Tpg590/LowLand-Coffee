@@ -8,8 +8,6 @@ Dự án Frontend được xây dựng trên nền tảng **ASP.NET Core Razor P
 
 ```text
 Frontend/
-├── CoffeeShop.Frontend.sln              # (Tùy chọn) Solution quản lý Frontend
-│
 └── CoffeeShop.WebRazorPages/            # Dự án Web ASP.NET Core Razor Pages (.NET 8)
     ├── wwwroot/                         # Tài nguyên tĩnh
     │   ├── css/                         # Custom CSS, Themes
@@ -101,16 +99,13 @@ Frontend/
 
 > Chạy từ thư mục gốc repository (`LowLand-Coffee/`):
 
-### 1. Khởi tạo Solution & Dự án Web Frontend:
+### 1. Khởi tạo Dự án Web Frontend:
 ```bash
-# 1. Tạo file Solution Frontend:
-dotnet new sln -n CoffeeShop.frontend -o src/frontend
-
-# 2. Tạo project Web Razor Pages:
+# 1. Tạo project Web Razor Pages:
 dotnet new webapp -n CoffeeShop.WebRazorPages -o src/frontend/CoffeeShop.WebRazorPages --framework net8.0
 
-# 3. Thêm project vào Solution Frontend:
-dotnet sln src/frontend/CoffeeShop.frontend.sln add src/frontend/CoffeeShop.WebRazorPages/CoffeeShop.WebRazorPages.csproj
+# 2. Thêm project vào Solution tổng:
+dotnet sln src/CoffeeShop.sln add src/frontend/CoffeeShop.WebRazorPages/CoffeeShop.WebRazorPages.csproj --solution-folder "frontend"
 ```
 
 ### 2. Chạy dự án:

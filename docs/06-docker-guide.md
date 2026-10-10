@@ -56,6 +56,10 @@ Hệ thống được đóng gói thành các container độc lập hoạt đ�
 ## 3. Lệnh Vận Hành Docker Compose
 
 ```bash
+# 0. Tạo file .env cấu hình môi trường từ .env.example (nếu chưa có):
+cp .env.example .env          # Linux / macOS
+# copy .env.example .env      # Windows CMD / PowerShell
+
 # 1. Khởi chạy toàn bộ hệ thống ngầm:
 docker compose up -d --build
 
