@@ -19,6 +19,23 @@ var app = builder.Build();
 
 app.UseCors("AllowAll");
 
+// Root Health & Info endpoint
+app.MapGet("/", () => Results.Ok(new
+{
+    service = "LowLand Coffee YARP API Gateway",
+    status = "Healthy",
+    timestamp = DateTime.UtcNow,
+    routes = new[]
+    {
+        "/api/auth/**",
+        "/api/products/**",
+        "/api/orders/**",
+        "/api/vouchers/**",
+        "/api/notifications/**",
+        "/hubs/notification/**"
+    }
+}));
+
 app.MapReverseProxy();
 
 app.Run();

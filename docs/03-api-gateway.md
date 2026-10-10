@@ -17,7 +17,7 @@ API Gateway đóng vai trò là điểm tiếp nhận duy nhất (Single Point o
 
 ## 2. Bảng Quy Hoạch Định Tuyến (Routing Table)
 
-API Gateway lắng nghe duy nhất tại cổng **`5000`**. Toàn bộ request từ phía Razor Web client gửi về: `http://localhost:5000`.
+API Gateway lắng nghe tại cổng **`8080`**. Toàn bộ request từ phía Razor Web client gửi về: `http://localhost:8080`.
 
 | Route Pattern (Vào Gateway) | Service Đích (Downstream Destination) | Phụ trách | Mục Đích Sử Dụng |
 | :--- | :--- | :---: | :--- |

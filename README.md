@@ -30,7 +30,7 @@ docker compose down
 ```
 
 * 🌐 **Giao diện Web Razor Pages:** `http://localhost:5000`
-* 🔌 **API Gateway Swagger/Reverse Proxy:** `http://localhost:5000`
+* 🔌 **API Gateway Swagger/Reverse Proxy:** `http://localhost:8080`
 * 🗄️ **SQL Server 2022 Container:** `localhost:1433` (`sa` / `YourPassword123!`)
 
 ---
@@ -40,7 +40,7 @@ docker compose down
 | Thành Viên | Vai Trò | Module Phụ Trách | Cổng | Database Riêng |
 | :--- | :--- | :--- | :--- | :--- |
 | **Tuấn** | Leader / Order & Payment | `Order.API` | `5003` | `Coffee_OrderDB` |
-| **Khang** | Gateway & Auth | `ApiGateway` & `Auth.API` | `5000` / `5001` | `Coffee_AuthDB` |
+| **Khang** | Gateway & Auth | `ApiGateway` & `Auth.API` | `8080` / `5001` | `Coffee_AuthDB` |
 | **Phú** | Catalog & Product | `Product.API` | `5002` | `Coffee_ProductDB` |
 | **Trí** | Loyalty & Voucher | `Engagement.API` | `5004` | `Coffee_EngagementDB` |
 | **Thành** | Notification & Realtime | `Notification.API` | `5005` | `Coffee_NotificationDB` |

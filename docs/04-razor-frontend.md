@@ -6,7 +6,7 @@ Tài liệu này quy định kiến trúc tầng giao diện **ASP.NET Core Razo
 
 ## 1. Nguyên Tắc Cốt Lõi (Architecture Principles)
 
-* **Cổng giao tiếp duy nhất:** Toàn bộ giao tiếp mạng từ Web Frontend bắt buộc gửi về **YARP API Gateway** (`http://localhost:5000`). Trình duyệt không gọi trực tiếp cổng nội bộ của backend API.
+* **Cổng giao tiếp duy nhất:** Toàn bộ giao tiếp mạng từ Web Frontend bắt buộc gửi về **YARP API Gateway** (`http://localhost:8080`). Trình duyệt không gọi trực tiếp cổng nội bộ của backend API.
 * **Mô hình Feature Folders:** Tổ chức các trang `.cshtml` & `.cshtml.cs` theo từng cụm chức năng nghiệp vụ độc lập.
 * **Kết nối thời gian thực (SignalR):** Nhận thông báo trạng thái đơn hàng (Customer) và chuông báo đơn mới (Staff) qua WebSocket trung chuyển từ ApiGateway.
 * **Tách biệt tầng HTTP Service:** Mỗi Microservice Backend có một Typed `HttpClient` Service riêng biệt trong thư mục `Services/`.
@@ -40,8 +40,8 @@ src/Frontend/CoffeeShop.WebRazorPages/
 │
 ├── ViewModels/                          # Data Models hứng JSON từ API
 │   ├── Auth/, Product/, Order/, Engagement/, Notification/
-├── wwwroot/                             # CSS, JS (signalr.js), Images, Bootstrap 5
-├── appsettings.json                     # Cấu hình "GatewayUrl": "http://localhost:5000"
+│├── wwwroot/                             # CSS, JS (signalr.js), Images, Bootstrap 5
+├── appsettings.json                     # Cấu hình "GatewayUrl": "http://localhost:8080"
 └── Program.cs                           # Đăng ký HttpClient, Cookie Auth, Session
 ```
 
@@ -50,7 +50,7 @@ src/Frontend/CoffeeShop.WebRazorPages/
 ## 3. Cơ Chế Đăng Ký Typed HttpClients Trong `Program.cs`
 
 ```csharp
-var gatewayUrl = builder.Configuration["ApiGateway:BaseUrl"] ?? "http://localhost:5000";
+var gatewayUrl = builder.Configuration["ApiGateway:BaseUrl"] ?? "http://localhost:8080";
 
 // Đăng ký các HttpClient Services hướng về Gateway
 builder.Services.AddHttpClient<IAuthHttpService, AuthHttpService>(c => c.BaseAddress = new Uri(gatewayUrl));
@@ -67,7 +67,7 @@ builder.Services.AddHttpClient<INotificationHttpService, NotificationHttpService
 Tại file `wwwroot/js/notification-client.js`:
 ```javascript
 const connection = new signalR.HubConnectionBuilder()
-    .withUrl("http://localhost:5000/hubs/notification")
+    .withUrl("http://localhost:8080/hubs/notification")
     .withAutomaticReconnect()
     .build();
 
