@@ -1,6 +1,139 @@
-@Product.API_HostAddress = http://localhost:5014
+@Product.API_HostAddress = http://localhost:5002
 
-GET {{Product.API_HostAddress}}/weatherforecast/
+### 12. View Category - Danh sách danh mục
+GET {{Product.API_HostAddress}}/api/categories
 Accept: application/json
 
-###
+### 12b. View Category Detail - Chi tiết một danh mục
+GET {{Product.API_HostAddress}}/api/categories/10000000-0000-0000-0000-000000000001
+Accept: application/json
+
+### 13. Create Category - Tạo mới danh mục
+POST {{Product.API_HostAddress}}/api/categories
+Content-Type: application/json
+
+{
+  "name": "Bánh Mì & Điểm Tâm",
+  "displayOrder": 5,
+  "isActive": true
+}
+
+### 14. Update Category - Cập nhật danh mục
+PUT {{Product.API_HostAddress}}/api/categories/10000000-0000-0000-0000-000000000001
+Content-Type: application/json
+
+{
+  "name": "Cà Phê Truyền Thống Đặc Biệt",
+  "displayOrder": 1,
+  "isActive": true
+}
+
+### 15. Delete Category - Xóa danh mục (chỉ xóa khi không có món)
+DELETE {{Product.API_HostAddress}}/api/categories/10000000-0000-0000-0000-000000000004
+Accept: application/json
+
+### 16. View Product - Danh sách món ăn / đồ uống
+GET {{Product.API_HostAddress}}/api/products?pageNumber=1&pageSize=10
+Accept: application/json
+
+### 17. View Product Detail - Chi tiết món kèm Size & Topping
+GET {{Product.API_HostAddress}}/api/products/20000000-0000-0000-0000-000000000001
+Accept: application/json
+
+### 18. Search & Filter Product - Tìm kiếm & Lọc
+GET {{Product.API_HostAddress}}/api/products?keyword=Phin&minPrice=20000&maxPrice=50000&sortBy=price&isDescending=false&pageNumber=1&pageSize=10
+Accept: application/json
+
+### 19. Create Product - Tạo món mới kèm Options
+POST {{Product.API_HostAddress}}/api/products
+Content-Type: application/json
+
+{
+  "categoryId": "10000000-0000-0000-0000-000000000001",
+  "name": "Cà Phê Muối LowLand",
+  "description": "Lớp kem muối béo mặn hòa cùng cà phê phin đậm đà thơm ngát",
+  "basePrice": 35000,
+  "imageUrl": "https://placehold.co/300",
+  "isAvailable": true,
+  "options": [
+    {
+      "optionType": "SIZE",
+      "name": "Size M",
+      "extraPrice": 0,
+      "isAvailable": true
+    },
+    {
+      "optionType": "SIZE",
+      "name": "Size L",
+      "extraPrice": 8000,
+      "isAvailable": true
+    },
+    {
+      "optionType": "TOPPING",
+      "name": "Kem Muối Thêm",
+      "extraPrice": 10000,
+      "isAvailable": true
+    }
+  ]
+}
+
+### 20. Update Product - Cập nhật thông tin món
+PUT {{Product.API_HostAddress}}/api/products/20000000-0000-0000-0000-000000000001
+Content-Type: application/json
+
+{
+  "categoryId": "10000000-0000-0000-0000-000000000001",
+  "name": "Phin Sữa Đá LowLand (Công Thức Mới)",
+  "description": "Cà phê phin thơm ngon, đậm đà với sữa đặc béo ngậy chuẩn gu Việt",
+  "basePrice": 32000,
+  "imageUrl": "https://placehold.co/300",
+  "isAvailable": true,
+  "options": [
+    {
+      "optionType": "SIZE",
+      "name": "Size S",
+      "extraPrice": 0,
+      "isAvailable": true
+    },
+    {
+      "optionType": "SIZE",
+      "name": "Size M",
+      "extraPrice": 6000,
+      "isAvailable": true
+    },
+    {
+      "optionType": "SIZE",
+      "name": "Size L",
+      "extraPrice": 12000,
+      "isAvailable": true
+    }
+  ]
+}
+
+### Toggle Stock - Bật/Tắt nhanh Còn hàng / Hết hàng
+PATCH {{Product.API_HostAddress}}/api/products/20000000-0000-0000-0000-000000000001/toggle-stock
+Content-Type: application/json
+
+{
+  "isAvailable": false
+}
+
+### 21. Delete Product - Xóa mềm món (IsDeleted = true)
+DELETE {{Product.API_HostAddress}}/api/products/20000000-0000-0000-0000-000000000001
+Accept: application/json
+
+### 22. Upload Product Image to Cloudinary
+POST {{Product.API_HostAddress}}/api/products/upload-image
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="coffee_sample.jpg"
+Content-Type: image/jpeg
+
+< ./sample.jpg
+--WebAppBoundary--
+
+### 23. Delete Product Image on Cloudinary
+DELETE {{Product.API_HostAddress}}/api/products/images/lowland-coffee/products/sample_public_id
+Accept: application/json
+
