@@ -24,9 +24,14 @@ public class ProductController : ControllerBase
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(ApiResponse<ImageUploadResultDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<ImageUploadResultDto>), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> UploadImage([FromForm] IFormFile file, CancellationToken cancellationToken)
+    public async Task<IActionResult> UploadImage([FromForm] UploadImageRequest request, CancellationToken cancellationToken)
     {
-        var result = await _cloudinaryService.UploadImageAsync(file, "lowland-coffee/products", cancellationToken);
+        if (request == null || request.File == null)
+        {
+            return BadRequest(ApiResponse<ImageUploadResultDto>.Fail("Vui lòng chọn tệp hình ảnh để tải lên", 400));
+        }
+
+        var result = await _cloudinaryService.UploadImageAsync(request.File, "lowland-coffee/products", cancellationToken);
         return StatusCode(result.StatusCode, result);
     }
 

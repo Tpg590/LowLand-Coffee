@@ -17,8 +17,23 @@ public class CloudinaryService : ICloudinaryService
     public CloudinaryService(IOptions<CloudinarySettings> options)
     {
         var settings = options.Value;
-        var account = new Account(settings.CloudName, settings.ApiKey, settings.ApiSecret);
-        _cloudinary = new Cloudinary(account);
+        var apiSecret = settings.ApiSecret?.Trim() ?? string.Empty;
+
+        if (apiSecret.Contains("CLOUDINARY_URL="))
+        {
+            var url = apiSecret.Replace("CLOUDINARY_URL=", string.Empty).Trim();
+            _cloudinary = new Cloudinary(url);
+        }
+        else if (apiSecret.StartsWith("cloudinary://", StringComparison.OrdinalIgnoreCase))
+        {
+            _cloudinary = new Cloudinary(apiSecret);
+        }
+        else
+        {
+            var account = new Account(settings.CloudName?.Trim(), settings.ApiKey?.Trim(), apiSecret);
+            _cloudinary = new Cloudinary(account);
+        }
+
         _cloudinary.Api.Secure = true;
     }
 
