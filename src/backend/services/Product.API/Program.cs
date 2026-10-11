@@ -8,6 +8,7 @@ using Product.API.Repositories;
 using Product.API.Repositories.Interfaces;
 using Product.API.Services;
 using Product.API.Services.Interfaces;
+using Product.API.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +25,10 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 // Add Services
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IProductService, ProductService>();
+
+// Add Cloudinary Service
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
 // Add Controllers
 builder.Services.AddControllers();

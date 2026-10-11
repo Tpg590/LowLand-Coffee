@@ -9,10 +9,37 @@ namespace Product.API.Controllers;
 public class ProductController : ControllerBase
 {
     private readonly IProductService _productService;
+    private readonly ICloudinaryService _cloudinaryService;
 
-    public ProductController(IProductService productService)
+    public ProductController(IProductService productService, ICloudinaryService cloudinaryService)
     {
         _productService = productService;
+        _cloudinaryService = cloudinaryService;
+    }
+
+    /// <summary>
+    /// Tải hình ảnh sản phẩm lên Cloudinary
+    /// </summary>
+    [HttpPost("upload-image")]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(typeof(ApiResponse<ImageUploadResultDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<ImageUploadResultDto>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UploadImage([FromForm] IFormFile file, CancellationToken cancellationToken)
+    {
+        var result = await _cloudinaryService.UploadImageAsync(file, "lowland-coffee/products", cancellationToken);
+        return StatusCode(result.StatusCode, result);
+    }
+
+    /// <summary>
+    /// Xóa hình ảnh trên Cloudinary theo PublicId
+    /// </summary>
+    [HttpDelete("images/{publicId}")]
+    [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> DeleteImage([FromRoute] string publicId, CancellationToken cancellationToken)
+    {
+        var result = await _cloudinaryService.DeleteImageAsync(publicId, cancellationToken);
+        return StatusCode(result.StatusCode, result);
     }
 
     /// <summary>
