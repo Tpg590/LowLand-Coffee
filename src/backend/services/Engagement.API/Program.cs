@@ -1,5 +1,9 @@
 using System.Text;
+using Engagement.API.Data;
+using Engagement.API.Repositories;
+using Engagement.API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -7,6 +11,21 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add Controllers
 builder.Services.AddControllers();
+
+// Configure EF Core DbContext with SQL Server (Database First)
+var connectionString = builder.Configuration.GetConnectionString("EngagementConnection")
+    ?? "Server=localhost,1434;Database=Coffee_EngagementDB;User Id=sa;Password=YourPassword123!;TrustServerCertificate=True;";
+builder.Services.AddDbContext<EngagementDbContext>(options =>
+{
+    options.UseSqlServer(connectionString);
+});
+
+// Register Repositories and Services (Dependency Injection)
+builder.Services.AddAutoMapper(cfg => cfg.AddProfile<Engagement.API.Mappings.MappingProfile>());
+builder.Services.AddScoped<IVoucherRepository, VoucherRepository>();
+builder.Services.AddScoped<IVoucherService, VoucherService>();
+builder.Services.AddScoped<ILoyaltyRepository, LoyaltyRepository>();
+builder.Services.AddScoped<ILoyaltyService, LoyaltyService>();
 
 // Add CORS Policy
 builder.Services.AddCors(options =>
@@ -53,7 +72,7 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "LowLand Coffee - Engagement & Promotion API",
         Version = "v1",
-        Description = "Microservice quản lý Khuyến mãi, Voucher giảm giá & Điểm thưởng Loyalty"
+        Description = "Microservice quản lý Khuyến mãi, Voucher giảm giá & Điểm thưởng Loyalty (PRN232)"
     });
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
