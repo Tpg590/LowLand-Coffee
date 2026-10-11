@@ -8,8 +8,6 @@ Tài liệu cung cấp các bộ tiêu chuẩn kỹ thuật chi tiết (System P
 1. [Bộ Tiêu Chuẩn Chung (Core Principles)](#1-bộ-tiêu-chuẩn-chung-core-principles)
 2. [Bộ Tiêu Chuẩn Backend: .NET 8 Microservices Web API (C# 12)](#2-bộ-tiêu-chuẩn-backend-net-8-microservices-web-api-c-12)
 3. [Bộ Tiêu Chuẩn Frontend: ASP.NET Core Razor Pages (.NET 8)](#3-bộ-tiêu-chuẩn-frontend-aspnet-core-razor-pages-net-8)
-4. [Bộ Tiêu Chuẩn Mobile App: Flutter (Dart)](#4-bộ-tiêu-chuẩn-mobile-app-flutter-dart)
-
 ---
 
 ## 1. Bộ Tiêu Chuẩn Chung (Core Principles)
@@ -108,25 +106,3 @@ Yêu cầu đầu ra: Cung cấp mã nguồn `.cshtml` và `.cshtml.cs` hoàn ch
 
 ---
 
-## 4. Bộ Tiêu Chuẩn Mobile App: Flutter (Dart)
-
-```text
-Hãy review / viết code Flutter (Dart) theo các tiêu chuẩn kỹ thuật sau:
-
-1. Kiến trúc & Thiết kế:
-- Tuân thủ nguyên lý SOLID, DRY, KISS và YAGNI.
-- Áp dụng phân tầng sạch (Data - Domain - Presentation / Feature-first), phân tách triệt để UI layout và Business Logic.
-- Tách nhỏ Widget (dưới 100-150 dòng), ưu tiên composition hơn inheritance, dùng const constructor mọi nơi có thể để tối ưu rebuild pipeline.
-
-2. Clean Code Dart & Hiệu năng:
-- Tuyệt đối không hard-code (dùng constants, AppSizes, AppColors, TextStyle tokens, Localization / .arb).
-- Đặt tên chuẩn Dart Style Guide: camelCase cho member/variable, PascalCase cho class/enum/typedef, snake_case cho file name.
-- Quản lý State rõ ràng (immutability, unidirectional data flow), dispose triệt để Controllers/Streams/Listeners để tránh memory leak.
-- Xử lý bất đồng bộ chặt chẽ: bắt buộc handle full case (loading, success, failure/error), không swallow exception trong try-catch, dùng typed Result/Either hoặc Custom Exceptions.
-
-3. Quy chuẩn Comment:
-- Dùng Doc Comments (///) cho public API/Widget/Method để mô tả "What" (mục đích, tham số, kết quả).
-- Dùng inline comment (//) chỉ khi cần giải thích "Why" (lý do chọn giải pháp kỹ thuật, workaround cho bug framework, hoặc xử lý edge case đặc biệt). Không mô tả lại code làm như thế nào (How).
-
-Yêu cầu đầu ra: Cung cấp code Dart hoàn chỉnh, đúng convention, tối ưu hiệu năng và giải thích ngắn gọn các quyết định kỹ thuật quan trọng.
-```
