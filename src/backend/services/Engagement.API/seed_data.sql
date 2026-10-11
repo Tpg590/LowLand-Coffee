@@ -11,7 +11,6 @@ DECLARE @Voucher2 UNIQUEIDENTIFIER = '40000000-0000-0000-0000-000000000002';
 DECLARE @Voucher3 UNIQUEIDENTIFIER = '40000000-0000-0000-0000-000000000003';
 DECLARE @CustomerIdEngage UNIQUEIDENTIFIER = 'cccccccc-cccc-cccc-cccc-cccccccccccc'; -- auth_users (Customer)
 DECLARE @OrderId1Engage UNIQUEIDENTIFIER = '30000000-0000-0000-0000-000000000001';   -- order_orders
-DECLARE @ProdPhinSuaEngage UNIQUEIDENTIFIER = '20000000-0000-0000-0000-000000000001';-- product_products
 
 -- Tiers UUIDs
 DECLARE @TierBronze UNIQUEIDENTIFIER = '41000000-0000-0000-0000-000000000001';
@@ -19,11 +18,10 @@ DECLARE @TierSilver UNIQUEIDENTIFIER = '41000000-0000-0000-0000-000000000002';
 DECLARE @TierGold UNIQUEIDENTIFIER = '41000000-0000-0000-0000-000000000003';
 DECLARE @TierDiamond UNIQUEIDENTIFIER = '41000000-0000-0000-0000-000000000004';
 
--- Member & Point Transaction & Review UUIDs
+-- Member & Point Transaction UUIDs
 DECLARE @Member1 UNIQUEIDENTIFIER = '42000000-0000-0000-0000-000000000001';
 DECLARE @PointTx1 UNIQUEIDENTIFIER = '43000000-0000-0000-0000-000000000001';
 DECLARE @PointTx2 UNIQUEIDENTIFIER = '43000000-0000-0000-0000-000000000002';
-DECLARE @Review1 UNIQUEIDENTIFIER = '44000000-0000-0000-0000-000000000001';
 
 -- 1. Nạp Danh mục 4 Hạng thành viên (Loyalty Tiers)
 IF NOT EXISTS (SELECT 1 FROM dbo.loyalty_tiers WHERE id = @TierBronze)
@@ -60,12 +58,5 @@ BEGIN
     VALUES
     (@PointTx1, @Member1, @OrderId1Engage, 'EARN', 150, 150, N'Tích điểm khi hoàn tất đơn hàng ORD-20261004-001', DATEADD(MINUTE, -60, GETDATE())),
     (@PointTx2, @Member1, NULL, 'REDEEM', -30, 120, N'Quy đổi 30 điểm giảm 30.000 VNĐ', DATEADD(MINUTE, -30, GETDATE()));
-END
-
--- 4. Nạp Đánh giá sản phẩm mẫu
-IF NOT EXISTS (SELECT 1 FROM dbo.engagement_reviews WHERE id = @Review1)
-BEGIN
-    INSERT INTO dbo.engagement_reviews (id, product_id, user_id, order_id, rating, comment, is_approved, created_at, updated_at)
-    VALUES (@Review1, @ProdPhinSuaEngage, @CustomerIdEngage, @OrderId1Engage, 5, N'Cà phê phin sữa đá đậm vị, thơm béo đặc trưng của LowLand!', 1, DATEADD(MINUTE, -40, GETDATE()), GETDATE());
 END
 GO

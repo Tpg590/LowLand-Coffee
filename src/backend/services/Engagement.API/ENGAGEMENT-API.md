@@ -39,19 +39,16 @@
 | `POST` | `/api/loyalty/add-points` | Internal / Order.API | Cộng điểm khi hoàn thành đơn hàng |
 | `POST` | `/api/loyalty/redeem` | Customer | Quy đổi điểm tích lũy trừ tiền đơn hàng |
 | `GET` | `/api/loyalty/transactions` | Customer | Lịch sử biến động điểm tích lũy |
-| `GET` | `/api/reviews/product/{productId}` | Public | Xem danh sách đánh giá của món |
-| `POST` | `/api/reviews` | Customer | Gửi đánh giá cho món đã mua |
 
 ---
 
 ## 🗄️ Cấu trúc Cơ Sở Dữ Liệu `Coffee_EngagementDB`
 
-Bao gồm 6 bảng chuẩn hóa theo UUID:
+Bao gồm 5 bảng chuẩn hóa theo UUID:
 
-1. **`dbo.promo_vouchers`**: Danh mục mã giảm giá (code, discount_type, discount_value, max_discount_amount, min_order_value, quantity, start_date, end_date, is_active).
+1. **`dbo.promo_vouchers`**: Danh mục mã giảm giá (code, title, discount_type, discount_value, max_discount_amount, min_order_value, quantity, start_date, end_date, is_active).
 2. **`dbo.promo_voucher_usages`**: Lịch sử sử dụng voucher theo đơn hàng và người dùng (voucher_id, user_id, order_id, discount_amount, used_at).
 3. **`dbo.loyalty_tiers`**: 4 Cấp bậc hạng thành viên (BRONZE, SILVER, GOLD, DIAMOND) lưu cấu hình min_points, point_multiplier, quyền lợi sinh nhật và topping miễn phí.
 4. **`dbo.loyalty_members`**: Hồ sơ thành viên (user_id, tier_id, current_points khả dụng, total_accumulated_points trọn đời).
 5. **`dbo.loyalty_point_transactions`**: Lịch sử giao dịch điểm (EARN, REDEEM, REFUND, ADJUST).
-6. **`dbo.engagement_reviews`**: Đánh giá & phản hồi sản phẩm từ khách hàng (product_id, user_id, order_id, rating, comment, is_approved).
 

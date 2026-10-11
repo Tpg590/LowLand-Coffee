@@ -275,23 +275,6 @@ BEGIN
 END
 GO
 
--- 6. BẢNG engagement_reviews (Đánh giá món nước & phản hồi khách hàng)
-IF OBJECT_ID('dbo.engagement_reviews', 'U') IS NULL
-BEGIN
-    CREATE TABLE dbo.engagement_reviews (
-        id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-        product_id UNIQUEIDENTIFIER NOT NULL,  -- Logical Ref -> product_products.id
-        user_id UNIQUEIDENTIFIER NOT NULL,     -- Logical Ref -> auth_users.id
-        order_id UNIQUEIDENTIFIER NULL,        -- Logical Ref -> order_orders.id
-        rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
-        comment NVARCHAR(MAX) NULL,
-        is_approved BIT NOT NULL DEFAULT 1,
-        created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
-        updated_at DATETIME2 NOT NULL DEFAULT GETDATE()
-    );
-END
-GO
-
 -- =========================================================================
 -- 5. DATABASE: Coffee_NotificationDB
 -- =========================================================================
