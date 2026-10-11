@@ -1,9 +1,29 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Product.API.Data;
+using Product.API.Repositories;
+using Product.API.Repositories.Interfaces;
+using Product.API.Services;
+using Product.API.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add Database Context
+var connectionString = builder.Configuration.GetConnectionString("ProductConnection")
+    ?? "Server=localhost,1433;Database=Coffee_ProductDB;User Id=sa;Password=YourPassword123!;TrustServerCertificate=True;";
+builder.Services.AddDbContext<ProductDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
+// Add Repositories
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+
+// Add Services
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IProductService, ProductService>();
 
 // Add Controllers
 builder.Services.AddControllers();
