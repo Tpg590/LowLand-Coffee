@@ -38,14 +38,17 @@
 | `GET` | `/api/loyalty/my-tier` | Customer | Xem điểm tích lũy & hạng thẻ thành viên |
 | `POST` | `/api/loyalty/add-points` | Internal / Order.API | Cộng điểm khi hoàn thành đơn hàng |
 | `POST` | `/api/loyalty/redeem` | Customer | Quy đổi điểm tích lũy trừ tiền đơn hàng |
+| `GET` | `/api/loyalty/transactions` | Customer | Lịch sử biến động điểm tích lũy |
 
 ---
 
-## 🚀 Lệnh tạo dự án khi bắt đầu code:
-Đứng tại thư mục gốc repository (`LowLand-Coffee/`):
-```bash
-dotnet new webapi -n Engagement.API -o src/backend/services/Engagement.API --framework net8.0 --use-controllers
-dotnet sln src/backend/CoffeeShop.backend.sln add src/backend/services/Engagement.API/Engagement.API.csproj
-dotnet add src/backend/services/Engagement.API package Microsoft.EntityFrameworkCore.SqlServer
-dotnet add src/backend/services/Engagement.API package Microsoft.EntityFrameworkCore.Tools
-```
+## 🗄️ Cấu trúc Cơ Sở Dữ Liệu `Coffee_EngagementDB`
+
+Bao gồm 5 bảng chuẩn hóa theo UUID:
+
+1. **`dbo.promo_vouchers`**: Danh mục mã giảm giá (code, title, discount_type, discount_value, max_discount_amount, min_order_value, quantity, start_date, end_date, is_active).
+2. **`dbo.promo_voucher_usages`**: Lịch sử sử dụng voucher theo đơn hàng và người dùng (voucher_id, user_id, order_id, discount_amount, used_at).
+3. **`dbo.loyalty_tiers`**: 4 Cấp bậc hạng thành viên (BRONZE, SILVER, GOLD, DIAMOND) lưu cấu hình min_points, point_multiplier, quyền lợi sinh nhật và topping miễn phí.
+4. **`dbo.loyalty_members`**: Hồ sơ thành viên (user_id, tier_id, current_points khả dụng, total_accumulated_points trọn đời).
+5. **`dbo.loyalty_point_transactions`**: Lịch sử giao dịch điểm (EARN, REDEEM, REFUND, ADJUST).
+
