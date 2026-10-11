@@ -1,6 +1,166 @@
-@Auth.API_HostAddress = http://localhost:5010
+@Auth.API_HostAddress = http://localhost:5001
 
-GET {{Auth.API_HostAddress}}/weatherforecast/
+### =========================================================================
+### 1. ĐĂNG KÝ TÀI KHOẢN (Customer Register)
+### =========================================================================
+POST {{Auth.API_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "Nguyễn Văn Khách Hàng",
+  "email": "customer_test@lowlandcoffee.com",
+  "phoneNumber": "0987654321",
+  "password": "Password123!",
+  "confirmPassword": "Password123!"
+}
+
+### =========================================================================
+### 2. ĐĂNG NHẬP (Login & cấp phát JWT Access + Refresh Token)
+### =========================================================================
+# @name loginAdmin
+POST {{Auth.API_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "emailOrPhone": "admin@lowlandcoffee.com",
+  "password": "Admin@123"
+}
+
+### Lưu biến Bearer token từ kết quả đăng nhập Admin
+@adminToken = {{loginAdmin.response.body.data.accessToken}}
+@adminRefreshToken = {{loginAdmin.response.body.data.refreshToken}}
+
+### 2b. Đăng nhập bằng Số điện thoại (Staff)
+# @name loginStaff
+POST {{Auth.API_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "emailOrPhone": "0902233445",
+  "password": "Admin@123"
+}
+
+@staffToken = {{loginStaff.response.body.data.accessToken}}
+
+### =========================================================================
+### 3. CẤP LẠI TOKEN TỪ REFRESH TOKEN (Refresh Token Rotation)
+### =========================================================================
+POST {{Auth.API_HostAddress}}/api/auth/refresh-token
+Content-Type: application/json
+
+{
+  "refreshToken": "{{adminRefreshToken}}"
+}
+
+### =========================================================================
+### 4. QUÊN MẬT KHẨU & GỬI MÃ OTP QUA EMAIL (Forgot Password)
+### =========================================================================
+# @name forgotPassword
+POST {{Auth.API_HostAddress}}/api/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "customer@gmail.com"
+}
+
+### =========================================================================
+### 5. KHÔI PHỤC MẬT KHẨU VỚI MÃ OTP (Reset Password)
+### =========================================================================
+POST {{Auth.API_HostAddress}}/api/auth/reset-password
+Content-Type: application/json
+
+{
+  "email": "customer@gmail.com",
+  "otpCode": "123456",
+  "newPassword": "NewPassword123!",
+  "confirmPassword": "NewPassword123!"
+}
+
+### =========================================================================
+### 6. XEM HỒ SƠ CÁ NHÂN (Get Profile - Authenticated)
+### =========================================================================
+GET {{Auth.API_HostAddress}}/api/auth/profile
+Authorization: Bearer {{adminToken}}
 Accept: application/json
 
-###
+### =========================================================================
+### 7. CẬP NHẬT HỒ SƠ CÁ NHÂN (Update Profile - Authenticated)
+### =========================================================================
+PUT {{Auth.API_HostAddress}}/api/auth/profile
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "fullName": "Quản Trị Viên Hệ Thống (Cập nhật)",
+  "phoneNumber": "0901122334",
+  "avatarUrl": "https://placehold.co/200",
+  "address": "Tầng 5, Tòa nhà LowLand Coffee, Q.1, TP.HCM"
+}
+
+### =========================================================================
+### 8. ĐỔI MẬT KHẨU (Change Password - Authenticated)
+### =========================================================================
+POST {{Auth.API_HostAddress}}/api/auth/change-password
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "Admin@123",
+  "newPassword": "Admin@NewPass123!",
+  "confirmPassword": "Admin@NewPass123!"
+}
+
+### =========================================================================
+### 9. [ADMIN] DANH SÁCH TOÀN BỘ NGƯỜI DÙNG (Search & Paging)
+### =========================================================================
+GET {{Auth.API_HostAddress}}/api/users?pageNumber=1&pageSize=10&search=admin
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+### =========================================================================
+### 10. [ADMIN] DANH SÁCH VAI TRÒ (Roles)
+### =========================================================================
+GET {{Auth.API_HostAddress}}/api/users/roles
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+### =========================================================================
+### 11. [ADMIN] XEM CHI TIẾT NGƯỜI DÙNG THEO ID
+### =========================================================================
+GET {{Auth.API_HostAddress}}/api/users/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+### =========================================================================
+### 12. [ADMIN] CẤP TÀI KHOẢN CHO NHÂN VIÊN (Create Staff)
+### =========================================================================
+POST {{Auth.API_HostAddress}}/api/users/staff
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "fullName": "Nhân Viên Pha Chế Mới",
+  "email": "barista02@lowlandcoffee.com",
+  "phoneNumber": "0911223344",
+  "password": "Staff@123456",
+  "address": "LowLand Coffee Chi Nhánh Thảo Điền",
+  "avatarUrl": "https://placehold.co/150"
+}
+
+### =========================================================================
+### 13. [ADMIN] KHÓA / MỞ KHÓA TÀI KHOẢN (Update Status)
+### =========================================================================
+PUT {{Auth.API_HostAddress}}/api/users/cccccccc-cccc-cccc-cccc-cccccccccccc/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "isActive": false
+}
+
+### =========================================================================
+### 14. [ADMIN] XÓA CỨNG TÀI KHOẢN (Hard Delete - Xóa vĩnh viễn)
+### =========================================================================
+DELETE {{Auth.API_HostAddress}}/api/users/cccccccc-cccc-cccc-cccc-cccccccccccc
+Authorization: Bearer {{adminToken}}
+Accept: application/json
