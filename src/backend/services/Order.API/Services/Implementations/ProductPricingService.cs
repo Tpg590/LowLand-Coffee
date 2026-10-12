@@ -47,14 +47,12 @@ public class ProductPricingService : IProductPricingService
             var response = await _httpClient.GetAsync($"/api/products/{item.ProductId}", cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("Không thể kết nối đến Product Service cho sản phẩm {ProductId}. Status: {Status}", item.ProductId, response.StatusCode);
+                _logger.LogWarning("Không thể lấy thông tin sản phẩm {ProductId} từ Product.API. Status: {Status}", item.ProductId, response.StatusCode);
                 
-                // Fallback nếu Product Service chưa chạy hoặc không tìm thấy: dùng tên & giá từ item nếu hợp lệ
                 return new ProductPriceVerificationResult
                 {
-                    IsSuccess = true,
-                    ProductName = !string.IsNullOrWhiteSpace(item.ProductName) ? item.ProductName : "Sản phẩm cà phê",
-                    VerifiedUnitPrice = item.UnitPrice > 0 ? item.UnitPrice : 0
+                    IsSuccess = false,
+                    ErrorMessage = $"Không tìm thấy sản phẩm có mã {item.ProductId} trên Product.API (Status code: {(int)response.StatusCode}). Vui lòng kiểm tra lại."
                 };
             }
 
@@ -114,20 +112,11 @@ public class ProductPricingService : IProductPricingService
                 }
             }
 
-            // Kiểm tra Price Tampering:
-            // Nếu Client gửi UnitPrice sai lệch so với giá hệ thống tính toán (chênh lệch > 0.01)
+            // Luôn sử dụng đơn giá chuẩn được tính toán từ CSDL Server (Authoritative Server Pricing)
             if (item.UnitPrice > 0 && Math.Abs(item.UnitPrice - calculatedUnitPrice) > 0.01m)
             {
-                _logger.LogWarning("Phát hiện Price Tampering! Sản phẩm {ProductName} ({ProductId}). Giá client gửi: {ClientPrice}, Giá chuẩn: {ServerPrice}",
-                    product.Name, item.ProductId, item.UnitPrice, calculatedUnitPrice);
-
-                return new ProductPriceVerificationResult
-                {
-                    IsSuccess = false,
-                    ErrorMessage = $"Phát hiện sai lệch đơn giá cho món '{product.Name}'. Giá thực tế: {calculatedUnitPrice:N0}đ, Giá gửi lên: {item.UnitPrice:N0}đ.",
-                    ProductName = product.Name,
-                    VerifiedUnitPrice = calculatedUnitPrice
-                };
+                _logger.LogInformation("Điều chỉnh đơn giá cho món {ProductName}: Giá client {ClientPrice} -> Giá chuẩn server {ServerPrice}",
+                    product.Name, item.UnitPrice, calculatedUnitPrice);
             }
 
             return new ProductPriceVerificationResult
@@ -139,14 +128,12 @@ public class ProductPricingService : IProductPricingService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Lỗi khi kiểm tra giá từ Product Service cho sản phẩm {ProductId}", item.ProductId);
+            _logger.LogError(ex, "Lỗi kết nối đến Product.API khi xác thực món {ProductId}", item.ProductId);
 
-            // Dự phòng linh hoạt khi môi trường microservices chạy độc lập
             return new ProductPriceVerificationResult
             {
-                IsSuccess = true,
-                ProductName = !string.IsNullOrWhiteSpace(item.ProductName) ? item.ProductName : "Sản phẩm",
-                VerifiedUnitPrice = item.UnitPrice
+                IsSuccess = false,
+                ErrorMessage = $"Không thể kết nối đến máy chủ Product.API ({_httpClient.BaseAddress}). Vui lòng đảm bảo dịch vụ Product.API đang hoạt động."
             };
         }
     }

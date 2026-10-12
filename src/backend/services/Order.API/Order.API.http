@@ -156,10 +156,10 @@ Authorization: Bearer {{StaffToken}}
 }
 
 ### =========================================================================
-### CHỨC NĂNG 6: TẠO URL / MÃ QR VNPAY (GENERATE VNPAY QR)
+### CHỨC NĂNG 6: TẠO LIÊN KẾT CHUYỂN HƯỚNG VNPAY (REDIRECT PAYMENT GATEWAY)
 ### =========================================================================
 
-### 6.1 Tạo mã QR và link thanh toán VNPay
+### 6.1 Tạo link chuyển hướng thanh toán VNPay (Body)
 POST {{Order_HostAddress}}/api/payments/vnpay/create-url
 Content-Type: application/json
 Authorization: Bearer {{CustomerToken}}
@@ -168,8 +168,8 @@ Authorization: Bearer {{CustomerToken}}
   "orderId": "30000000-0000-0000-0000-000000000002"
 }
 
-### 6.2 Tạo mã QR VNPay theo Order ID trên Route
-POST {{Order_HostAddress}}/api/payments/30000000-0000-0000-0000-000000000002/vnpay-qr
+### 6.2 Tạo link chuyển hướng thanh toán VNPay theo Order ID trên Route
+POST {{Order_HostAddress}}/api/payments/30000000-0000-0000-0000-000000000002/vnpay-url
 Authorization: Bearer {{CustomerToken}}
 
 ### =========================================================================

@@ -1,0 +1,315 @@
+@page
+@model CoffeeShop.WebRazorPages.Pages.Staff.CategoriesModel
+@{
+    Layout = "_StaffLayout";
+    ViewData["Title"] = "Phân loại Danh mục Thực đơn - Nhân viên";
+}
+
+<div class="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-gray-200 gap-4">
+        <div class="flex items-center gap-3.5">
+            <span class="w-12 h-12 rounded-2xl bg-amber-600 text-white flex items-center justify-center font-black text-xl shadow-md">
+                <i class="fi fi-rr-apps"></i>
+            </span>
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+                    <span>Phân loại Danh mục</span>
+                    <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black uppercase border border-emerald-200">Khu vực Nhân viên</span>
+                </h1>
+                <p class="text-sm text-gray-500 font-medium mt-0.5">Theo dõi các nhóm phân loại món, cơ cấu thực đơn và số lượng món theo từng phân loại</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+            <a href="/Staff/Products" class="px-4 py-2.5 rounded-xl bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-bold shadow-xs flex items-center gap-2 transition">
+                <i class="fi fi-rr-box-alt text-sm text-red-highland"></i>
+                <span>Xem danh sách Sản phẩm</span>
+            </a>
+            <button type="button" onclick="loadCategoriesData()" class="px-4 py-2.5 rounded-xl bg-red-highland hover:bg-red-700 text-white text-sm font-bold shadow-sm flex items-center gap-2 transition active:scale-95">
+                <i class="fi fi-rr-refresh text-sm"></i>
+                <span>Làm mới</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Thống kê phân loại (Metrics) -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-xl shrink-0">
+                <i class="fi fi-rr-apps"></i>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Tổng phân loại</div>
+                <div class="text-2xl font-black text-gray-900" id="stat-cat-total">0</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-xl shrink-0">
+                <i class="fi fi-rr-coffee"></i>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Nhóm Đồ uống</div>
+                <div class="text-2xl font-black text-gray-900" id="stat-cat-beverages">0</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-xl shrink-0">
+                <i class="fi fi-rr-cake-birthday"></i>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Nhóm Bánh & Khác</div>
+                <div class="text-2xl font-black text-emerald-600" id="stat-cat-food">0</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-700 flex items-center justify-center text-xl shrink-0">
+                <i class="fi fi-rr-box"></i>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Tổng số món</div>
+                <div class="text-2xl font-black text-rose-600" id="stat-cat-products-count">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KHỐI 1: DANH SÁCH THẺ PHÂN LOẠI (CATEGORY CARDS) -->
+    <div class="bg-white rounded-3xl border border-gray-200 p-6 shadow-xs space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+            <div class="flex items-center gap-2.5">
+                <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center text-sm font-black">
+                    <i class="fi fi-rr-layers"></i>
+                </span>
+                <h2 class="text-lg font-black text-gray-900">Danh sách Phân loại Thực đơn</h2>
+            </div>
+            <span class="text-xs font-bold text-gray-500">Dữ liệu thời gian thực từ CSDL</span>
+        </div>
+
+        <div id="category-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <!-- Đang tải -->
+            <div class="col-span-full py-12 text-center text-gray-400">
+                <i class="fi fi-rr-spinner animate-spin text-3xl mb-3 inline-block"></i>
+                <p class="text-sm font-semibold">Đang tải danh sách phân loại từ máy chủ...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- KHỐI 2: BẢNG CHI TIẾT DANH MỤC PHÂN LOẠI -->
+    <div class="bg-white rounded-3xl border border-gray-200 shadow-xs overflow-hidden">
+        <div class="p-6 border-b border-gray-200 flex items-center justify-between bg-slate-50/50">
+            <div>
+                <h3 class="text-base font-black text-gray-900">Bảng chi tiết thông tin Phân loại</h3>
+                <p class="text-xs text-gray-500 mt-0.5">Chi tiết mã phân loại, tên nhóm, mô tả và số lượng món phục vụ</p>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-600">
+                <thead class="text-xs font-black text-gray-400 uppercase bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="px-6 py-4">Phân loại danh mục</th>
+                        <th class="px-6 py-4">Mô tả nhóm</th>
+                        <th class="px-6 py-4 text-center">Số món trong nhóm</th>
+                        <th class="px-6 py-4 text-center">Trạng thái</th>
+                        <th class="px-6 py-4 text-center">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody id="category-table-body" class="divide-y divide-gray-100 font-medium">
+                    <tr>
+                        <td colspan="5" class="py-12 text-center text-gray-400">
+                            <i class="fi fi-rr-spinner animate-spin text-2xl mb-2 inline-block"></i>
+                            <p class="text-xs font-semibold">Đang tải bảng danh mục...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const PRODUCT_API_BASE = 'http://localhost:5002';
+        let allCategories = [];
+        let allProducts = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCategoriesData();
+        });
+
+        async function loadCategoriesData() {
+            try {
+                // 1. Tải danh mục
+                const catRes = await fetch(`${PRODUCT_API_BASE}/api/categories`);
+                if (catRes.ok) {
+                    const catJson = await catRes.json();
+                    allCategories = catJson.data || [];
+                }
+
+                // 2. Tải sản phẩm để đếm số lượng món theo từng phân loại
+                const prodRes = await fetch(`${PRODUCT_API_BASE}/api/products?pageSize=100`);
+                if (prodRes.ok) {
+                    const prodJson = await prodRes.json();
+                    allProducts = (prodJson.data && prodJson.data.items) ? prodJson.data.items : [];
+                }
+
+                renderCategoryMetrics();
+                renderCategoryCards();
+                renderCategoryTable();
+
+            } catch (error) {
+                console.error('Lỗi khi tải dữ liệu phân loại:', error);
+                if (typeof showToast === 'function') {
+                    showToast('Lỗi kết nối', 'Không thể kết nối đến máy chủ Product.API (5002)', 'error');
+                }
+            }
+        }
+
+        function renderCategoryMetrics() {
+            const catCount = allCategories.length;
+            const prodCount = allProducts.length;
+
+            let bevCount = 0;
+            let foodCount = 0;
+
+            allCategories.forEach(c => {
+                const name = (c.name || '').toLowerCase();
+                if (name.includes('bánh') || name.includes('snack') || name.includes('ăn')) {
+                    foodCount++;
+                } else {
+                    bevCount++;
+                }
+            });
+
+            document.getElementById('stat-cat-total').innerText = catCount;
+            document.getElementById('stat-cat-beverages').innerText = bevCount;
+            document.getElementById('stat-cat-food').innerText = foodCount;
+            document.getElementById('stat-cat-products-count').innerText = prodCount;
+        }
+
+        function renderCategoryCards() {
+            const container = document.getElementById('category-cards-grid');
+            if (!container) return;
+
+            if (allCategories.length === 0) {
+                container.innerHTML = `<div class="col-span-full py-8 text-center text-gray-400 text-sm">Chưa có phân loại nào trong CSDL.</div>`;
+                return;
+            }
+
+            const iconsMap = {
+                'cà phê': 'fi-rr-coffee',
+                'trà': 'fi-rr-leaf',
+                'freeze': 'fi-rr-glass',
+                'bánh': 'fi-rr-cake-birthday'
+            };
+
+            const colors = [
+                { bg: 'bg-amber-50', text: 'text-amber-800', border: 'border-amber-200', tag: 'bg-amber-100' },
+                { bg: 'bg-red-50', text: 'text-red-highland', border: 'border-red-200', tag: 'bg-red-100' },
+                { bg: 'bg-emerald-50', text: 'text-emerald-800', border: 'border-emerald-200', tag: 'bg-emerald-100' },
+                { bg: 'bg-orange-50', text: 'text-orange-800', border: 'border-orange-200', tag: 'bg-orange-100' }
+            ];
+
+            container.innerHTML = allCategories.map((cat, idx) => {
+                const prodsInCat = allProducts.filter(p => p.categoryId === cat.id);
+                const count = prodsInCat.length;
+                const inStock = prodsInCat.filter(p => p.isAvailable).length;
+                const outOfStock = count - inStock;
+
+                const nameLower = (cat.name || '').toLowerCase();
+                let icon = 'fi-rr-box';
+                for (const key in iconsMap) {
+                    if (nameLower.includes(key)) {
+                        icon = iconsMap[key];
+                        break;
+                    }
+                }
+
+                const style = colors[idx % colors.length];
+
+                return `
+                    <div class="p-5 rounded-2xl border ${style.border} ${style.bg} flex flex-col justify-between transition-all hover:shadow-md hover:-translate-y-0.5 group">
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="w-12 h-12 rounded-xl bg-white shadow-xs flex items-center justify-center text-2xl ${style.text}">
+                                    <i class="fi ${icon}"></i>
+                                </div>
+                                <span class="px-2.5 py-1 rounded-full ${style.tag} ${style.text} text-xs font-black">
+                                    ${count} món
+                                </span>
+                            </div>
+                            <div>
+                                <h3 class="font-black text-gray-900 text-lg group-hover:text-red-highland transition">${cat.name}</h3>
+                                <p class="text-xs text-gray-500 font-medium mt-1 line-clamp-2">${cat.description || 'Nhóm món thuộc thực đơn tiêu chuẩn LowLand Coffee'}</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-t border-gray-200/60 space-y-2.5">
+                            <div class="flex items-center justify-between text-xs font-bold">
+                                <span class="text-emerald-700">✓ Đang phục vụ: ${inStock}</span>
+                                <span class="text-rose-600">✕ Hết hàng: ${outOfStock}</span>
+                            </div>
+                            <a href="/Staff/Products?category=${cat.id}" class="w-full py-2 rounded-xl bg-white border border-gray-200 hover:border-gray-300 text-gray-800 text-xs font-black shadow-xs flex items-center justify-center gap-1.5 transition">
+                                <span>Xem các món</span>
+                                <i class="fi fi-rr-arrow-right text-[10px]"></i>
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderCategoryTable() {
+            const tbody = document.getElementById('category-table-body');
+            if (!tbody) return;
+
+            if (allCategories.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-gray-400">Chưa có dữ liệu danh mục</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = allCategories.map((cat, idx) => {
+                const count = allProducts.filter(p => p.categoryId === cat.id).length;
+
+                return `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <span class="w-9 h-9 rounded-xl bg-amber-50 text-amber-800 flex items-center justify-center font-black text-sm">
+                                    ${idx + 1}
+                                </span>
+                                <div>
+                                    <div class="font-extrabold text-gray-900 text-sm">${cat.name}</div>
+                                    <div class="text-[11px] text-gray-400 font-mono mt-0.5">${cat.id}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-xs text-gray-600 max-w-xs truncate">
+                            ${cat.description || 'Chưa cập nhật mô tả'}
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-blue-50 text-blue-800 border border-blue-100">
+                                ${count} món trực thuộc
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                Đang hoạt động
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <a href="/Staff/Products?category=${cat.id}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-red-highland hover:text-white text-gray-700 text-xs font-bold transition">
+                                <span>Xem món</span>
+                                <i class="fi fi-rr-arrow-right text-[10px]"></i>
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+    </script>
+}

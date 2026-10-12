@@ -53,9 +53,9 @@ IF NOT EXISTS (SELECT 1 FROM dbo.auth_users WHERE id = @AdminUserId)
 BEGIN
     INSERT INTO dbo.auth_users (id, role_id, email, password_hash, full_name, phone_number, avatar_url, address, is_active, created_at, updated_at)
     VALUES 
-    (@AdminUserId, @AdminRoleId, 'admin@lowlandcoffee.com', '$2a$11$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', N'Quản Trị Viên', '0901122334', 'https://placehold.co/150', N'123 Nguyễn Huệ, Q.1, TP.HCM', 1, GETDATE(), GETDATE()),
-    (@StaffUserId, @StaffRoleId, 'staff@lowlandcoffee.com', '$2a$11$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', N'Thu Ngân 01', '0902233445', 'https://placehold.co/150', N'LowLand Landmark 81, Bình Thạnh', 1, GETDATE(), GETDATE()),
-    (@CustomerUserId, @CustomerRoleId, 'customer@gmail.com', '$2a$11$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', N'Nguyễn Văn Khách', '0903344556', 'https://placehold.co/150', N'456 Lê Lợi, Q.1, TP.HCM', 1, GETDATE(), GETDATE());
+    (@AdminUserId, @AdminRoleId, 'admin@lowlandcoffee.com', '$2a$11$dbMvRxSU6tmWeR8q4A.P4O1exj54XyuhgY9wkycQSmb7VepqCgw0S', N'Quản Trị Viên', '0901122334', 'https://placehold.co/150', N'123 Nguyễn Huệ, Q.1, TP.HCM', 1, GETDATE(), GETDATE()),
+    (@StaffUserId, @StaffRoleId, 'staff@lowlandcoffee.com', '$2a$11$dbMvRxSU6tmWeR8q4A.P4O1exj54XyuhgY9wkycQSmb7VepqCgw0S', N'Thu Ngân 01', '0902233445', 'https://placehold.co/150', N'LowLand Landmark 81, Bình Thạnh', 1, GETDATE(), GETDATE()),
+    (@CustomerUserId, @CustomerRoleId, 'customer@gmail.com', '$2a$11$dbMvRxSU6tmWeR8q4A.P4O1exj54XyuhgY9wkycQSmb7VepqCgw0S', N'Nguyễn Văn Khách', '0903344556', 'https://placehold.co/150', N'456 Lê Lợi, Q.1, TP.HCM', 1, GETDATE(), GETDATE());
 END
 GO
 

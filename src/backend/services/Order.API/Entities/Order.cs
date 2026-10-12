@@ -39,6 +39,10 @@ public class Order
     [Column("note")]
     public string? Note { get; set; }
 
+    [MaxLength(150)]
+    [Column("customer_name")]
+    public string? CustomerName { get; set; }
+
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

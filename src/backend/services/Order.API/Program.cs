@@ -92,9 +92,9 @@ builder.Services.AddRateLimiter(rateLimiterOptions =>
 });
 
 // 6. Cấu hình JWT Authentication
-var jwtSecretKey = builder.Configuration["JwtSettings:SecretKey"]
-    ?? Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
-    ?? "LowLandCoffee_Secure_Default_Dev_Secret_Key_2026";
+var jwtSecretKey = !string.IsNullOrWhiteSpace(builder.Configuration["JwtSettings:SecretKey"])
+    ? builder.Configuration["JwtSettings:SecretKey"]!
+    : (Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? "LowLandCoffee_Super_Secret_Key_For_PRN232_Assignment_2026_Key");
 var jwtIssuer = builder.Configuration["JwtSettings:Issuer"]
     ?? Environment.GetEnvironmentVariable("JWT_ISSUER")
     ?? "LowLandCoffee.Auth";
@@ -193,5 +193,35 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// 10. Đảm bảo cột product_name trong order_items hỗ trợ Unicode (NVARCHAR)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
+    try
+    {
+        db.Database.ExecuteSqlRaw(@"
+            IF EXISTS (
+                SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_NAME = 'order_items' AND COLUMN_NAME = 'product_name' AND DATA_TYPE = 'varchar'
+            )
+            BEGIN
+                ALTER TABLE dbo.order_items ALTER COLUMN product_name NVARCHAR(150) NOT NULL;
+            END;
+
+            IF NOT EXISTS (
+                SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_NAME = 'order_orders' AND COLUMN_NAME = 'customer_name'
+            )
+            BEGIN
+                ALTER TABLE dbo.order_orders ADD customer_name NVARCHAR(150) NULL;
+            END;
+        ");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogWarning("Không thể cập nhật NVARCHAR cho order_items: {Message}", ex.Message);
+    }
+}
 
 app.Run();

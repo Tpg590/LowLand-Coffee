@@ -30,17 +30,17 @@ public class OrderService : IOrderService
     }
 
     public async Task<ApiResponse<OrderDetailDto>> CreateOrderAsync(
-        Guid currentUserId, string currentUserRole, CreateOrderRequest request, CancellationToken cancellationToken = default)
+        Guid currentUserId, string currentUserRole, CreateOrderRequest request, string? clientIp = null, CancellationToken cancellationToken = default)
     {
         if (request.Items == null || !request.Items.Any())
         {
             return ApiResponse<OrderDetailDto>.Fail("Đơn hàng phải có ít nhất một sản phẩm.", 400);
         }
 
-        var isStaffOrAdmin = string.Equals(currentUserRole, "Staff", StringComparison.OrdinalIgnoreCase) ||
-                             string.Equals(currentUserRole, "Admin", StringComparison.OrdinalIgnoreCase);
+        var isStaffOrAdmin = currentUserRole.Equals("Staff", StringComparison.OrdinalIgnoreCase) ||
+                             currentUserRole.Equals("Admin", StringComparison.OrdinalIgnoreCase);
 
-        // Nếu là Staff tạo đơn tại quầy, cho phép chỉ định CustomerId nếu khách có tài khoản
+        // Nếu là Staff/Admin tạo đơn tại quầy, cho phép chỉ định CustomerId nếu khách có tài khoản
         Guid targetUserId = currentUserId;
         if (isStaffOrAdmin && request.CustomerId.HasValue && request.CustomerId.Value != Guid.Empty)
         {
@@ -59,12 +59,17 @@ public class OrderService : IOrderService
             orderCode = $"ORD-{todayStr}-{randomSuffix}";
         }
 
+        var customerName = !string.IsNullOrWhiteSpace(request.CustomerName)
+            ? request.CustomerName.Trim()
+            : $"Khách vãng lai #{randomSuffix}";
+
         var newOrder = new Entities.Order
         {
             UserId = targetUserId,
             OrderCode = orderCode,
             Status = OrderStatus.PENDING,
             Note = request.Note,
+            CustomerName = customerName,
             DiscountAmount = Math.Max(0, request.DiscountAmount),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -126,15 +131,24 @@ public class OrderService : IOrderService
         // Tạo phương thức thanh toán ban đầu (hỗ trợ cả Tiếng Việt và Tiếng Anh)
         var initialPaymentMethod = PaymentMethod.Normalize(request.PaymentMethod);
 
+        var isCashPaidAtPos = initialPaymentMethod == PaymentMethod.CASH && isStaffOrAdmin;
+
         var orderPayment = new OrderPayment
         {
             OrderId = newOrder.Id,
             PaymentMethod = initialPaymentMethod,
             Amount = newOrder.FinalAmount,
-            PaymentStatus = PaymentStatus.PENDING,
+            PaymentStatus = isCashPaidAtPos ? PaymentStatus.SUCCESS : PaymentStatus.PENDING,
+            PaidAt = isCashPaidAtPos ? DateTime.UtcNow : null,
+            TransactionCode = isCashPaidAtPos ? $"CASH_POS_{randomSuffix}" : null,
             CreatedAt = DateTime.UtcNow
         };
         newOrder.OrderPayments.Add(orderPayment);
+
+        if (isCashPaidAtPos)
+        {
+            newOrder.Status = OrderStatus.PROCESSING; // Thu tiền mặt tại quầy xong thì chuyển ngay sang pha chế
+        }
 
         await _dbContext.Orders.AddAsync(newOrder, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -150,7 +164,8 @@ public class OrderService : IOrderService
         {
             try
             {
-                orderDetailDto.VnPayPayment = _vnPayService.CreatePaymentUrl(newOrder, "127.0.0.1");
+                var ip = !string.IsNullOrWhiteSpace(clientIp) ? clientIp : "127.0.0.1";
+                orderDetailDto.VnPayPayment = _vnPayService.CreatePaymentUrl(newOrder, ip, request.ReturnUrl);
             }
             catch (Exception ex)
             {
@@ -314,8 +329,7 @@ public class OrderService : IOrderService
     public async Task<ApiResponse<OrderDetailDto>> CancelOrderAsync(
         Guid orderId, CancelOrderRequest request, Guid currentUserId, string currentUserRole, CancellationToken cancellationToken = default)
     {
-        var isStaffOrAdmin = string.Equals(currentUserRole, "Staff", StringComparison.OrdinalIgnoreCase) ||
-                             string.Equals(currentUserRole, "Admin", StringComparison.OrdinalIgnoreCase);
+        var isStaff = string.Equals(currentUserRole, "Staff", StringComparison.OrdinalIgnoreCase);
 
         var order = await _dbContext.Orders
             .Include(o => o.OrderItems)
@@ -328,7 +342,7 @@ public class OrderService : IOrderService
         }
 
         // BOLA / IDOR Protection: Nếu là Customer, chỉ được hủy đơn của chính mình
-        if (!isStaffOrAdmin && order.UserId != currentUserId)
+        if (!isStaff && order.UserId != currentUserId)
         {
             _logger.LogWarning("BOLA/IDOR Violation: User {UserId} cố gắng hủy đơn {OrderId} của User {OwnerId}",
                 currentUserId, orderId, order.UserId);
@@ -347,7 +361,7 @@ public class OrderService : IOrderService
         }
 
         // Điều kiện đối với Khách hàng: Chỉ được hủy khi đơn còn ở trạng thái "Tiếp nhận" (PENDING)
-        if (!isStaffOrAdmin)
+        if (!isStaff)
         {
             if (order.Status != OrderStatus.PENDING)
             {
@@ -357,10 +371,10 @@ public class OrderService : IOrderService
         }
         else
         {
-            // Điều kiện đối với Staff / Admin: Bắt buộc phải có lý do hủy
+            // Điều kiện đối với Staff: Bắt buộc phải có lý do hủy
             if (string.IsNullOrWhiteSpace(request.Reason))
             {
-                return ApiResponse<OrderDetailDto>.Fail("Nhân viên hoặc Quản trị viên bắt buộc phải nhập lý do hủy đơn.", 400);
+                return ApiResponse<OrderDetailDto>.Fail("Nhân viên (Staff) bắt buộc phải nhập lý do hủy đơn.", 400);
             }
         }
 

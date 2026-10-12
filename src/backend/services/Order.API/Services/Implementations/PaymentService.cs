@@ -26,7 +26,13 @@ public class PaymentService : IPaymentService
         _logger = logger;
     }
 
-    public async Task<ApiResponse<VnPayPaymentResponseDto>> GenerateVnPayQrAsync(
+    public Task<ApiResponse<VnPayPaymentResponseDto>> GenerateVnPayQrAsync(
+        Guid orderId, Guid? currentUserId, string currentUserRole, string clientIp, CancellationToken cancellationToken = default)
+    {
+        return GenerateVnPayPaymentUrlAsync(orderId, currentUserId, currentUserRole, clientIp, cancellationToken);
+    }
+
+    public async Task<ApiResponse<VnPayPaymentResponseDto>> GenerateVnPayPaymentUrlAsync(
         Guid orderId, Guid? currentUserId, string currentUserRole, string clientIp, CancellationToken cancellationToken = default)
     {
         var order = await _dbContext.Orders
@@ -76,7 +82,7 @@ public class PaymentService : IPaymentService
         }
 
         var paymentResponse = _vnPayService.CreatePaymentUrl(order, clientIp);
-        return ApiResponse<VnPayPaymentResponseDto>.Success(paymentResponse, "Tạo thông tin thanh toán VNPay QR thành công.");
+        return ApiResponse<VnPayPaymentResponseDto>.Success(paymentResponse, "Tạo đường dẫn thanh toán VNPay thành công.");
     }
 
     public async Task<ApiResponse<OrderPaymentDto>> ConfirmCashPaymentAsync(

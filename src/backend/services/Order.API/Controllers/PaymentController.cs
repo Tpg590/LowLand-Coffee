@@ -41,14 +41,21 @@ public class PaymentController : ControllerBase
     {
         if (Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedFor) && !string.IsNullOrWhiteSpace(forwardedFor))
         {
-            return forwardedFor.ToString().Split(',')[0].Trim();
+            var ip = forwardedFor.ToString().Split(',')[0].Trim();
+            if (ip == "::1") return "127.0.0.1";
+            return ip;
         }
 
-        return HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+        var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+        if (string.IsNullOrWhiteSpace(remoteIp) || remoteIp == "::1")
+        {
+            return "127.0.0.1";
+        }
+        return remoteIp;
     }
 
     /// <summary>
-    /// Chức năng 6A: Tạo đường dẫn / mã QR VNPay cho đơn hàng chưa thanh toán (từ Request Body)
+    /// Chức năng 6A: Tạo liên kết chuyển hướng sang cổng VNPay cho đơn hàng chưa thanh toán (từ Request Body)
     /// Áp dụng Strict Rate Limiting (tối đa 5 lần thử trong 10-15 phút)
     /// </summary>
     [HttpPost("vnpay/create-url")]
@@ -63,26 +70,27 @@ public class PaymentController : ControllerBase
         var userRole = GetCurrentUserRole();
         var clientIp = GetClientIpAddress();
 
-        var result = await _paymentService.GenerateVnPayQrAsync(request.OrderId, userId, userRole, clientIp, cancellationToken);
+        var result = await _paymentService.GenerateVnPayPaymentUrlAsync(request.OrderId, userId, userRole, clientIp, cancellationToken);
         return StatusCode(result.StatusCode, result);
     }
 
     /// <summary>
-    /// Chức năng 6B: Tạo mã QR VNPay theo Order ID trên Route
+    /// Chức năng 6B: Tạo liên kết chuyển hướng sang cổng VNPay theo Order ID trên Route
     /// Áp dụng Strict Rate Limiting (tối đa 5 lần thử trong 10-15 phút)
     /// </summary>
+    [HttpPost("{orderId:guid}/vnpay-url")]
     [HttpPost("{orderId:guid}/vnpay-qr")]
     [Authorize]
     [EnableRateLimiting("StrictPolicy")]
     [ProducesResponseType(typeof(ApiResponse<VnPayPaymentResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<VnPayPaymentResponseDto>), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> GenerateVnPayQr([FromRoute] Guid orderId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GenerateVnPayUrl([FromRoute] Guid orderId, CancellationToken cancellationToken)
     {
         var userId = GetCurrentUserId();
         var userRole = GetCurrentUserRole();
         var clientIp = GetClientIpAddress();
 
-        var result = await _paymentService.GenerateVnPayQrAsync(orderId, userId, userRole, clientIp, cancellationToken);
+        var result = await _paymentService.GenerateVnPayPaymentUrlAsync(orderId, userId, userRole, clientIp, cancellationToken);
         return StatusCode(result.StatusCode, result);
     }
 
@@ -116,7 +124,7 @@ public class PaymentController : ControllerBase
     }
 
     /// <summary>
-    /// Chức năng 7C: Staff / Admin xác nhận thanh toán tiền mặt tại quầy
+    /// Chức năng 7C: Staff xác nhận thanh toán tiền mặt tại quầy
     /// </summary>
     [HttpPut("{orderId:guid}/cash-confirm")]
     [Authorize(Roles = "Staff,Admin")]
