@@ -1,6 +1,193 @@
-@Order.API_HostAddress = http://localhost:5040
+@Order_HostAddress = http://localhost:5003
+@Gateway_HostAddress = http://localhost:5000
 
-GET {{Order.API_HostAddress}}/weatherforecast/
-Accept: application/json
+### 1. Đăng nhập để lấy Token (Auth.API hoặc Gateway)
+# @name LoginCustomer
+POST http://localhost:5001/api/auth/login
+Content-Type: application/json
 
-###
+{
+  "email": "customer@lowlandcoffee.com",
+  "password": "Customer@123!"
+}
+
+### Lưu token từ kết quả đăng nhập
+@CustomerToken = {{LoginCustomer.response.body.data.accessToken}}
+
+# @name LoginStaff
+POST http://localhost:5001/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "staff@lowlandcoffee.com",
+  "password": "Staff@123!"
+}
+
+@StaffToken = {{LoginStaff.response.body.data.accessToken}}
+
+### =========================================================================
+### CHỨC NĂNG 1: TẠO ĐƠN HÀNG MỚI (CREATE ORDER)
+### =========================================================================
+
+### 1.1 Khách hàng đặt hàng Online
+# @name CreateOnlineOrder
+POST {{Order_HostAddress}}/api/orders
+Content-Type: application/json
+Authorization: Bearer {{CustomerToken}}
+
+{
+  "items": [
+    {
+      "productId": "20000000-0000-0000-0000-000000000001",
+      "productName": "Phin Sữa Đá LowLand",
+      "unitPrice": 35000,
+      "quantity": 2,
+      "size": "Size M",
+      "toppings": ["Thạch Cà Phê"],
+      "note": "50% đường, nhiều đá riêng"
+    }
+  ],
+  "discountAmount": 0,
+  "paymentMethod": "VNPAY",
+  "note": "Giao hàng giờ hành chính"
+}
+
+### Lưu ID đơn hàng mới tạo
+@NewOrderId = {{CreateOnlineOrder.response.body.data.id}}
+
+### 1.2 Nhân viên tạo đơn tại quầy cho khách vãng lai
+POST {{Order_HostAddress}}/api/orders
+Content-Type: application/json
+Authorization: Bearer {{StaffToken}}
+
+{
+  "customerId": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+  "items": [
+    {
+      "productId": "20000000-0000-0000-0000-000000000004",
+      "productName": "Trà Sen Vàng Hạt Sen",
+      "unitPrice": 51000,
+      "quantity": 1,
+      "size": "Size L",
+      "toppings": ["Hạt Sen Thêm"],
+      "note": "Ít ngọt"
+    }
+  ],
+  "discountAmount": 10000,
+  "paymentMethod": "CASH",
+  "note": "Uống tại quán - Bàn số 5"
+}
+
+### =========================================================================
+### CHỨC NĂNG 2: XEM DANH SÁCH ĐƠN HÀNG (VIEW ORDER LIST)
+### =========================================================================
+
+### 2.1 Khách hàng xem lịch sử đơn cá nhân (có phân trang)
+GET {{Order_HostAddress}}/api/orders/my-orders?pageNumber=1&pageSize=10
+Authorization: Bearer {{CustomerToken}}
+
+### 2.2 Nhân viên / Admin xem toàn bộ danh sách đơn (kèm lọc theo trạng thái)
+GET {{Order_HostAddress}}/api/orders?status=PENDING&pageNumber=1&pageSize=10
+Authorization: Bearer {{StaffToken}}
+
+### =========================================================================
+### CHỨC NĂNG 3: XEM CHI TIẾT ĐƠN HÀNG (VIEW ORDER DETAIL)
+### =========================================================================
+
+### 3.1 Xem chi tiết đơn hàng (Bảo mật IDOR/BOLA)
+GET {{Order_HostAddress}}/api/orders/30000000-0000-0000-0000-000000000001
+Authorization: Bearer {{CustomerToken}}
+
+### =========================================================================
+### CHỨC NĂNG 4: CẬP NHẬT TRẠNG THÁI ĐƠN HÀNG (UPDATE ORDER STATUS)
+### Quy trình: Tiếp nhận (PENDING) -> Pha chế (PROCESSING) -> Giao hàng (SHIPPING) -> Hoàn thành (COMPLETED)
+### =========================================================================
+
+### 4.1 Chuyển sang Pha chế
+PUT {{Order_HostAddress}}/api/orders/{{NewOrderId}}/status
+Content-Type: application/json
+Authorization: Bearer {{StaffToken}}
+
+{
+  "status": "PROCESSING",
+  "note": "Barista đang chuẩn bị món"
+}
+
+### 4.2 Chuyển sang Đang giao hàng
+PUT {{Order_HostAddress}}/api/orders/{{NewOrderId}}/status
+Content-Type: application/json
+Authorization: Bearer {{StaffToken}}
+
+{
+  "status": "SHIPPING",
+  "note": "Shipper đã nhận hàng đi giao"
+}
+
+### 4.3 Chuyển sang Hoàn thành
+PUT {{Order_HostAddress}}/api/orders/{{NewOrderId}}/status
+Content-Type: application/json
+Authorization: Bearer {{StaffToken}}
+
+{
+  "status": "COMPLETED",
+  "note": "Khách đã nhận hàng thành công"
+}
+
+### =========================================================================
+### CHỨC NĂNG 5: HỦY ĐƠN HÀNG (CANCEL ORDER)
+### =========================================================================
+
+### 5.1 Khách hàng hủy đơn (Chỉ được phép khi trạng thái PENDING)
+POST {{Order_HostAddress}}/api/orders/{{NewOrderId}}/cancel
+Content-Type: application/json
+Authorization: Bearer {{CustomerToken}}
+
+{
+  "reason": "Tôi đặt nhầm món và muốn thay đổi"
+}
+
+### 5.2 Nhân viên hủy đơn (Bắt buộc phải nhập lý do)
+POST {{Order_HostAddress}}/api/orders/{{NewOrderId}}/cancel
+Content-Type: application/json
+Authorization: Bearer {{StaffToken}}
+
+{
+  "reason": "Quán tạm hết nguyên liệu hạt sen tươi"
+}
+
+### =========================================================================
+### CHỨC NĂNG 6: TẠO URL / MÃ QR VNPAY (GENERATE VNPAY QR)
+### =========================================================================
+
+### 6.1 Tạo mã QR và link thanh toán VNPay
+POST {{Order_HostAddress}}/api/payments/vnpay/create-url
+Content-Type: application/json
+Authorization: Bearer {{CustomerToken}}
+
+{
+  "orderId": "30000000-0000-0000-0000-000000000002"
+}
+
+### 6.2 Tạo mã QR VNPay theo Order ID trên Route
+POST {{Order_HostAddress}}/api/payments/30000000-0000-0000-0000-000000000002/vnpay-qr
+Authorization: Bearer {{CustomerToken}}
+
+### =========================================================================
+### CHỨC NĂNG 7: XÁC NHẬN THANH TOÁN (CONFIRM PAYMENT)
+### =========================================================================
+
+### 7.1 Webhook IPN từ VNPay (Server-to-Server Checksum & Idempotency)
+GET {{Order_HostAddress}}/api/payments/vnpay-ipn?vnp_Amount=5700000&vnp_BankCode=NCB&vnp_BankTranNo=VNP12345678&vnp_CardType=ATM&vnp_OrderInfo=Thanh+toan+don+hang+ORD-20261004-002&vnp_PayDate=20261012010000&vnp_ResponseCode=00&vnp_TmnCode=your_tmn_code&vnp_TransactionNo=14567890&vnp_TransactionStatus=00&vnp_TxnRef=ORD-20261004-002&vnp_SecureHash=invalid_test_hash
+
+### 7.2 Return URL khi VNPay redirect khách về Gateway
+GET {{Order_HostAddress}}/api/payments/vnpay-return?vnp_Amount=5700000&vnp_BankCode=NCB&vnp_ResponseCode=00&vnp_TxnRef=ORD-20261004-002
+
+### 7.3 Nhân viên xác nhận thu tiền mặt tại quầy
+PUT {{Order_HostAddress}}/api/payments/30000000-0000-0000-0000-000000000002/cash-confirm
+Content-Type: application/json
+Authorization: Bearer {{StaffToken}}
+
+{
+  "transactionCode": "CASH_POS_001_123456",
+  "note": "Đã thu đủ 57.000 VNĐ tại quầy thu ngân"
+}

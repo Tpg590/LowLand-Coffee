@@ -105,6 +105,11 @@ services:
       - JwtSettings__Issuer=${JWT_ISSUER:-LowLandCoffee.Auth}
       - JwtSettings__Audience=${JWT_AUDIENCE:-LowLandCoffee.Clients}
       - JwtSettings__ExpiryInHours=${JWT_EXPIRY_HOURS:-24}
+      - VnPay__TmnCode=${VNPAY_TMN_CODE:-}
+      - VnPay__HashSecret=${VNPAY_HASH_SECRET:-}
+      - VnPay__BaseUrl=${VNPAY_BASE_URL:-https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+      - VnPay__ReturnUrl=${VNPAY_RETURN_URL:-http://localhost:5000/api/payments/vnpay-return}
+      - Services__ProductApiUrl=${PRODUCT_API_URL:-http://product-api:8080}
     ports:
       - "${ORDER_HOST_PORT:-5003}:8080"
     depends_on:
