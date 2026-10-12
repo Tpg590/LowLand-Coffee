@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using Order.API.Data;
 using Order.API.DTOs;
 using Order.API.Entities;
-using Order.API.Hubs;
 using Order.API.Services.Interfaces;
 using QRCoder;
 
@@ -16,18 +15,15 @@ public class VnPayService : IVnPayService
 {
     private readonly IConfiguration _configuration;
     private readonly OrderDbContext _dbContext;
-    private readonly IOrderNotificationService _notificationService;
     private readonly ILogger<VnPayService> _logger;
 
     public VnPayService(
         IConfiguration configuration,
         OrderDbContext dbContext,
-        IOrderNotificationService notificationService,
         ILogger<VnPayService> logger)
     {
         _configuration = configuration;
         _dbContext = dbContext;
-        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -234,16 +230,6 @@ public class VnPayService : IVnPayService
 
             await _dbContext.SaveChangesAsync(cancellationToken);
 
-            // Bắn SignalR realtime
-            await _notificationService.NotifyPaymentConfirmedAsync(
-                order.Id, order.OrderCode, order.UserId, Entities.PaymentMethod.VNPAY, Entities.PaymentStatus.SUCCESS, order.FinalAmount);
-
-            if (order.Status == OrderStatus.PROCESSING)
-            {
-                await _notificationService.NotifyOrderStatusChangedAsync(
-                    order.Id, order.OrderCode, order.UserId, order.Status);
-            }
-
             _logger.LogInformation("VNPay IPN: Xác nhận thanh toán thành công cho đơn {OrderCode}, mã GD VNPay: {TxnNo}", orderCode, transactionNo);
             return new VnPayIpnResponseDto { RspCode = "00", Message = "Confirm Success" };
         }
@@ -327,9 +313,6 @@ public class VnPayService : IVnPayService
                     }
 
                     await _dbContext.SaveChangesAsync(cancellationToken);
-
-                    await _notificationService.NotifyPaymentConfirmedAsync(
-                        order.Id, order.OrderCode, order.UserId, Entities.PaymentMethod.VNPAY, Entities.PaymentStatus.SUCCESS, order.FinalAmount);
                 }
             }
 

@@ -56,6 +56,7 @@ public class OrderDetailDto : OrderDto
 {
     public List<OrderItemDto> Items { get; set; } = new();
     public List<OrderPaymentDto> Payments { get; set; } = new();
+    public VnPayPaymentResponseDto? VnPayPayment { get; set; }
 }
 
 public class OrderFilterRequest

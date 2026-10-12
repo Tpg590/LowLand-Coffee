@@ -1,8 +1,8 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Order.API.Data;
 using Order.API.DTOs;
 using Order.API.Entities;
-using Order.API.Hubs;
 using Order.API.Services.Interfaces;
 
 namespace Order.API.Services.Implementations;
@@ -11,18 +11,18 @@ public class PaymentService : IPaymentService
 {
     private readonly OrderDbContext _dbContext;
     private readonly IVnPayService _vnPayService;
-    private readonly IOrderNotificationService _notificationService;
+    private readonly IMapper _mapper;
     private readonly ILogger<PaymentService> _logger;
 
     public PaymentService(
         OrderDbContext dbContext,
         IVnPayService vnPayService,
-        IOrderNotificationService notificationService,
+        IMapper mapper,
         ILogger<PaymentService> logger)
     {
         _dbContext = dbContext;
         _vnPayService = vnPayService;
-        _notificationService = notificationService;
+        _mapper = mapper;
         _logger = logger;
     }
 
@@ -135,30 +135,10 @@ public class PaymentService : IPaymentService
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        // Bắn SignalR realtime
-        await _notificationService.NotifyPaymentConfirmedAsync(
-            order.Id, order.OrderCode, order.UserId, PaymentMethod.CASH, PaymentStatus.SUCCESS, order.FinalAmount);
-
-        if (order.Status == OrderStatus.PROCESSING)
-        {
-            await _notificationService.NotifyOrderStatusChangedAsync(order.Id, order.OrderCode, order.UserId, order.Status);
-        }
-
         _logger.LogInformation("Staff {StaffId} đã xác nhận thanh toán tiền mặt cho đơn {OrderCode}, số tiền {Amount}",
             staffId, order.OrderCode, order.FinalAmount);
 
-        var paymentDto = new OrderPaymentDto
-        {
-            Id = cashPayment.Id,
-            OrderId = cashPayment.OrderId,
-            PaymentMethod = cashPayment.PaymentMethod,
-            TransactionCode = cashPayment.TransactionCode,
-            Amount = cashPayment.Amount,
-            PaymentStatus = cashPayment.PaymentStatus,
-            PaidAt = cashPayment.PaidAt,
-            CreatedAt = cashPayment.CreatedAt
-        };
-
+        var paymentDto = _mapper.Map<OrderPaymentDto>(cashPayment);
         return ApiResponse<OrderPaymentDto>.Success(paymentDto, "Xác nhận thanh toán tiền mặt thành công.");
     }
 }

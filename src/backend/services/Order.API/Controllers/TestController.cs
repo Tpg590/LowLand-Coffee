@@ -7,7 +7,6 @@ using Microsoft.IdentityModel.Tokens;
 using Order.API.Data;
 using Order.API.DTOs;
 using Order.API.Entities;
-using Order.API.Hubs;
 
 namespace Order.API.Controllers;
 
@@ -18,16 +17,13 @@ public class TestController : ControllerBase
 {
     private readonly IConfiguration _configuration;
     private readonly OrderDbContext _dbContext;
-    private readonly IOrderNotificationService _notificationService;
 
     public TestController(
         IConfiguration configuration,
-        OrderDbContext dbContext,
-        IOrderNotificationService notificationService)
+        OrderDbContext dbContext)
     {
         _configuration = configuration;
         _dbContext = dbContext;
-        _notificationService = notificationService;
     }
 
     /// <summary>
@@ -143,16 +139,6 @@ public class TestController : ControllerBase
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        // Bắn SignalR realtime
-        await _notificationService.NotifyPaymentConfirmedAsync(
-            order.Id, order.OrderCode, order.UserId, PaymentMethod.VNPAY, PaymentStatus.SUCCESS, order.FinalAmount);
-
-        if (order.Status == OrderStatus.PROCESSING)
-        {
-            await _notificationService.NotifyOrderStatusChangedAsync(
-                order.Id, order.OrderCode, order.UserId, order.Status);
-        }
-
         return Ok(ApiResponse<object>.Success(new
         {
             OrderId = order.Id,
@@ -161,6 +147,6 @@ public class TestController : ControllerBase
             PaymentStatus = payment.PaymentStatus,
             TransactionCode = payment.TransactionCode,
             PaidAt = payment.PaidAt
-        }, "Giả lập thanh toán VNPay thành công. Trạng thái đơn đã chuyển sang PROCESSING và đã bắn SignalR."));
+        }, "Giả lập thanh toán VNPay thành công. Trạng thái đơn đã chuyển sang PROCESSING."));
     }
 }
