@@ -35,6 +35,30 @@ public class OrderController : ControllerBase
                ?? "Customer";
     }
 
+    private string? GetCurrentUserName()
+    {
+        return User.FindFirst(ClaimTypes.Name)?.Value
+               ?? User.FindFirst("name")?.Value
+               ?? User.FindFirst("FullName")?.Value;
+    }
+
+    private string GetClientIpAddress()
+    {
+        if (Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedFor) && !string.IsNullOrWhiteSpace(forwardedFor))
+        {
+            var ip = forwardedFor.ToString().Split(',')[0].Trim();
+            if (ip == "::1") return "127.0.0.1";
+            return ip;
+        }
+
+        var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+        if (string.IsNullOrWhiteSpace(remoteIp) || remoteIp == "::1")
+        {
+            return "127.0.0.1";
+        }
+        return remoteIp;
+    }
+
     /// <summary>
     /// Chức năng 1: Tạo đơn hàng mới (Customer đặt online / Staff tạo tại quầy)
     /// </summary>
@@ -52,13 +76,24 @@ public class OrderController : ControllerBase
 
         var userId = GetCurrentUserId();
         var userRole = GetCurrentUserRole();
+        var clientIp = GetClientIpAddress();
+        var userName = GetCurrentUserName();
 
-        var result = await _orderService.CreateOrderAsync(userId, userRole, request, cancellationToken);
+        var isStaffOrAdmin = string.Equals(userRole, "Staff", StringComparison.OrdinalIgnoreCase) ||
+                             string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase);
+
+        // Nếu là Customer đặt đơn mà chưa có CustomerName trong request, tự động lấy họ tên từ Token đăng nhập
+        if (string.IsNullOrWhiteSpace(request.CustomerName) && !string.IsNullOrWhiteSpace(userName) && !isStaffOrAdmin)
+        {
+            request.CustomerName = userName;
+        }
+
+        var result = await _orderService.CreateOrderAsync(userId, userRole, request, clientIp, cancellationToken);
         return StatusCode(result.StatusCode, result);
     }
 
     /// <summary>
-    /// Chức năng 1B: Nhân viên tạo đơn hàng tại quầy POS (Dành riêng cho Staff / Admin)
+    /// Chức năng 1B: Nhân viên tạo đơn hàng tại quầy POS (Dành riêng cho Staff & Admin)
     /// Hỗ trợ: Khách vãng lai (customerId = null) hoặc Khách thành viên (customerId = guid). Tự động sinh mã VNPay QR nếu chọn VNPay.
     /// </summary>
     [HttpPost("pos")]
@@ -75,8 +110,9 @@ public class OrderController : ControllerBase
 
         var userId = GetCurrentUserId();
         var userRole = GetCurrentUserRole();
+        var clientIp = GetClientIpAddress();
 
-        var result = await _orderService.CreateOrderAsync(userId, userRole, request, cancellationToken);
+        var result = await _orderService.CreateOrderAsync(userId, userRole, request, clientIp, cancellationToken);
         return StatusCode(result.StatusCode, result);
     }
 
@@ -84,7 +120,7 @@ public class OrderController : ControllerBase
     /// Chức năng 2A: Xem danh sách đơn cá nhân của Customer (có phân trang)
     /// </summary>
     [HttpGet("my-orders")]
-    [Authorize]
+    [Authorize(Roles = "Customer")]
     [ProducesResponseType(typeof(ApiResponse<PagedResult<OrderDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMyOrders([FromQuery] OrderFilterRequest filter, CancellationToken cancellationToken)
     {
@@ -96,7 +132,7 @@ public class OrderController : ControllerBase
     }
 
     /// <summary>
-    /// Chức năng 2B: Staff / Admin xem toàn bộ đơn tại quán (có phân trang & lọc trạng thái)
+    /// Chức năng 2B: Staff & Admin xem toàn bộ đơn tại quán (có phân trang & lọc trạng thái)
     /// </summary>
     [HttpGet]
     [Authorize(Roles = "Staff,Admin")]
@@ -114,7 +150,7 @@ public class OrderController : ControllerBase
     /// Chức năng 3: Xem chi tiết 1 đơn hàng (BOLA / IDOR protection kiểm tra chặt chẽ)
     /// </summary>
     [HttpGet("{id:guid}")]
-    [Authorize]
+    [Authorize(Roles = "Customer,Staff,Admin")]
     [ProducesResponseType(typeof(ApiResponse<OrderDetailDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<OrderDetailDto>), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiResponse<OrderDetailDto>), StatusCodes.Status404NotFound)]
@@ -128,7 +164,7 @@ public class OrderController : ControllerBase
     }
 
     /// <summary>
-    /// Chức năng 4: Cập nhật trạng thái đơn hàng theo thứ tự: Tiếp nhận -> Pha chế -> Giao hàng -> Hoàn thành (Staff/Admin)
+    /// Chức năng 4: Cập nhật trạng thái đơn hàng theo thứ tự: Tiếp nhận -> Pha chế -> Giao hàng -> Hoàn thành (Dành cho Staff & Admin)
     /// </summary>
     [HttpPut("{id:guid}/status")]
     [Authorize(Roles = "Staff,Admin")]

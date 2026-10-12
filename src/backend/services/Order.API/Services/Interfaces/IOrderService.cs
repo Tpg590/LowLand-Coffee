@@ -5,7 +5,7 @@ namespace Order.API.Services.Interfaces;
 public interface IOrderService
 {
     Task<ApiResponse<OrderDetailDto>> CreateOrderAsync(
-        Guid currentUserId, string currentUserRole, CreateOrderRequest request, CancellationToken cancellationToken = default);
+        Guid currentUserId, string currentUserRole, CreateOrderRequest request, string? clientIp = null, CancellationToken cancellationToken = default);
 
     Task<ApiResponse<PagedResult<OrderDto>>> GetOrdersAsync(
         Guid? currentUserId, string currentUserRole, OrderFilterRequest filter, CancellationToken cancellationToken = default);

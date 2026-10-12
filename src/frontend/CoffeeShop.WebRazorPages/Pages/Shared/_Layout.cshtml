@@ -1,50 +1,365 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - CoffeeShop.WebRazorPages</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <title>@ViewData["Title"] - LowLand Coffee</title>
+
+    <!-- Favicon (Sử dụng ảnh Logo thương hiệu) -->
+    <link rel="icon" type="image/jpeg" href="~/images/logo.jpg" asp-append-version="true" />
+    <link rel="shortcut icon" type="image/jpeg" href="~/images/logo.jpg" asp-append-version="true" />
+    <link rel="apple-touch-icon" href="~/images/logo.jpg" asp-append-version="true" />
+
+    <!-- Google Font: Be Vietnam Pro -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS (Play CDN with Brand Configuration) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'red-highland': '#C62831',
+                        'red-highland-dark': '#9E1C23',
+                        'red-highland-light': '#E8454D',
+                        'cream-highland': '#FAE9AD',
+                        'brown-highland': '#4F392E',
+                        'orange-highland': '#F27A25',
+                        'green-highland': '#8FA876',
+                        'blue-highland': '#98D4E5'
+                    },
+                    fontFamily: {
+                        sans: ['"Be Vietnam Pro"', 'sans-serif'],
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+                            '50%': { transform: 'translateY(-14px) rotate(2deg)' },
+                        },
+                        'float-reverse': {
+                            '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+                            '50%': { transform: 'translateY(10px) rotate(-2deg)' },
+                        }
+                    },
+                    animation: {
+                        float: 'float 4.5s ease-in-out infinite',
+                        'float-slow': 'float 6s ease-in-out infinite',
+                        'float-reverse': 'float-reverse 5s ease-in-out infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Flowbite UI Component Library -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+
+    <!-- Swiper.js Slider CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+
+    <!-- Flaticon UIcons (https://www.flaticon.com/uicons) -->
+    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
+    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-bold-rounded/css/uicons-bold-rounded.css">
+    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css">
+
+    <!-- Custom Global CSS -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/CoffeeShop.WebRazorPages.styles.css" asp-append-version="true" />
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">CoffeeShop.WebRazorPages</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
+<body class="font-sans bg-[#FBFBFB] text-gray-800 flex flex-col min-h-screen">
+    <!-- ========================================================================= -->
+    <!-- Flowbite Navbar Component (LowLand Coffee Theme) -->
+    <!-- ========================================================================= -->
+    <header class="sticky top-0 z-50 bg-[#C62831] shadow-md transition-all">
+        <!-- Top Utility Bar -->
+        <div class="border-b border-red-700/40 text-white/95 text-sm py-2 px-4 sm:px-8 lg:px-12 font-medium">
+            <div class="w-full flex justify-between items-center">
+                <div class="flex items-center gap-2.5">
+                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span class="text-sm sm:text-base font-semibold">Chào mừng bạn đến với LowLand Coffee - Tự hào cà phê Việt</span>
+                </div>
+                <div class="flex items-center gap-6 text-sm sm:text-base">
+                    <a href="#store-locator" class="flex items-center gap-2 hover:text-amber-200 transition font-semibold">
+                        <!-- Flaticon Pin Location Icon -->
+                        <i class="fi fi-rr-marker text-sm"></i>
+                        <span>Tìm cửa hàng</span>
+                    </a>
+                    <div class="flex items-center gap-1.5 font-bold">
+                        <span class="text-white">VN</span>
+                        <span class="text-white/40">|</span>
+                        <span class="text-white/80 hover:text-white cursor-pointer">EN</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Navigation Bar -->
+        <nav class="border-gray-200 px-4 sm:px-8 lg:px-12 py-3.5 w-full">
+            <div class="flex flex-wrap justify-between items-center w-full">
+                <!-- Brand Logo (LowLand Style Badge) -->
+                <a asp-page="/Index" class="flex items-center gap-3.5 group">
+                    <img src="~/images/logo.jpg" alt="LowLand Coffee" class="w-13 h-13 sm:w-14 sm:h-14 object-contain rounded-full shadow-lg border-2 border-amber-100 bg-amber-50 group-hover:scale-105 transition-transform" />
+                    <div class="flex flex-col">
+                        <span class="self-center text-2xl sm:text-3xl font-black whitespace-nowrap text-white tracking-wide">LOWLAND</span>
+                        <span class="text-xs uppercase font-black tracking-widest text-amber-200 -mt-0.5">Coffee & Tea</span>
+                    </div>
+                </a>
+
+                <!-- Mobile Toggle Button -->
+                <div class="flex items-center lg:order-2 gap-3.5">
+                    <!-- Cart Button with Flaticon-style icon & Badge -->
+                    <a asp-page="/Order" class="relative p-3 rounded-full bg-red-700/70 hover:bg-red-700 text-white transition flex items-center justify-center shadow-md" title="Xem giỏ hàng & Đặt hàng">
+                        <i class="fi fi-rr-shopping-bag text-xl"></i>
+                        <span class="cart-badge absolute -top-1 -right-1 bg-amber-300 text-red-900 text-xs font-black w-5 h-5 rounded-full flex items-center justify-center shadow-md" style="display: none;">0</span>
+                    </a>
+
+                    <!-- Account / User Dropdown Area (Dành riêng cho Customer) -->
+                    <div id="nav-auth-container" class="relative">
+                        <a asp-page="/Auth/Login" id="btn-nav-login" class="inline-flex items-center gap-2.5 text-white bg-red-800/90 hover:bg-red-800 font-extrabold rounded-full text-base px-5 py-2.5 text-center transition shadow-md">
+                            <i class="fi fi-rr-user text-base"></i>
+                            <span>Tài khoản / Đăng nhập</span>
+                        </a>
+
+                        <div id="nav-user-badge" class="hidden items-center gap-2">
+                            <button id="userDropdownButton" data-dropdown-toggle="userDropdown" class="inline-flex items-center gap-2.5 text-white bg-red-800 hover:bg-red-900 font-extrabold rounded-full text-base px-5 py-2.5 shadow-md border border-red-600 transition" type="button">
+                                <span class="w-7 h-7 rounded-full bg-amber-300 text-red-900 font-black flex items-center justify-center text-sm shadow-sm" id="user-avatar-initial">U</span>
+                                <span id="nav-username" class="max-w-[130px] truncate text-base">Khách</span>
+                                <svg class="w-4 h-4 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            <!-- Dropdown Menu -->
+                            <div id="userDropdown" class="z-50 hidden my-4 text-base list-none bg-white divide-y divide-gray-100 rounded-2xl shadow-2xl w-64 border border-gray-100">
+                                <div class="px-5 py-3.5 bg-gray-50/90 rounded-t-2xl">
+                                    <span class="block text-base font-black text-gray-900" id="dropdown-full-name">Tài khoản</span>
+                                    <span class="block text-xs text-gray-500 font-semibold truncate mt-0.5" id="dropdown-role">Vai trò: Khách hàng</span>
+                                </div>
+                                <ul class="py-1.5 text-sm text-gray-700 font-bold" id="dropdown-role-links">
+                                </ul>
+                                <div class="py-1">
+                                    <a href="#" onclick="logoutCustomer()" class="block px-5 py-2.5 text-sm font-bold text-red-highland hover:bg-red-50 flex items-center gap-2">
+                                        <i class="fi fi-rr-sign-out-alt"></i>
+                                        <span>Đăng xuất</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button data-collapse-toggle="mobile-menu-2" type="button" class="inline-flex items-center p-2.5 ml-1 text-sm text-white rounded-xl lg:hidden hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400" aria-controls="mobile-menu-2" aria-expanded="false">
+                        <span class="sr-only">Mở menu</span>
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path></svg>
+                    </button>
+                </div>
+
+                <!-- Nav Menu Items (Dành riêng cho Khách hàng) -->
+                <div class="hidden justify-between items-center w-full lg:flex lg:w-auto lg:order-1" id="mobile-menu-2">
+                    <ul class="flex flex-col mt-4 font-bold text-base lg:text-lg lg:flex-row lg:space-x-8 lg:mt-0 items-center">
+                        <li>
+                            <a asp-page="/Index" class="block py-2 pr-4 pl-3 text-white border-b border-red-700 lg:border-0 lg:p-0 hover:text-amber-200 transition">Trang chủ</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
+                        <li>
+                            <a href="/Index#menu" class="block py-2 pr-4 pl-3 text-white/90 border-b border-red-700 lg:border-0 lg:p-0 hover:text-amber-200 transition">Thực đơn</a>
+                        </li>
+                        <li>
+                            <a asp-page="/Order" class="block py-2 pr-4 pl-3 text-amber-200 font-black border-b border-red-700 lg:border-0 lg:p-0 hover:text-white transition flex items-center gap-1.5">
+                                <span>Đặt hàng Online</span>
+                                <span class="bg-amber-300 text-red-950 text-xs px-2 py-0.5 rounded-full font-black uppercase">Hot</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/Index#promotions" class="block py-2 pr-4 pl-3 text-white/90 border-b border-red-700 lg:border-0 lg:p-0 hover:text-amber-200 transition">Khuyến mãi</a>
+                        </li>
+                        <li>
+                            <a href="/Index#news" class="block py-2 pr-4 pl-3 text-white/90 border-b border-red-700 lg:border-0 lg:p-0 hover:text-amber-200 transition">Tin tức</a>
                         </li>
                     </ul>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - CoffeeShop.WebRazorPages - <a asp-area="" asp-page="/Privacy">Privacy</a>
+    <!-- Main Content Area -->
+    <main role="main" class="flex-grow">
+        @RenderBody()
+    </main>
+
+    <!-- ========================================================================= -->
+    <!-- Flowbite Footer Component (Highlands Coffee Red Theme) -->
+    <!-- ========================================================================= -->
+    <footer class="bg-red-highland text-white mt-16 border-t border-red-700">
+        <div class="w-full px-4 sm:px-8 lg:px-12 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
+                <!-- Location selector column -->
+                <div>
+                    <div class="flex items-center gap-3 mb-4">
+                        <img src="~/images/logo.jpg" alt="LowLand Coffee" class="w-10 h-10 object-contain rounded-full bg-amber-50 shadow-sm border border-amber-200" />
+                        <span class="text-lg font-bold tracking-wide">LowLand Coffee</span>
+                    </div>
+                    <div class="inline-flex items-center gap-2 bg-red-800/80 hover:bg-red-800 px-3 py-2 rounded-lg text-xs font-medium cursor-pointer border border-red-700 transition">
+                        <i class="fi fi-rr-marker text-amber-300 text-sm"></i>
+                        <span>Tp. Hồ Chí Minh</span>
+                        <span class="text-white/60 ml-1 text-[10px]">(Change location)</span>
+                    </div>
+                    <p class="text-xs text-white/70 mt-4 leading-relaxed">
+                        Thương hiệu cà phê của người Việt, vì người Việt. Gắn kết đam mê cà phê di sản từ năm 1999.
+                    </p>
+                </div>
+
+                <!-- Về chúng tôi -->
+                <div>
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-amber-200 mb-4">Về chúng tôi</h3>
+                    <ul class="space-y-2.5 text-xs text-white/80">
+                        <li><a href="#" class="hover:text-white hover:underline transition">Lịch sử LowLand Coffee</a></li>
+                        <li><a href="#" class="hover:text-white hover:underline transition">Hạt cà phê di sản</a></li>
+                        <li><a href="#" class="hover:text-white hover:underline transition">Sứ mệnh & Giá trị cốt lõi</a></li>
+                        <li><a href="#" class="hover:text-white hover:underline transition">Cơ hội nghề nghiệp</a></li>
+                    </ul>
+                </div>
+
+                <!-- Dịch vụ khách hàng -->
+                <div>
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-amber-200 mb-4">Dịch vụ khách hàng</h3>
+                    <ul class="space-y-2.5 text-xs text-white/80">
+                        <li><a href="#" class="hover:text-white hover:underline transition">Câu chuyện thương hiệu</a></li>
+                        <li><a href="#store-locator" class="hover:text-white hover:underline transition">Hệ thống cửa hàng</a></li>
+                        <li><a href="#" class="hover:text-white hover:underline transition">Chính sách giao hàng tận nơi</a></li>
+                        <li><a href="#" class="hover:text-white hover:underline transition">Điều khoản & Bảo mật thông tin</a></li>
+                    </ul>
+                </div>
+
+                <!-- Liên kết nhanh -->
+                <div>
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-amber-200 mb-4">Liên kết nhanh</h3>
+                    <ul class="space-y-2.5 text-xs text-white/80">
+                        <li><a asp-page="/Order" class="hover:text-white hover:underline transition">Đặt món trực tuyến</a></li>
+                        <li><a href="#" class="hover:text-white hover:underline transition">Thẻ thành viên LowLand</a></li>
+                        <li><a href="#" class="hover:text-white hover:underline transition">Dành cho đối tác</a></li>
+                        <li><a href="tel:19001755" class="hover:text-amber-200 font-bold transition">Tổng đài hỗ trợ: 1900 1755</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="pt-8 border-t border-red-700/60 flex flex-col sm:flex-row justify-between items-center text-xs text-white/60 gap-4">
+                <p>&copy; 2026 LowLand Coffee. Tự hào hương vị cà phê di sản Việt Nam. Tất cả quyền được bảo lưu.</p>
+                <div class="flex items-center gap-4">
+                    <span class="hover:text-white cursor-pointer">Chính sách bảo mật</span>
+                    <span>•</span>
+                    <span class="hover:text-white cursor-pointer">Điều khoản dịch vụ</span>
+                </div>
+            </div>
         </div>
     </footer>
 
+    <!-- Toast Notification Container (Requirement 1: Thay thế hoàn toàn alert) -->
+    <div id="toast-container"></div>
+
+    <!-- Scripts -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        function checkNavAuth() {
+            try {
+                const userStr = localStorage.getItem('current_user');
+                const loginBtn = document.getElementById('btn-nav-login');
+                const userBadge = document.getElementById('nav-user-badge');
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    if (loginBtn) loginBtn.classList.add('hidden');
+                    if (userBadge) {
+                        userBadge.classList.remove('hidden');
+                        userBadge.classList.add('flex');
+                        const displayName = user.fullName || 'Tài khoản';
+                        document.getElementById('nav-username').innerText = displayName;
+                        document.getElementById('dropdown-full-name').innerText = displayName;
+
+                        // Chuẩn hóa nhận diện vai trò (hỗ trợ cả role, roleName và nhận diện admin/staff)
+                        const rawRole = (user.role || user.roleName || '').toString().toLowerCase();
+                        let roleTitle = 'Khách hàng';
+                        let normalizedRole = 'Customer';
+
+                        if (rawRole === 'admin' || (user.email && user.email.toLowerCase().includes('admin')) || displayName.toLowerCase().includes('quản trị viên')) {
+                            roleTitle = 'Quản trị viên';
+                            normalizedRole = 'Admin';
+                        } else if (rawRole === 'staff' || (user.email && user.email.toLowerCase().includes('staff')) || displayName.toLowerCase().includes('thu ngân')) {
+                            roleTitle = 'Nhân viên';
+                            normalizedRole = 'Staff';
+                        }
+
+                        // Đồng bộ lại vào user object để toàn bộ app nhận diện chuẩn
+                        if (user.role !== normalizedRole) {
+                            user.role = normalizedRole;
+                            user.roleName = normalizedRole;
+                            try { localStorage.setItem('current_user', JSON.stringify(user)); } catch (e) {}
+                        }
+
+                        document.getElementById('dropdown-role').innerText = `Vai trò: ${roleTitle}`;
+                        document.getElementById('user-avatar-initial').innerText = (displayName[0] || 'U').toUpperCase();
+
+                        const roleLinks = document.getElementById('dropdown-role-links');
+                        if (roleLinks) {
+                            roleLinks.innerHTML = '';
+                            if (normalizedRole === 'Staff') {
+                                roleLinks.innerHTML = `
+                                    <li>
+                                        <a href="/Staff/Orders" class="block px-4 py-2.5 font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 flex items-center gap-2">
+                                            <i class="fi fi-rr-coffee text-amber-800"></i>
+                                            <span>Vào Quầy POS (Nhân viên)</span>
+                                        </a>
+                                    </li>
+                                `;
+                            } else if (normalizedRole === 'Admin') {
+                                roleLinks.innerHTML = `
+                                    <li>
+                                        <a href="/Admin/Users" class="block px-4 py-2.5 font-bold text-blue-800 bg-blue-50 hover:bg-blue-100 flex items-center gap-2">
+                                            <i class="fi fi-sr-shield-check text-blue-800"></i>
+                                            <span>Vào Trang Quản trị (Admin)</span>
+                                        </a>
+                                    </li>
+                                `;
+                            } else {
+                                roleLinks.innerHTML = `
+                                    <li>
+                                        <a href="/MyOrders" class="block px-4 py-2.5 hover:bg-gray-100 flex items-center gap-2 font-semibold">
+                                            <i class="fi fi-rr-clipboard-list text-gray-500"></i>
+                                            <span>Đơn hàng của tôi</span>
+                                        </a>
+                                    </li>
+                                `;
+                            }
+                        }
+                    }
+                } else {
+                    if (loginBtn) loginBtn.classList.remove('hidden');
+                    if (userBadge) {
+                        userBadge.classList.add('hidden');
+                        userBadge.classList.remove('flex');
+                    }
+                }
+            } catch (e) {}
+        }
+
+        function logoutCustomer() {
+            localStorage.removeItem('current_user');
+            localStorage.removeItem('auth_token');
+            // Bảo toàn giỏ hàng cá nhân trong localStorage cho từng khách hàng
+            // Chỉ reset badge giỏ hàng hiển thị trên thanh navbar về 0
+            if (typeof updateCartBadge === 'function') {
+                updateCartBadge();
+            }
+            if (typeof showToast === 'function') {
+                showToast('Đăng xuất thành công', 'Bạn đã đăng xuất khỏi hệ thống.', 'info');
+            }
+            setTimeout(() => {
+                window.location.reload();
+            }, 400);
+        }
+
+        document.addEventListener('DOMContentLoaded', checkNavAuth);
+    </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

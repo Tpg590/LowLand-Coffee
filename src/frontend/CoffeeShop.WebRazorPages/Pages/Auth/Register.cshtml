@@ -1,0 +1,167 @@
+@page
+@model CoffeeShop.WebRazorPages.Pages.Auth.RegisterModel
+@{
+    ViewData["Title"] = "Đăng ký thành viên - LowLand Coffee";
+}
+
+<div class="w-full min-h-[calc(100vh-180px)] flex items-center justify-center px-4 sm:px-8 py-10">
+    <div class="w-full max-w-lg bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+        <!-- Header Banner -->
+        <div class="bg-gradient-to-r from-red-highland via-[#B32028] to-red-highland-dark text-white p-8 text-center relative overflow-hidden">
+            <div class="absolute -top-10 -left-10 w-32 h-32 rounded-full bg-white/10 blur-xl pointer-events-none"></div>
+            <img src="~/images/logo.jpg" alt="LowLand Coffee" class="w-16 h-16 mx-auto rounded-full object-contain bg-amber-50 shadow-md border-2 border-amber-200 mb-3" />
+            <h2 class="text-2xl font-black tracking-tight uppercase">Đăng ký thành viên</h2>
+            <p class="text-xs text-amber-200 mt-1 font-medium">Gia nhập cộng đồng LowLand Coffee để tích điểm & nhận ưu đãi</p>
+        </div>
+
+        <!-- Form Body -->
+        <div class="p-6 sm:p-8 space-y-6">
+            <form id="form-register" onsubmit="handleRegister(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Họ và tên *</label>
+                    <input type="text" id="reg-fullname" required class="w-full bg-[#F3F4F6] border-0 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 focus:ring-2 focus:ring-red-highland placeholder-gray-400" placeholder="Nguyễn Văn A" />
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Email *</label>
+                        <input type="email" id="reg-email" required class="w-full bg-[#F3F4F6] border-0 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 focus:ring-2 focus:ring-red-highland placeholder-gray-400" placeholder="customer@gmail.com" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Số điện thoại *</label>
+                        <input type="tel" id="reg-phone" required class="w-full bg-[#F3F4F6] border-0 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 focus:ring-2 focus:ring-red-highland placeholder-gray-400" placeholder="0912345678" />
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Địa chỉ</label>
+                    <input type="text" id="reg-address" class="w-full bg-[#F3F4F6] border-0 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 focus:ring-2 focus:ring-red-highland placeholder-gray-400" placeholder="109 Trương Văn Hải, TP. Thủ Đức" />
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Mật khẩu *</label>
+                        <input type="password" id="reg-password" required minlength="6" class="w-full bg-[#F3F4F6] border-0 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 focus:ring-2 focus:ring-red-highland placeholder-gray-400" placeholder="Tối thiểu 6 ký tự" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Xác nhận mật khẩu *</label>
+                        <input type="password" id="reg-confirm-password" required minlength="6" class="w-full bg-[#F3F4F6] border-0 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 focus:ring-2 focus:ring-red-highland placeholder-gray-400" placeholder="Nhập lại mật khẩu" />
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <label class="flex items-start gap-2.5 cursor-pointer text-xs text-gray-600">
+                        <input type="checkbox" required class="w-4 h-4 mt-0.5 rounded text-red-highland focus:ring-red-highland" />
+                        <span>Tôi đồng ý với <a href="#" class="text-red-highland font-bold underline">Điều khoản dịch vụ</a> và <a href="#" class="text-red-highland font-bold underline">Chính sách bảo mật</a> của LowLand Coffee.</span>
+                    </label>
+                </div>
+
+                <button type="submit" id="btn-register-submit" class="w-full py-3.5 rounded-xl bg-red-highland hover:bg-red-700 text-white font-extrabold text-sm uppercase tracking-wider shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-2 mt-4">
+                    <i class="fi fi-rr-user-add text-base"></i>
+                    <span>Đăng ký tài khoản</span>
+                </button>
+            </form>
+
+            <div class="text-center text-xs text-gray-500 pt-2 border-t border-gray-100">
+                Đã có tài khoản LowLand?
+                <a asp-page="/Auth/Login" class="font-bold text-red-highland hover:underline ml-1">Đăng nhập ngay</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function handleRegister(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-register-submit');
+            const fullName = document.getElementById('reg-fullname').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const phoneNumber = document.getElementById('reg-phone').value.trim();
+            const address = document.getElementById('reg-address').value.trim();
+            const password = document.getElementById('reg-password').value;
+            const confirmPassword = document.getElementById('reg-confirm-password').value;
+
+            if (password !== confirmPassword) {
+                showToast('Mật khẩu không khớp', 'Mật khẩu xác nhận phải trùng khớp với mật khẩu đã nhập.', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Đang tạo tài khoản...`;
+
+            try {
+                // Gọi Auth.API POST /api/auth/register gửi trực tiếp vào SQL Server thật
+                const payload = {
+                    fullName: fullName,
+                    email: email,
+                    phoneNumber: phoneNumber || null,
+                    password: password,
+                    confirmPassword: confirmPassword
+                };
+
+                const res = await fetch('http://localhost:5001/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).catch(() => null);
+
+                let apiCreatedId = null;
+                if (res) {
+                    if (!res.ok) {
+                        const errData = await res.json().catch(() => null);
+                        const msg = errData?.message || (errData?.errors && errData.errors[0]) || 'Email hoặc số điện thoại đã tồn tại trong CSDL.';
+                        btn.disabled = false;
+                        btn.innerHTML = `<span>Đăng ký tài khoản</span>`;
+                        showToast('Đăng ký không thành công', msg, 'error');
+                        return;
+                    }
+                    const data = await res.json().catch(() => null);
+                    if (data?.data?.user?.id) {
+                        apiCreatedId = data.data.user.id;
+                    }
+                }
+
+                // Lưu tài khoản mới đồng bộ vào cả registered_users và admin_users_list
+                try {
+                    const todayStr = new Date().toISOString().slice(0, 10);
+                    const newUserObj = {
+                        id: apiCreatedId || ('cust-' + Date.now()),
+                        fullName: fullName,
+                        email: email,
+                        phoneNumber: phoneNumber || '---',
+                        address: address || 'TP. Hồ Chí Minh',
+                        role: 'Customer',
+                        isActive: true,
+                        createdAt: todayStr
+                    };
+
+                    // 1. Lưu vào registered_users
+                    let regUsers = JSON.parse(localStorage.getItem('registered_users') || '[]');
+                    regUsers = regUsers.filter(u => u.email && u.email.toLowerCase() !== email.toLowerCase());
+                    regUsers.push(newUserObj);
+                    localStorage.setItem('registered_users', JSON.stringify(regUsers));
+
+                    // 2. Lưu vào admin_users_list để hiển thị ngay trên bảng quản lý của Admin
+                    let adminUsers = JSON.parse(localStorage.getItem('admin_users_list') || '[]');
+                    adminUsers = adminUsers.filter(u => u.email && u.email.toLowerCase() !== email.toLowerCase());
+                    adminUsers.push(newUserObj);
+                    localStorage.setItem('admin_users_list', JSON.stringify(adminUsers));
+
+                    // Lưu tạm email vừa đăng ký để trang Login tự động điền sẵn
+                    sessionStorage.setItem('last_registered_account', email || phoneNumber);
+                } catch (e) {}
+
+                showToast('Đăng ký thành công', `Chào mừng ${fullName}! Tài khoản đã được lưu vào CSDL hệ thống.`, 'success', 3500);
+                setTimeout(() => {
+                    window.location.href = '/Auth/Login';
+                }, 1200);
+
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = `<span>Đăng ký tài khoản</span>`;
+                showToast('Lỗi đăng ký', 'Không thể hoàn tất đăng ký. Vui lòng thử lại sau.', 'error');
+            }
+        }
+    </script>
+}

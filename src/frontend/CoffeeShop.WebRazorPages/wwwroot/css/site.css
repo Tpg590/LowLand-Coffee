@@ -1,22 +1,133 @@
+/* Be Vietnam Pro Google Font & Global Defaults */
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+
 html {
-  font-size: 14px;
+  font-size: 14.5px;
+  -webkit-font-smoothing: antialiased;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   html {
-    font-size: 16px;
+    font-size: 15px;
   }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+@media (min-width: 1440px) {
+  html {
+    font-size: 15.5px;
+  }
 }
 
 body {
-  margin-bottom: 60px;
+  font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #1f2937;
+  background-color: #fbfbfb;
+  overflow-x: hidden;
+}
+
+/* Flaticon UIcons Global Alignment */
+i.fi, [class^="fi-"], [class*=" fi-"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+/* Keyframe Animations for Floating Cups and Accents */
+@keyframes floatCup {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-16px) rotate(3deg);
+  }
+}
+
+@keyframes floatCupReverse {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(12px) rotate(-3deg);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.05);
+  }
+}
+
+.animate-floating-cup {
+  animation: floatCup 4.5s ease-in-out infinite;
+}
+
+.animate-floating-cup-reverse {
+  animation: floatCupReverse 5.2s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+/* Swiper Hero Customizations */
+.hero-swiper .swiper-pagination-bullet {
+  width: 10px;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.6);
+  opacity: 1;
+  transition: all 0.3s ease;
+}
+
+.hero-swiper .swiper-pagination-bullet-active {
+  width: 28px;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+/* Toast Notifications Container */
+#toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 400px;
+  pointer-events: none;
+}
+
+.toast-item {
+  pointer-events: auto;
+  transform: translateX(120%);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+  opacity: 0;
+}
+
+.toast-item.toast-show {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #c62831;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9e1c23;
 }

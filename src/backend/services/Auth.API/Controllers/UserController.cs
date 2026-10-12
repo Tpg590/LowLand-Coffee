@@ -29,6 +29,26 @@ public class UserController : ControllerBase
     }
 
     /// <summary>
+    /// Tìm kiếm tài khoản Khách hàng (Customer) theo tên / SĐT / email để hỗ trợ chức năng POS (Staff + Admin)
+    /// </summary>
+    [HttpGet("search")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<PagedResult<UserDto>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> SearchCustomers([FromQuery] string? q, [FromQuery] int pageSize = 10, CancellationToken cancellationToken = default)
+    {
+        var query = new UserQueryParameters
+        {
+            Search = q,
+            RoleName = "Customer", // Chỉ tìm kiếm tài khoản Khách hàng, loại bỏ Staff và Admin
+            IsActive = true,       // Chỉ tìm tài khoản đang hoạt động
+            PageNumber = 1,
+            PageSize = Math.Min(pageSize, 20)
+        };
+        var result = await _userService.GetUsersAsync(query, cancellationToken);
+        return StatusCode(result.StatusCode, result);
+    }
+
+    /// <summary>
     /// Xem chi tiết một người dùng theo ID (Admin)
     /// </summary>
     [HttpGet("{id:guid}")]
@@ -84,6 +104,25 @@ public class UserController : ControllerBase
         }
 
         var result = await _userService.UpdateStatusAsync(id, request, cancellationToken);
+        return StatusCode(result.StatusCode, result);
+    }
+
+    /// <summary>
+    /// Chức năng: Cập nhật thông tin tài khoản người dùng (Admin)
+    /// </summary>
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(typeof(ApiResponse<UserDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<UserDto>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<UserDto>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateUser([FromRoute] Guid id, [FromBody] UpdateUserRequest request, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            return BadRequest(ApiResponse<UserDto>.Fail("Dữ liệu không hợp lệ", 400, errors));
+        }
+
+        var result = await _userService.UpdateUserAsync(id, request, cancellationToken);
         return StatusCode(result.StatusCode, result);
     }
 

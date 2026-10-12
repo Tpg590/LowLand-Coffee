@@ -15,11 +15,13 @@ public class CreateOrderItemRequest
 public class CreateOrderRequest
 {
     public Guid? CustomerId { get; set; } // Dành cho Staff đặt hộ tại quầy
+    public string? CustomerName { get; set; } // Tên khách (có thể là tên thật hoặc "Khách vãng lai #xxx")
     public List<CreateOrderItemRequest> Items { get; set; } = new();
     public decimal DiscountAmount { get; set; } = 0.00m;
     public string? VoucherCode { get; set; }
     public string PaymentMethod { get; set; } = Entities.PaymentMethod.CASH;
     public string? Note { get; set; }
+    public string? ReturnUrl { get; set; }
 }
 
 public class OrderDto
@@ -27,6 +29,7 @@ public class OrderDto
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
     public string OrderCode { get; set; } = string.Empty;
+    public string? CustomerName { get; set; }
     public decimal TotalAmount { get; set; }
     public decimal DiscountAmount { get; set; }
     public decimal FinalAmount { get; set; }
@@ -36,6 +39,7 @@ public class OrderDto
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public int TotalItems { get; set; }
+    public string? ItemsSummary { get; set; }
     public string? PaymentMethod { get; set; }
     public string? PaymentStatus { get; set; }
 }
@@ -56,6 +60,7 @@ public class OrderDetailDto : OrderDto
 {
     public List<OrderItemDto> Items { get; set; } = new();
     public List<OrderPaymentDto> Payments { get; set; } = new();
+    public VnPayPaymentResponseDto? VnPayPayment { get; set; }
 }
 
 public class OrderFilterRequest

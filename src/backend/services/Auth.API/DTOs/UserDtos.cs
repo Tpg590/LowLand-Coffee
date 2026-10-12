@@ -62,3 +62,17 @@ public class UserQueryParameters
     public int PageNumber { get; set; } = 1;
     public int PageSize { get; set; } = 10;
 }
+
+public class UpdateUserRequest
+{
+    [Required(ErrorMessage = "Họ và tên là bắt buộc")]
+    [MaxLength(100, ErrorMessage = "Họ và tên không vượt quá 100 ký tự")]
+    public string FullName { get; set; } = string.Empty;
+
+    [MaxLength(20, ErrorMessage = "Số điện thoại không vượt quá 20 ký tự")]
+    public string? PhoneNumber { get; set; }
+
+    public string? Address { get; set; }
+
+    public string? AvatarUrl { get; set; }
+}

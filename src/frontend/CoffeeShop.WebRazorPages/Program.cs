@@ -52,6 +52,9 @@ app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapGet("/Staff", () => Results.Redirect("/Staff/Orders"));
+app.MapGet("/Admin", () => Results.Redirect("/Admin/Users"));
+
 app.MapRazorPages();
 
 app.Run();

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Quản trị Hệ thống LowLand Coffee</title>
+
+    <!-- Favicon (Sử dụng ảnh Logo thương hiệu) -->
+    <link rel="icon" type="image/jpeg" href="~/images/logo.jpg" asp-append-version="true" />
+    <link rel="shortcut icon" type="image/jpeg" href="~/images/logo.jpg" asp-append-version="true" />
+    <link rel="apple-touch-icon" href="~/images/logo.jpg" asp-append-version="true" />
+
+    <!-- Google Font: Be Vietnam Pro -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS (Play CDN with Brand Configuration) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'red-highland': '#C62831',
+                        'red-highland-dark': '#9E1C23',
+                        'cream-highland': '#FAE9AD',
+                        'brown-highland': '#4F392E'
+                    },
+                    fontFamily: {
+                        sans: ['"Be Vietnam Pro"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Flowbite UI Component Library -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+
+    <!-- Flaticon UIcons (https://www.flaticon.com/uicons) -->
+    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
+    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-bold-rounded/css/uicons-bold-rounded.css">
+    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css">
+
+    <!-- Auth Guard: Chỉ cho phép Quản trị viên truy cập -->
+    <script>
+        (function enforceAdminAuth() {
+            try {
+                const userStr = localStorage.getItem('current_user');
+                if (!userStr) {
+                    window.location.replace('/Auth/Login?returnUrl=' + encodeURIComponent(window.location.pathname));
+                    return;
+                }
+                const user = JSON.parse(userStr);
+                const role = (user.role || user.roleName || '').toString().toLowerCase();
+                const isEmailAdmin = user.email && user.email.toLowerCase().includes('admin');
+                const isNameAdmin = user.fullName && user.fullName.toLowerCase().includes('quản trị viên');
+                if (role !== 'admin' && !isEmailAdmin && !isNameAdmin) {
+                    if (role === 'staff' || (user.email && user.email.toLowerCase().includes('staff'))) {
+                        window.location.replace('/Staff/Orders');
+                    } else {
+                        window.location.replace('/Index');
+                    }
+                }
+            } catch (e) {
+                window.location.replace('/Auth/Login');
+            }
+        })();
+    </script>
+
+    <!-- Custom Global CSS -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="font-sans bg-[#F8FAFC] text-gray-800 min-h-screen text-[15px]">
+
+    <div class="min-h-screen flex bg-[#F8FAFC]">
+        <!-- ========================================================================= -->
+        <!-- SIDEBAR BÊN TRÁI DÀNH RIÊNG CHO QUẢN TRỊ VIÊN (ADMIN SIDEBAR) -->
+        <!-- ========================================================================= -->
+        <aside id="admin-sidebar" class="w-64 lg:w-72 bg-[#0F172A] text-slate-300 flex flex-col shrink-0 fixed inset-y-0 left-0 z-40 transition-transform -translate-x-full lg:translate-x-0 border-r border-slate-800 shadow-2xl">
+            <!-- Header Sidebar: Logo & Tiêu đề cổng quản trị -->
+            <div class="h-20 flex items-center px-6 border-b border-slate-800/80 bg-[#0B1120]">
+                <div class="flex items-center gap-3.5">
+                    <img src="~/images/logo.jpg" alt="LowLand Coffee" class="w-11 h-11 object-contain rounded-full bg-amber-50 border-2 border-amber-300 shadow-md" />
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-base font-black tracking-wider text-white uppercase">LOWLAND ADMIN</span>
+                        </div>
+                        <span class="inline-block px-2 py-0.5 mt-0.5 rounded-md bg-amber-500/20 text-amber-400 text-[11px] font-bold tracking-wider">Hệ Thống Quản Trị</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danh sách Menu Điều hướng (Sidebar Navigation Links) -->
+            <div class="flex-1 overflow-y-auto px-4 py-6 space-y-1.5">
+                
+                <div class="px-3 pb-2 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                    Quản lý Hệ thống
+                </div>
+
+                <!-- Mục Sản phẩm (Để sẵn cho thành viên làm Product triển khai) -->
+                <a asp-page="/Admin/Products" id="nav-products" class="flex items-center gap-3.5 px-3.5 py-3 rounded-xl font-bold text-sm transition-all text-slate-300 hover:text-white hover:bg-slate-800/80 group">
+                    <i class="fi fi-rr-box-alt text-lg text-amber-400 group-hover:scale-110 transition-transform"></i>
+                    <span class="flex-1">Sản phẩm</span>
+                </a>
+
+                <div class="pt-6 px-3 pb-2 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                    Người Dùng & Phân Quyền
+                </div>
+
+                <!-- Quản lý Người dùng & Nhân viên -->
+                <a asp-page="/Admin/Users" id="nav-users" class="flex items-center gap-3.5 px-3.5 py-3 rounded-xl font-bold text-sm transition-all text-slate-300 hover:text-white hover:bg-slate-800/80 group">
+                    <i class="fi fi-rr-users-alt text-lg text-blue-400 group-hover:scale-110 transition-transform"></i>
+                    <span class="flex-1">Người dùng & Nhân viên</span>
+                </a>
+
+
+            </div>
+
+            <!-- Footer của Sidebar: Thông tin tài khoản Admin & Nút Đăng xuất -->
+            <div class="p-4 border-t border-slate-800/80 bg-[#0B1120] space-y-3">
+                <div class="flex items-center gap-3 px-2 py-1">
+                    <div class="w-10 h-10 rounded-xl bg-amber-400/20 border border-amber-400/30 flex items-center justify-center text-amber-300 shrink-0">
+                        <i class="fi fi-sr-shield-check text-xl"></i>
+                    </div>
+                    <div class="overflow-hidden">
+                        <div class="text-sm font-bold text-white truncate" id="admin-display-name">Quản Trị Viên</div>
+                        <div class="text-xs text-slate-400 font-medium">Toàn quyền Quản trị</div>
+                    </div>
+                </div>
+
+                <!-- Nút Đăng xuất ra khỏi cổng Admin -->
+                <button type="button" onclick="logoutAdmin()" class="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-red-700 hover:text-white text-slate-300 text-xs font-bold transition flex items-center justify-center gap-2 border border-slate-700/80 active:scale-95 shadow-sm">
+                    <i class="fi fi-rr-sign-out-alt text-sm"></i>
+                    <span>Đăng xuất hệ thống</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Backdrop khi mở Sidebar trên Mobile -->
+        <div id="sidebar-backdrop" onclick="toggleAdminSidebar()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 hidden lg:hidden transition-opacity"></div>
+
+        <!-- ========================================================================= -->
+        <!-- KHU VỰC NỘI DUNG CHÍNH BÊN PHẢI (MAIN CONTENT AREA) -->
+        <!-- ========================================================================= -->
+        <div class="flex-1 flex flex-col min-h-screen lg:pl-64 xl:pl-72 w-full transition-all">
+            <!-- Topbar Header phụ -->
+            <header class="sticky top-0 z-20 h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-8 shadow-sm">
+                <div class="flex items-center gap-3">
+                    <!-- Nút mở Sidebar trên Mobile -->
+                    <button type="button" onclick="toggleAdminSidebar()" class="lg:hidden p-2 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus:outline-none transition">
+                        <i class="fi fi-rr-menu-burger text-lg"></i>
+                    </button>
+                    <div class="flex items-center gap-2 text-sm text-gray-500 font-medium">
+                        <span class="text-red-highland font-bold flex items-center gap-1.5">
+                            <i class="fi fi-rr-dashboard text-xs"></i> Bảng Quản trị
+                        </span>
+                        <span>/</span>
+                        <span class="text-gray-800 font-bold truncate max-w-xs sm:max-w-md">@ViewData["Title"]</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <!-- Badge trạng thái trực tuyến -->
+                    <div class="hidden sm:flex items-center gap-2 text-xs font-bold text-gray-600 bg-gray-100 px-3 py-1.5 rounded-full border border-gray-200">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span id="admin-clock">Hệ thống Trực tuyến</span>
+                    </div>
+                    
+                    <div class="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">
+                        <i class="fi fi-sr-shield-check text-emerald-600"></i>
+                        <span>Phiên bảo mật Admin</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Body Content -->
+            <main role="main" class="flex-1 p-4 sm:p-6 lg:p-8">
+                @RenderBody()
+            </main>
+
+            <!-- Footer trang Quản trị -->
+            <footer class="bg-white border-t border-gray-200 py-4 px-6 sm:px-8 text-xs text-gray-500 flex flex-col sm:flex-row items-center justify-between gap-2">
+                <div>Hệ thống Quản lý Chuỗi Cà phê LowLand Coffee &copy; 2026. Dành riêng cho Quản trị viên.</div>
+                <div class="flex items-center gap-1.5 text-slate-500 font-medium">
+                    <i class="fi fi-rr-lock text-emerald-600"></i> Cổng quản lý độc lập & bảo mật
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        // Hiển thị tên tài khoản Admin từ localStorage
+        try {
+            const userStr = localStorage.getItem('current_user');
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                const nameEl = document.getElementById('admin-display-name');
+                if (nameEl && user.fullName) {
+                    nameEl.innerText = `${user.fullName}`;
+                }
+            }
+        } catch (e) {}
+
+        // Toggle Sidebar trên màn hình di động
+        function toggleAdminSidebar() {
+            const sidebar = document.getElementById('admin-sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                backdrop.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                backdrop.classList.add('hidden');
+            }
+        }
+
+        // Tự động Highlight Menu đang chọn dựa theo URL
+        (function highlightActiveMenu() {
+            const path = window.location.pathname.toLowerCase();
+            const navProducts = document.getElementById('nav-products');
+            const navUsers = document.getElementById('nav-users');
+
+            const activeClass = ['bg-slate-800', 'text-amber-300', 'border', 'border-slate-700/80', 'shadow-inner'];
+
+            if (path.includes('/admin/products')) {
+                navProducts?.classList.add(...activeClass);
+                navProducts?.classList.remove('text-slate-300');
+            } else if (path.includes('/admin/users') || path.includes('/admin/index') || path === '/admin') {
+                navUsers?.classList.add(...activeClass);
+                navUsers?.classList.remove('text-slate-300');
+            }
+        })();
+
+        // Cập nhật đồng hồ thời gian thực
+        function updateAdminClock() {
+            const clockEl = document.getElementById('admin-clock');
+            if (clockEl) {
+                const now = new Date();
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                clockEl.innerText = `${hours}:${minutes} - ${day}/${month}/${now.getFullYear()}`;
+            }
+        }
+        updateAdminClock();
+        setInterval(updateAdminClock, 30000);
+
+        // Đăng xuất Admin an toàn
+        function logoutAdmin() {
+            localStorage.removeItem('current_user');
+            localStorage.removeItem('auth_token');
+            if (typeof showToast === 'function') {
+                showToast('Đăng xuất thành công', 'Đã thoát tài khoản Quản trị viên.', 'info');
+            }
+            setTimeout(() => {
+                window.location.href = '/Auth/Login';
+            }, 500);
+        }
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

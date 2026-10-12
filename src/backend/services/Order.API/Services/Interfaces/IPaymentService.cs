@@ -4,6 +4,9 @@ namespace Order.API.Services.Interfaces;
 
 public interface IPaymentService
 {
+    Task<ApiResponse<VnPayPaymentResponseDto>> GenerateVnPayPaymentUrlAsync(
+        Guid orderId, Guid? currentUserId, string currentUserRole, string clientIp, CancellationToken cancellationToken = default);
+
     Task<ApiResponse<VnPayPaymentResponseDto>> GenerateVnPayQrAsync(
         Guid orderId, Guid? currentUserId, string currentUserRole, string clientIp, CancellationToken cancellationToken = default);
 

@@ -1,10 +1,547 @@
-﻿@page
+@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Trang chủ - LowLand Coffee";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="space-y-16 pb-16">
+    <!-- ========================================================================= -->
+    <!-- 1. Hero Banner Slider (Swiper.js with Floating Cup Animation) -->
+    <!-- ========================================================================= -->
+    <section class="relative overflow-hidden bg-gradient-to-b from-red-highland via-[#B32028] to-[#96171E] text-white">
+        <!-- Background Decorative Circles -->
+        <div class="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-red-400/20 blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-amber-400/15 blur-3xl pointer-events-none"></div>
+
+        <div class="swiper hero-swiper w-full px-4 sm:px-8 lg:px-12 py-10 lg:py-14">
+            <div class="swiper-wrapper">
+                <!-- Slide 1: MUA 1 TẶNG 1 LOW-LÊN LÊN DEAL -->
+                <div class="swiper-slide">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[460px]">
+                        <!-- Left Content -->
+                        <div class="lg:col-span-7 space-y-6 z-10">
+                            <div class="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-amber-300 text-red-950 font-black text-sm uppercase tracking-wider shadow-lg">
+                                <span class="animate-bounce">🔥</span>
+                                <span>Ưu đãi đặc biệt</span>
+                            </div>
+                            <div class="space-y-3">
+                                <h2 class="text-5xl sm:text-6xl lg:text-7xl font-black uppercase tracking-tight text-white drop-shadow-md leading-none">
+                                    MUA 1 TẶNG 1
+                                </h2>
+                                <h3 class="text-4xl sm:text-5xl lg:text-6xl font-black text-amber-200 tracking-wide uppercase drop-shadow">
+                                    LOW-LÊN LÊN DEAL
+                                </h3>
+                            </div>
+                            <p class="text-white/95 text-base sm:text-lg lg:text-xl max-w-2xl leading-relaxed font-medium">
+                                Đón mừng mùa hội cùng LowLand Coffee! Thưởng thức hương vị cà phê phin di sản cùng các dòng Trà & Freeze thượng hạng. Nhận ngay 1 ly cùng size khi đặt đơn hôm nay!
+                            </p>
+                            <div class="flex flex-wrap items-center gap-4 pt-3">
+                                <a asp-page="/Order" class="px-9 py-4 rounded-full bg-white text-red-highland hover:bg-amber-100 font-black text-base uppercase tracking-wider shadow-2xl transition-all transform hover:-translate-y-1 flex items-center gap-2.5">
+                                    <span>Đặt ngay kẻo lỡ</span>
+                                    <i class="fi fi-rr-arrow-right text-base"></i>
+                                </a>
+                                <a href="#menu" class="px-8 py-4 rounded-full bg-red-800/80 hover:bg-red-800 text-white font-extrabold text-base border border-white/30 transition shadow-md hover:-translate-y-0.5">
+                                    Khám phá thực đơn
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Right Graphic: Animated Floating Coffee Cups -->
+                        <div class="lg:col-span-5 relative flex items-center justify-center">
+                            <!-- Background Glow Pill -->
+                            <div class="w-72 h-72 sm:w-80 sm:h-80 rounded-full bg-amber-300/20 absolute blur-2xl animate-pulse-glow"></div>
+
+                            <!-- Big Main Cup (Animated Floating) -->
+                            <div class="relative z-10 animate-floating-cup filter drop-shadow-[0_20px_25px_rgba(0,0,0,0.45)]">
+                                <div class="w-64 h-80 sm:w-72 sm:h-96 rounded-3xl bg-gradient-to-tr from-amber-950 via-amber-900 to-amber-800 p-3 border-4 border-white/30 shadow-2xl flex flex-col justify-between overflow-hidden relative group">
+                                    <!-- Coffee foam & ice top -->
+                                    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-200/30 via-transparent to-black/60"></div>
+                                    <div class="relative z-10 flex justify-between items-center text-xs text-amber-200 font-bold">
+                                        <span class="bg-red-600/90 text-white px-2.5 py-1 rounded-full uppercase text-[10px]">Phin Đậm Đà</span>
+                                        <span>Size L • 55k</span>
+                                    </div>
+                                    <!-- Center LowLand Logo on Cup -->
+                                    <div class="relative z-10 my-auto text-center space-y-2">
+                                        <img src="~/images/logo.jpg" alt="LowLand Coffee" class="w-16 h-16 mx-auto rounded-full object-contain bg-amber-50 shadow-lg border-2 border-amber-200" />
+                                        <h4 class="text-xl font-black text-white uppercase tracking-wider">Phin Sữa Đá</h4>
+                                        <p class="text-xs text-amber-100/80">Hạt Robusta Buôn Ma Thuột</p>
+                                    </div>
+                                    <div class="relative z-10 bg-black/40 backdrop-blur-sm -mx-3 -mb-3 p-3 text-center text-xs font-semibold text-white/90">
+                                        Chuẩn vị cà phê Việt từ 1999
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Small Accent Cup (Opposite Floating) -->
+                            <div class="absolute -right-4 -bottom-6 z-20 animate-floating-cup-reverse hidden sm:block">
+                                <div class="w-36 h-48 rounded-2xl bg-gradient-to-br from-emerald-800 to-emerald-950 p-2.5 border-2 border-white/40 shadow-xl flex flex-col justify-between overflow-hidden">
+                                    <span class="text-[9px] font-bold text-emerald-200 bg-emerald-900/80 px-2 py-0.5 rounded-full text-center">Freeze Matcha</span>
+                                    <div class="text-center">
+                                        <div class="w-10 h-10 mx-auto rounded-full bg-red-highland flex items-center justify-center text-[7px] text-white font-extrabold mb-1">HL</div>
+                                        <p class="text-[10px] font-black text-white">Thạch giòn</p>
+                                    </div>
+                                    <span class="text-[10px] text-center font-bold text-amber-300">55.000đ</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2: TRÀ SEN VÀNG THANH MÁT -->
+                <div class="swiper-slide">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[460px]">
+                        <div class="lg:col-span-7 space-y-6 z-10">
+                            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-400 text-emerald-950 font-extrabold text-xs uppercase tracking-wider shadow-md">
+                                <span>🍃</span>
+                                <span>Best Seller Mùa Hè</span>
+                            </div>
+                            <div class="space-y-2">
+                                <h2 class="text-4xl sm:text-6xl font-black uppercase tracking-tight text-white drop-shadow-md">
+                                    TRÀ SEN VÀNG
+                                </h2>
+                                <h3 class="text-2xl sm:text-4xl font-extrabold text-amber-200 uppercase tracking-wide">
+                                    Hạt Sen Bùi Béo • Củ Năng Giòn Tan
+                                </h3>
+                            </div>
+                            <p class="text-white/90 text-sm sm:text-base max-w-xl leading-relaxed">
+                                Sự kết hợp hoàn mỹ giữa vị chát thanh dịu nhẹ của trà Ô long cao nguyên và hạt sen thơm bùi ngậy, mang lại cảm giác sảng khoái tuyệt hảo mỗi ngày.
+                            </p>
+                            <div class="flex items-center gap-4 pt-2">
+                                <a asp-page="/Order" class="px-8 py-3.5 rounded-full bg-white text-red-highland hover:bg-amber-100 font-extrabold text-sm uppercase tracking-wider shadow-xl transition-all">
+                                    Thưởng thức ngay
+                                </a>
+                            </div>
+                        </div>
+                        <div class="lg:col-span-5 flex items-center justify-center">
+                            <div class="animate-floating-cup">
+                                <div class="w-64 h-84 sm:w-72 sm:h-96 rounded-3xl bg-gradient-to-tr from-amber-700 via-amber-600 to-yellow-500 p-4 border-4 border-white/30 shadow-2xl flex flex-col justify-between">
+                                    <span class="text-xs font-bold text-white uppercase bg-red-700 px-3 py-1 rounded-full self-start">Trà Sen Vàng</span>
+                                    <div class="text-center my-auto space-y-2">
+                                        <div class="w-20 h-20 mx-auto rounded-full bg-white text-red-highland font-black flex items-center justify-center text-xl shadow-inner">HL</div>
+                                        <h4 class="text-2xl font-black text-white">Ô LONG SEN</h4>
+                                    </div>
+                                    <div class="text-center text-xs text-white/90 font-bold bg-black/30 p-2 rounded-xl">Size L • 65.000đ</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Swiper Pagination -->
+            <div class="swiper-pagination !bottom-2"></div>
+        </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- 2. Section: Thực Đơn Được Yêu Thích Nhất (Menu Highlights) -->
+    <!-- ========================================================================= -->
+    <section id="menu" class="w-full px-4 sm:px-8 lg:px-12 my-6">
+        <!-- Section Header with Red Underline Divider -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b-2 border-gray-100 gap-4">
+            <div>
+                <h2 class="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-gray-900 leading-tight">
+                    <span class="text-red-highland">Thực Đơn Được Yêu Thích</span> Nhất
+                </h2>
+                <p class="text-base sm:text-lg text-gray-600 mt-2 font-medium">Những món thức uống và bánh ngọt trứ danh đậm đà phong vị Việt Nam</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-sm sm:text-base text-gray-500 font-bold">Danh mục món ngon:</span>
+            </div>
+        </div>
+
+        <!-- Flowbite Category Pills / Tabs (To, Rõ ràng, Dễ bấm) -->
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 my-8">
+            <!-- Tab 0: Tất cả (Red Highland Pill) -->
+            <button type="button" onclick="filterMenu('all', this)" class="menu-tab-btn active group flex items-center gap-3 p-3.5 sm:p-4 rounded-3xl bg-red-highland text-white shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 border-2 border-red-highland">
+                <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white/20 flex items-center justify-center group-hover:scale-110 transition flex-shrink-0">
+                    <i class="fi fi-rr-apps text-xl text-white"></i>
+                </div>
+                <div class="text-left">
+                    <h4 class="font-black text-base sm:text-lg leading-tight">Tất cả món</h4>
+                    <span class="text-[11px] sm:text-xs text-white/90 font-medium block mt-0.5">Trọn vẹn thực đơn</span>
+                </div>
+            </button>
+
+            <!-- Tab 1: Cà phê (Brown Pill) -->
+            <button type="button" onclick="filterMenu('coffee', this)" class="menu-tab-btn group flex items-center gap-3 p-3.5 sm:p-4 rounded-3xl bg-white text-gray-800 shadow-md hover:shadow-2xl transition-all transform hover:-translate-y-1 border-2 border-gray-200 hover:border-[#4F392E]">
+                <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-amber-50 text-[#4F392E] flex items-center justify-center group-hover:scale-110 transition flex-shrink-0">
+                    <i class="fi fi-rr-coffee text-xl text-[#4F392E]"></i>
+                </div>
+                <div class="text-left">
+                    <h4 class="font-black text-base sm:text-lg leading-tight">Cà phê</h4>
+                    <span class="text-[11px] sm:text-xs text-gray-500 font-medium block mt-0.5">Đậm đà quẹt lối</span>
+                </div>
+            </button>
+
+            <!-- Tab 2: Trà Việt (Red Pill) -->
+            <button type="button" onclick="filterMenu('tea', this)" class="menu-tab-btn group flex items-center gap-3 p-3.5 sm:p-4 rounded-3xl bg-white text-gray-800 shadow-md hover:shadow-2xl transition-all transform hover:-translate-y-1 border-2 border-gray-200 hover:border-red-highland">
+                <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-red-50 text-red-highland flex items-center justify-center group-hover:scale-110 transition flex-shrink-0">
+                    <i class="fi fi-rr-leaf text-xl text-red-highland"></i>
+                </div>
+                <div class="text-left">
+                    <h4 class="font-black text-base sm:text-lg leading-tight">Trà Việt</h4>
+                    <span class="text-[11px] sm:text-xs text-gray-500 font-medium block mt-0.5">Đậm đà quả đỏ</span>
+                </div>
+            </button>
+
+            <!-- Tab 3: Freeze (Green Pill) -->
+            <button type="button" onclick="filterMenu('freeze', this)" class="menu-tab-btn group flex items-center gap-3 p-3.5 sm:p-4 rounded-3xl bg-white text-gray-800 shadow-md hover:shadow-2xl transition-all transform hover:-translate-y-1 border-2 border-gray-200 hover:border-[#8FA876]">
+                <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-emerald-50 text-[#6B8E4E] flex items-center justify-center group-hover:scale-110 transition flex-shrink-0">
+                    <i class="fi fi-rr-glass text-xl text-[#6B8E4E]"></i>
+                </div>
+                <div class="text-left">
+                    <h4 class="font-black text-base sm:text-lg leading-tight">Freeze</h4>
+                    <span class="text-[11px] sm:text-xs text-gray-500 font-medium block mt-0.5">Mát lạnh đá xay</span>
+                </div>
+            </button>
+
+            <!-- Tab 4: Bánh ngọt (Orange Pill) -->
+            <button type="button" onclick="filterMenu('bakery', this)" class="menu-tab-btn group flex items-center gap-3 p-3.5 sm:p-4 rounded-3xl bg-white text-gray-800 shadow-md hover:shadow-2xl transition-all transform hover:-translate-y-1 border-2 border-gray-200 hover:border-[#F27A25]">
+                <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-amber-50 text-[#F27A25] flex items-center justify-center group-hover:scale-110 transition flex-shrink-0">
+                    <i class="fi fi-rr-cake-birthday text-xl text-[#F27A25]"></i>
+                </div>
+                <div class="text-left">
+                    <h4 class="font-black text-base sm:text-lg leading-tight">Bánh ngọt</h4>
+                    <span class="text-[11px] sm:text-xs text-gray-500 font-medium block mt-0.5">Ngon ngọt ngào</span>
+                </div>
+            </button>
+        </div>
+
+        <!-- Product Cards Grid (Tự động nạp 100% từ Product.API Cổng 5002) -->
+        <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+            <!-- Loading Skeletons -->
+            <div class="col-span-full py-16 text-center">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-red-highland border-t-transparent"></div>
+                <p class="mt-4 text-base font-bold text-gray-500">Đang nạp thực đơn từ máy chủ LowLand Coffee...</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- 3. Section: LowLand là của chúng mình (Brand Story Banner) -->
+    <!-- ========================================================================= -->
+    <section id="brand-story" class="w-full px-4 sm:px-8 lg:px-12">
+        <div class="grid grid-cols-1 lg:grid-cols-12 rounded-3xl overflow-hidden shadow-xl border border-red-800/10">
+            <!-- Left Illustration Graphic -->
+            <div class="lg:col-span-5 bg-[#FAE9AD] p-8 sm:p-12 flex flex-col justify-between relative overflow-hidden">
+                <div class="relative z-10 space-y-2">
+                    <span class="text-xs uppercase tracking-widest font-black text-amber-900">Di sản cà phê</span>
+                    <h3 class="text-2xl font-black text-amber-950">Gắn kết cộng đồng</h3>
+                </div>
+                <!-- Coffee Farmer Graphic / Illustration -->
+                <div class="my-6 relative z-10 flex items-center justify-center">
+                    <div class="w-56 h-56 rounded-full bg-amber-200/60 border-4 border-amber-300/40 flex items-center justify-center p-4">
+                        <img src="https://images.unsplash.com/photo-1610632380989-680fe40816c6?w=400&auto=format&fit=crop&q=80" alt="Hạt cà phê di sản" class="w-48 h-48 rounded-full object-cover shadow-lg" />
+                    </div>
+                </div>
+                <div class="relative z-10 text-xs text-amber-900/80 font-medium">
+                    Từ những đồn điền trù phú trên cao nguyên Việt Nam
+                </div>
+            </div>
+
+            <!-- Right Red Story Card -->
+            <div class="lg:col-span-7 bg-red-highland text-white p-8 sm:p-12 flex flex-col justify-center space-y-6">
+                <div class="space-y-3">
+                    <span class="text-xs uppercase font-bold tracking-widest text-amber-200">LowLand Story</span>
+                    <h3 class="text-3xl sm:text-4xl font-black leading-tight">
+                        LowLand<br />là của chúng mình
+                    </h3>
+                </div>
+                <p class="text-sm sm:text-base text-white/90 leading-relaxed max-w-xl">
+                    LowLand Coffee® được thành lập vào năm 1999, bắt nguồn từ tình yêu dành cho đất Việt cùng với cà phê và cộng đồng nơi đây. Ngay từ những ngày đầu tiên, mục tiêu của chúng mình là có thể phục vụ và góp phần phát triển cộng đồng bằng cách siết chặt thêm sự kết nối và sự gắn bó giữa người với người.
+                </p>
+                <div class="pt-2">
+                    <a href="#about" class="inline-block px-8 py-3.5 rounded-full bg-white text-red-highland hover:bg-amber-100 font-extrabold text-sm uppercase tracking-wider shadow-lg transition">
+                        Tìm hiểu thêm
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- 4. Section: Tin tức và sự kiện -->
+    <!-- ========================================================================= -->
+    <section id="news" class="w-full px-4 sm:px-8 lg:px-12">
+        <div class="flex items-center justify-between pb-6 border-b-2 border-gray-100 mb-8">
+            <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-gray-900">
+                <span class="text-red-highland">Tin tức</span> và sự kiện
+            </h2>
+            <div class="flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-red-highland"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-gray-300"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-gray-300"></span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+            <!-- News 1 -->
+            <div class="group bg-white rounded-3xl border border-gray-100 shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden flex flex-col justify-between">
+                <div class="relative h-60 overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=500&auto=format&fit=crop&q=80" alt="Khai trương cửa hàng mới" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+                    <span class="absolute top-3.5 left-3.5 bg-red-highland text-white text-xs font-black px-3 py-1.5 rounded-full uppercase shadow">Sự kiện</span>
+                </div>
+                <div class="p-6 sm:p-7 flex flex-col justify-between flex-grow space-y-4">
+                    <div>
+                        <h4 class="font-black text-xl sm:text-2xl text-gray-900 group-hover:text-red-highland transition">Khai trương cửa hàng mới</h4>
+                        <p class="text-sm sm:text-base text-gray-600 mt-2.5 line-clamp-2 leading-relaxed">
+                            Không gian mới toanh, hiện đại và thân thiện tại 120 Điện Biên Phủ, sẵn sàng đón tiếp quý khách với nhiều ưu đãi.
+                        </p>
+                    </div>
+                    <div class="pt-4 border-t border-gray-100 flex items-center justify-between text-sm sm:text-base font-bold text-red-highland">
+                        <span>Xem chi tiết</span>
+                        <div class="w-9 h-9 rounded-full bg-red-50 group-hover:bg-red-highland group-hover:text-white text-red-highland flex items-center justify-center transition shadow-sm">
+                            <i class="fi fi-rr-arrow-right text-sm"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- News 2 -->
+            <div class="group bg-white rounded-3xl border border-gray-100 shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden flex flex-col justify-between">
+                <div class="relative h-60 overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=500&auto=format&fit=crop&q=80" alt="Tận hưởng không gian mới" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+                    <span class="absolute top-3.5 left-3.5 bg-amber-600 text-white text-xs font-black px-3 py-1.5 rounded-full uppercase shadow">Không gian</span>
+                </div>
+                <div class="p-6 sm:p-7 flex flex-col justify-between flex-grow space-y-4">
+                    <div>
+                        <h4 class="font-black text-xl sm:text-2xl text-gray-900 group-hover:text-red-highland transition">Tận hưởng không gian mới</h4>
+                        <p class="text-sm sm:text-base text-gray-600 mt-2.5 line-clamp-2 leading-relaxed">
+                            Khám phá thiết kế nội thất ấm áp mang đậm bản sắc văn hoá cà phê Việt, không gian lý tưởng để học tập và làm việc.
+                        </p>
+                    </div>
+                    <div class="pt-4 border-t border-gray-100 flex items-center justify-between text-sm sm:text-base font-bold text-red-highland">
+                        <span>Xem chi tiết</span>
+                        <div class="w-9 h-9 rounded-full bg-red-50 group-hover:bg-red-highland group-hover:text-white text-red-highland flex items-center justify-center transition shadow-sm">
+                            <i class="fi fi-rr-arrow-right text-sm"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- News 3 -->
+            <div class="group bg-white rounded-3xl border border-gray-100 shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden flex flex-col justify-between">
+                <div class="relative h-60 overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500&auto=format&fit=crop&q=80" alt="Cà phê tinh tuý từ đất Việt" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+                    <span class="absolute top-3.5 left-3.5 bg-emerald-700 text-white text-xs font-black px-3 py-1.5 rounded-full uppercase shadow">Di sản</span>
+                </div>
+                <div class="p-6 sm:p-7 flex flex-col justify-between flex-grow space-y-4">
+                    <div>
+                        <h4 class="font-black text-xl sm:text-2xl text-gray-900 group-hover:text-red-highland transition">Cà phê tinh tuý từ đất Việt</h4>
+                        <p class="text-sm sm:text-base text-gray-600 mt-2.5 line-clamp-2 leading-relaxed">
+                            Hạt cà phê Robusta và Arabica được tuyển chọn kỹ lưỡng, rang xay theo công thức gia truyền giữ trọn vẹn hương vị nồng đượm.
+                        </p>
+                    </div>
+                    <div class="pt-4 border-t border-gray-100 flex items-center justify-between text-sm sm:text-base font-bold text-red-highland">
+                        <span>Xem chi tiết</span>
+                        <div class="w-9 h-9 rounded-full bg-red-50 group-hover:bg-red-highland group-hover:text-white text-red-highland flex items-center justify-center transition shadow-sm">
+                            <i class="fi fi-rr-arrow-right text-sm"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- 5. Section: Trao Gift cards nhận yêu thương -->
+    <!-- ========================================================================= -->
+    <section class="w-full px-4 sm:px-8 lg:px-12">
+        <div class="bg-gradient-to-r from-amber-50 via-white to-red-50 rounded-3xl p-8 sm:p-12 border border-amber-200/50 shadow-md">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                <!-- Gift Cards Artwork -->
+                <div class="lg:col-span-6 flex justify-center relative">
+                    <!-- Rotating Decorative Star / Sparkle -->
+                    <div class="absolute -top-4 -left-4 text-emerald-600 animate-spin" style="animation-duration: 12s;">
+                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0l2.5 9.5L24 12l-9.5 2.5L12 24l-2.5-9.5L0 12l9.5-2.5z"/></svg>
+                    </div>
+                    <div class="relative w-72 sm:w-80 h-48 sm:h-52">
+                        <!-- Card 1 -->
+                        <div class="absolute top-0 left-0 w-64 h-40 rounded-2xl bg-gradient-to-br from-cyan-200 to-blue-400 p-4 shadow-xl transform -rotate-6 border border-white/60 flex flex-col justify-between">
+                            <span class="text-[10px] font-extrabold uppercase text-blue-900">LowLand Gift Card</span>
+                            <div class="text-center font-black text-blue-950 text-base">CHUNG ĐAM MÊ</div>
+                            <span class="text-[9px] text-blue-900/70 font-semibold self-end">LL-2026-VIP</span>
+                        </div>
+                        <!-- Card 2 (Front overlapping) -->
+                        <div class="absolute bottom-0 right-0 w-64 h-40 rounded-2xl bg-gradient-to-br from-pink-200 via-rose-200 to-amber-200 p-4 shadow-2xl transform rotate-3 border-2 border-white flex flex-col justify-between">
+                            <div class="flex justify-between items-center">
+                                <span class="text-[10px] font-extrabold uppercase text-red-900">E-Gift Voucher</span>
+                                <div class="w-6 h-6 rounded-full bg-red-highland flex items-center justify-center text-[7px] text-white font-black">LL</div>
+                            </div>
+                            <div class="text-center font-black text-red-950 text-lg tracking-wide">YÊU THƯƠNG</div>
+                            <span class="text-[9px] text-red-900/70 font-semibold">Tặng bạn ly cà phê ngọt ngào</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Text & Action -->
+                <div class="lg:col-span-6 space-y-4">
+                    <h3 class="text-2xl sm:text-3xl font-black text-gray-900 leading-tight">
+                        Trao <span class="text-red-highland">Gift cards</span><br />nhận yêu thương
+                    </h3>
+                    <p class="text-sm text-gray-600 leading-relaxed">
+                        There's an easier way to buy LowLand Cards in bulk! Give a LowLand Card to gift, reward, incentivize, or show appreciation towards your customers, clients and team members.
+                    </p>
+                    <div class="pt-2">
+                        <button type="button" onclick="showToast('Thẻ quà tặng', 'Tính năng mua Gift Card số lượng lớn đang sẵn sàng cho doanh nghiệp!', 'info')" class="px-8 py-3 rounded-full bg-red-highland hover:bg-red-700 text-white font-extrabold text-sm uppercase tracking-wider shadow-md transition">
+                            Tìm hiểu thêm
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 </div>
+
+@section Scripts {
+    <script>
+        // Khởi tạo Swiper Banner Hero
+        const swiper = new Swiper('.hero-swiper', {
+            loop: true,
+            autoplay: {
+                delay: 4500,
+                disableOnInteraction: false,
+            },
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+            },
+            effect: 'fade',
+            fadeEffect: {
+                crossFade: true
+            }
+        });
+
+        // Filter Menu Tabs
+        function filterMenu(category, btn) {
+            const tabs = document.querySelectorAll('.menu-tab-btn');
+            tabs.forEach(t => {
+                t.classList.remove('active', 'bg-red-highland', 'bg-[#4F392E]', 'text-white', 'border-red-highland', 'border-[#4F392E]');
+                t.classList.add('bg-white', 'text-gray-800', 'border-gray-200');
+            });
+
+            const activeBtn = btn || event?.currentTarget || tabs[0];
+            if (activeBtn) {
+                activeBtn.classList.add('active', 'bg-red-highland', 'text-white', 'border-red-highland');
+                activeBtn.classList.remove('bg-white', 'text-gray-800', 'border-gray-200');
+            }
+
+            const items = document.querySelectorAll('.product-item');
+            items.forEach(item => {
+                const itemCat = item.getAttribute('data-category') || '';
+                if (category === 'all' || item.classList.contains(category) || itemCat === category) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            if (category !== 'all') {
+                showToast('Lọc thực đơn', `Đang hiển thị danh mục: ${category.toUpperCase()}`, 'info');
+            }
+        }
+
+        // Tải toàn bộ danh sách sản phẩm động từ CSDL thật (Product.API 5002)
+        async function loadHomepageProducts() {
+            try {
+                const res = await fetch('http://localhost:5002/api/products?pageSize=100');
+                if (!res.ok) return;
+                const json = await res.json();
+                const items = json.data?.items || json.data || [];
+                if (!items || items.length === 0) return;
+
+                const grid = document.getElementById('product-grid');
+                if (!grid) return;
+
+                grid.innerHTML = items.map(p => {
+                    let cat = 'coffee';
+                    let bgGrad = 'from-amber-50 to-amber-100/50';
+                    const cName = (p.categoryName || '').toLowerCase();
+                    if (cName.includes('trà') || cName.includes('tea')) {
+                        cat = 'tea';
+                        bgGrad = 'from-red-50 to-red-100/50';
+                    } else if (cName.includes('freeze') || cName.includes('đá xay')) {
+                        cat = 'freeze';
+                        bgGrad = 'from-emerald-50 to-emerald-100/50';
+                    } else if (cName.includes('bánh') || cName.includes('snack') || cName.includes('mousse')) {
+                        cat = 'bakery';
+                        bgGrad = 'from-amber-50 to-orange-100/50';
+                    }
+
+                    const imgUrl = (p.imageUrl && p.imageUrl.startsWith('http') && !p.imageUrl.includes('placehold.co'))
+                        ? p.imageUrl
+                        : getFallbackImage(p.name, cat);
+
+                    const priceFormatted = (p.basePrice || 0).toLocaleString('vi-VN');
+                    const safeName = (p.name || '').replace(/'/g, "\\'");
+
+                    return `
+                        <div class="product-item ${cat} group bg-white rounded-3xl border border-gray-100 shadow-md hover:shadow-2xl transition-all duration-300 p-5 sm:p-6 flex flex-col justify-between" data-category="${cat}">
+                            <div>
+                                <div class="relative bg-gradient-to-b ${bgGrad} rounded-2xl p-5 flex items-center justify-center overflow-hidden h-56 sm:h-64 shadow-inner">
+                                    <img src="${imgUrl}" alt="${p.name}" class="max-h-48 sm:max-h-56 object-contain group-hover:scale-110 transition-transform duration-300" />
+                                    <button type="button" onclick="toggleBookmark(this)" class="absolute top-3.5 right-3.5 p-2 rounded-full bg-white/90 hover:bg-white text-gray-400 hover:text-red-highland shadow-sm transition" title="Lưu món yêu thích">
+                                        <i class="fi fi-rr-bookmark text-base"></i>
+                                    </button>
+                                </div>
+                                <div class="mt-5 space-y-2">
+                                    <h4 class="font-black text-xl sm:text-2xl text-gray-900 group-hover:text-red-highland transition">${p.name}</h4>
+                                    <p class="text-sm sm:text-base text-gray-600 line-clamp-2 leading-relaxed">
+                                        ${p.description || 'Thơm ngon vẹn tròn, mang trọn tinh hoa di sản cà phê Việt.'}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
+                                <div>
+                                    <span class="text-xs sm:text-sm text-gray-400 font-medium">Giá chỉ từ</span>
+                                    <p class="text-2xl sm:text-3xl font-black text-red-highland">${priceFormatted}đ</p>
+                                </div>
+                                <button type="button" onclick="addToCart({ id: '${p.id}', name: '${safeName}', size: 'Size M', price: ${p.basePrice || 0}, image: '${imgUrl}' })" class="w-12 h-12 rounded-2xl bg-red-highland hover:bg-red-700 text-white flex items-center justify-center shadow-lg transition transform active:scale-95" title="Thêm vào giỏ">
+                                    <i class="fi fi-rr-shopping-bag text-xl"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (e) {
+                console.log('Không thể tải sản phẩm từ Product.API, sử dụng fallback HTML', e);
+            }
+        }
+
+        function getFallbackImage(name, cat) {
+            const n = (name || '').toLowerCase();
+            if (n.includes('sen') || n.includes('đào') || cat === 'tea') {
+                return 'https://images.unsplash.com/photo-1556881286-fc6915169721?w=400&auto=format&fit=crop&q=80';
+            }
+            if (n.includes('freeze') || cat === 'freeze') {
+                return 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400&auto=format&fit=crop&q=80';
+            }
+            if (n.includes('bánh') || cat === 'bakery') {
+                return 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&auto=format&fit=crop&q=80';
+            }
+            return 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400&auto=format&fit=crop&q=80';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadHomepageProducts();
+        });
+
+        function toggleBookmark(btn) {
+            const svg = btn.querySelector('svg');
+            const isSaved = svg.getAttribute('fill') === 'currentColor';
+            if (isSaved) {
+                svg.setAttribute('fill', 'none');
+                btn.classList.remove('text-red-highland');
+                btn.classList.add('text-gray-400');
+                showToast('Yêu thích', 'Đã bỏ lưu món ăn', 'info');
+            } else {
+                svg.setAttribute('fill', 'currentColor');
+                btn.classList.add('text-red-highland');
+                btn.classList.remove('text-gray-400');
+                showToast('Yêu thích', 'Đã lưu món vào danh sách yêu thích của bạn!', 'success');
+            }
+        }
+    </script>
+}

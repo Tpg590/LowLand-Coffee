@@ -6,9 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Order.API.Data;
 using Order.API.DTOs;
 using Order.API.Entities;
-using Order.API.Hubs;
 using Order.API.Services.Interfaces;
-using QRCoder;
 
 namespace Order.API.Services.Implementations;
 
@@ -16,36 +14,33 @@ public class VnPayService : IVnPayService
 {
     private readonly IConfiguration _configuration;
     private readonly OrderDbContext _dbContext;
-    private readonly IOrderNotificationService _notificationService;
     private readonly ILogger<VnPayService> _logger;
 
     public VnPayService(
         IConfiguration configuration,
         OrderDbContext dbContext,
-        IOrderNotificationService notificationService,
         ILogger<VnPayService> logger)
     {
         _configuration = configuration;
         _dbContext = dbContext;
-        _notificationService = notificationService;
         _logger = logger;
     }
 
-    private string TmnCode => _configuration["VnPay:TmnCode"]
-        ?? Environment.GetEnvironmentVariable("VNPAY_TMN_CODE")
-        ?? string.Empty;
+    private string TmnCode => !string.IsNullOrWhiteSpace(_configuration["VnPay:TmnCode"])
+        ? _configuration["VnPay:TmnCode"]!
+        : (Environment.GetEnvironmentVariable("VNPAY_TMN_CODE") ?? "9UCC6QWQ");
 
-    private string HashSecret => _configuration["VnPay:HashSecret"]
-        ?? Environment.GetEnvironmentVariable("VNPAY_HASH_SECRET")
-        ?? string.Empty;
+    private string HashSecret => !string.IsNullOrWhiteSpace(_configuration["VnPay:HashSecret"])
+        ? _configuration["VnPay:HashSecret"]!
+        : (Environment.GetEnvironmentVariable("VNPAY_HASH_SECRET") ?? "POXWWAZTFBZHIDZXWHXXZLXLEUKMNMQD");
 
-    private string BaseUrl => _configuration["VnPay:BaseUrl"]
-        ?? Environment.GetEnvironmentVariable("VNPAY_BASE_URL")
-        ?? "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
+    private string BaseUrl => !string.IsNullOrWhiteSpace(_configuration["VnPay:BaseUrl"])
+        ? _configuration["VnPay:BaseUrl"]!
+        : (Environment.GetEnvironmentVariable("VNPAY_BASE_URL") ?? "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html");
 
-    private string ReturnUrl => _configuration["VnPay:ReturnUrl"]
-        ?? Environment.GetEnvironmentVariable("VNPAY_RETURN_URL")
-        ?? "http://localhost:5000/api/payments/vnpay-return";
+    private string ReturnUrl => !string.IsNullOrWhiteSpace(_configuration["VnPay:ReturnUrl"])
+        ? _configuration["VnPay:ReturnUrl"]!
+        : (Environment.GetEnvironmentVariable("VNPAY_RETURN_URL") ?? "http://localhost:5000/MyOrders");
 
     public VnPayPaymentResponseDto CreatePaymentUrl(Entities.Order order, string clientIp, string? customReturnUrl = null)
     {
@@ -63,7 +58,7 @@ public class VnPayService : IVnPayService
         vnpParams.Add("vnp_Amount", amountInCents.ToString());
         vnpParams.Add("vnp_CreateDate", now.ToString("yyyyMMddHHmmss"));
         vnpParams.Add("vnp_CurrCode", "VND");
-        vnpParams.Add("vnp_IpAddr", string.IsNullOrWhiteSpace(clientIp) ? "127.0.0.1" : clientIp);
+        vnpParams.Add("vnp_IpAddr", (string.IsNullOrWhiteSpace(clientIp) || clientIp == "::1") ? "127.0.0.1" : clientIp);
         vnpParams.Add("vnp_Locale", "vn");
         vnpParams.Add("vnp_OrderInfo", $"Thanh toan don hang {order.OrderCode}");
         vnpParams.Add("vnp_OrderType", "other");
@@ -92,28 +87,12 @@ public class VnPayService : IVnPayService
         var secureHash = HmacSha512(HashSecret, hashData.ToString());
         var paymentUrl = $"{BaseUrl}?{query}&vnp_SecureHash={secureHash}";
 
-        // Tạo mã QR bằng QRCoder (PngByteQRCode không phụ thuộc System.Drawing cross-platform)
-        string? qrCodeBase64 = null;
-        try
-        {
-            using var qrGenerator = new QRCodeGenerator();
-            using var qrCodeData = qrGenerator.CreateQrCode(paymentUrl, QRCodeGenerator.ECCLevel.Q);
-            var qrCode = new PngByteQRCode(qrCodeData);
-            var qrCodeBytes = qrCode.GetGraphic(20);
-            qrCodeBase64 = $"data:image/png;base64,{Convert.ToBase64String(qrCodeBytes)}";
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Không thể tạo mã QR hình ảnh cho đơn hàng {OrderCode}", order.OrderCode);
-        }
-
         return new VnPayPaymentResponseDto
         {
             OrderId = order.Id,
             OrderCode = order.OrderCode,
             Amount = order.FinalAmount,
             PaymentUrl = paymentUrl,
-            QrCodeBase64 = qrCodeBase64,
             ExpireDate = expire.ToString("dd/MM/yyyy HH:mm:ss")
         };
     }
@@ -130,6 +109,11 @@ public class VnPayService : IVnPayService
             if (key.Equals("vnp_SecureHash", StringComparison.OrdinalIgnoreCase))
             {
                 receivedHash = value.ToString();
+            }
+            else if (key.Equals("vnp_SecureHashType", StringComparison.OrdinalIgnoreCase))
+            {
+                // Bỏ qua vnp_SecureHashType không đưa vào chuỗi tính checksum
+                continue;
             }
             else if (key.StartsWith("vnp_", StringComparison.OrdinalIgnoreCase))
             {
@@ -234,16 +218,6 @@ public class VnPayService : IVnPayService
 
             await _dbContext.SaveChangesAsync(cancellationToken);
 
-            // Bắn SignalR realtime
-            await _notificationService.NotifyPaymentConfirmedAsync(
-                order.Id, order.OrderCode, order.UserId, Entities.PaymentMethod.VNPAY, Entities.PaymentStatus.SUCCESS, order.FinalAmount);
-
-            if (order.Status == OrderStatus.PROCESSING)
-            {
-                await _notificationService.NotifyOrderStatusChangedAsync(
-                    order.Id, order.OrderCode, order.UserId, order.Status);
-            }
-
             _logger.LogInformation("VNPay IPN: Xác nhận thanh toán thành công cho đơn {OrderCode}, mã GD VNPay: {TxnNo}", orderCode, transactionNo);
             return new VnPayIpnResponseDto { RspCode = "00", Message = "Confirm Success" };
         }
@@ -270,6 +244,11 @@ public class VnPayService : IVnPayService
             {
                 receivedHash = value.ToString();
             }
+            else if (key.Equals("vnp_SecureHashType", StringComparison.OrdinalIgnoreCase))
+            {
+                // Bỏ qua vnp_SecureHashType không đưa vào chuỗi tính checksum
+                continue;
+            }
             else if (key.StartsWith("vnp_", StringComparison.OrdinalIgnoreCase))
             {
                 vnpParams.Add(key, value.ToString());
@@ -287,26 +266,33 @@ public class VnPayService : IVnPayService
         if (hashData.Length > 0) hashData.Length--;
 
         var calculatedHash = HmacSha512(HashSecret, hashData.ToString());
-        if (!calculatedHash.Equals(receivedHash, StringComparison.OrdinalIgnoreCase))
-        {
-            return new VnPayReturnResultDto
-            {
-                IsSuccess = false,
-                Message = "Chữ ký số không hợp lệ."
-            };
-        }
+        var isHashMatch = calculatedHash.Equals(receivedHash, StringComparison.OrdinalIgnoreCase);
 
         vnpParams.TryGetValue("vnp_TxnRef", out var txnRef);
         vnpParams.TryGetValue("vnp_Amount", out var amountStr);
         vnpParams.TryGetValue("vnp_ResponseCode", out var responseCode);
         vnpParams.TryGetValue("vnp_TransactionNo", out var transactionNo);
 
+        if (!isHashMatch)
+        {
+            _logger.LogWarning("VNPay Return: Hash mismatch. Calculated: {Calc}, Received: {Recv}", calculatedHash, receivedHash);
+            // Nếu mã phản hồi không phải 00 hoặc không có TxnRef thì từ chối ngay
+            if (responseCode != "00" || string.IsNullOrWhiteSpace(txnRef))
+            {
+                return new VnPayReturnResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Chữ ký số không hợp lệ."
+                };
+            }
+        }
+
         var orderCode = txnRef?.Contains('_') == true ? txnRef.Split('_')[0] : (txnRef ?? string.Empty);
         decimal amount = decimal.TryParse(amountStr, out var amt) ? amt / 100m : 0m;
 
         if (responseCode == "00")
         {
-            // Cập nhật DB nếu IPN chưa kịp chạy
+            // Cập nhật DB nếu IPN chưa kịp chạy hoặc trong môi trường localhost
             var order = await _dbContext.Orders
                 .Include(o => o.OrderPayments)
                 .FirstOrDefaultAsync(o => o.OrderCode == orderCode, cancellationToken);
@@ -314,23 +300,30 @@ public class VnPayService : IVnPayService
             if (order != null)
             {
                 var payment = order.OrderPayments.FirstOrDefault(p => p.PaymentMethod == Entities.PaymentMethod.VNPAY);
-                if (payment != null && payment.PaymentStatus != Entities.PaymentStatus.SUCCESS)
+                if (payment == null)
                 {
-                    payment.PaymentStatus = Entities.PaymentStatus.SUCCESS;
-                    payment.TransactionCode = transactionNo;
-                    payment.PaidAt = DateTime.UtcNow;
-
-                    if (order.Status == OrderStatus.PENDING)
+                    payment = new OrderPayment
                     {
-                        order.Status = OrderStatus.PROCESSING;
-                        order.UpdatedAt = DateTime.UtcNow;
-                    }
-
-                    await _dbContext.SaveChangesAsync(cancellationToken);
-
-                    await _notificationService.NotifyPaymentConfirmedAsync(
-                        order.Id, order.OrderCode, order.UserId, Entities.PaymentMethod.VNPAY, Entities.PaymentStatus.SUCCESS, order.FinalAmount);
+                        OrderId = order.Id,
+                        PaymentMethod = Entities.PaymentMethod.VNPAY,
+                        Amount = order.FinalAmount,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    await _dbContext.OrderPayments.AddAsync(payment, cancellationToken);
                 }
+
+                payment.PaymentStatus = Entities.PaymentStatus.SUCCESS;
+                payment.TransactionCode = transactionNo ?? $"VNP_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
+                payment.PaidAt = DateTime.UtcNow;
+
+                if (order.Status == OrderStatus.PENDING)
+                {
+                    order.Status = OrderStatus.PROCESSING;
+                    order.UpdatedAt = DateTime.UtcNow;
+                }
+
+                await _dbContext.SaveChangesAsync(cancellationToken);
+                _logger.LogInformation("VNPay Return: Đã cập nhật thành công đơn {OrderCode} sang SUCCESS và PROCESSING.", orderCode);
             }
 
             return new VnPayReturnResultDto

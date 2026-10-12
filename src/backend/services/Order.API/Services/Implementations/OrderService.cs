@@ -1,8 +1,8 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Order.API.Data;
 using Order.API.DTOs;
 using Order.API.Entities;
-using Order.API.Hubs;
 using Order.API.Services.Interfaces;
 
 namespace Order.API.Services.Implementations;
@@ -11,33 +11,36 @@ public class OrderService : IOrderService
 {
     private readonly OrderDbContext _dbContext;
     private readonly IProductPricingService _pricingService;
-    private readonly IOrderNotificationService _notificationService;
+    private readonly IVnPayService _vnPayService;
+    private readonly IMapper _mapper;
     private readonly ILogger<OrderService> _logger;
 
     public OrderService(
         OrderDbContext dbContext,
         IProductPricingService pricingService,
-        IOrderNotificationService notificationService,
+        IVnPayService vnPayService,
+        IMapper mapper,
         ILogger<OrderService> logger)
     {
         _dbContext = dbContext;
         _pricingService = pricingService;
-        _notificationService = notificationService;
+        _vnPayService = vnPayService;
+        _mapper = mapper;
         _logger = logger;
     }
 
     public async Task<ApiResponse<OrderDetailDto>> CreateOrderAsync(
-        Guid currentUserId, string currentUserRole, CreateOrderRequest request, CancellationToken cancellationToken = default)
+        Guid currentUserId, string currentUserRole, CreateOrderRequest request, string? clientIp = null, CancellationToken cancellationToken = default)
     {
         if (request.Items == null || !request.Items.Any())
         {
             return ApiResponse<OrderDetailDto>.Fail("Đơn hàng phải có ít nhất một sản phẩm.", 400);
         }
 
-        var isStaffOrAdmin = string.Equals(currentUserRole, "Staff", StringComparison.OrdinalIgnoreCase) ||
-                             string.Equals(currentUserRole, "Admin", StringComparison.OrdinalIgnoreCase);
+        var isStaffOrAdmin = currentUserRole.Equals("Staff", StringComparison.OrdinalIgnoreCase) ||
+                             currentUserRole.Equals("Admin", StringComparison.OrdinalIgnoreCase);
 
-        // Nếu là Staff tạo đơn tại quầy, cho phép chỉ định CustomerId nếu khách có tài khoản
+        // Nếu là Staff/Admin tạo đơn tại quầy, cho phép chỉ định CustomerId nếu khách có tài khoản
         Guid targetUserId = currentUserId;
         if (isStaffOrAdmin && request.CustomerId.HasValue && request.CustomerId.Value != Guid.Empty)
         {
@@ -56,12 +59,17 @@ public class OrderService : IOrderService
             orderCode = $"ORD-{todayStr}-{randomSuffix}";
         }
 
+        var customerName = !string.IsNullOrWhiteSpace(request.CustomerName)
+            ? request.CustomerName.Trim()
+            : $"Khách vãng lai #{randomSuffix}";
+
         var newOrder = new Entities.Order
         {
             UserId = targetUserId,
             OrderCode = orderCode,
             Status = OrderStatus.PENDING,
             Note = request.Note,
+            CustomerName = customerName,
             DiscountAmount = Math.Max(0, request.DiscountAmount),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -123,15 +131,24 @@ public class OrderService : IOrderService
         // Tạo phương thức thanh toán ban đầu (hỗ trợ cả Tiếng Việt và Tiếng Anh)
         var initialPaymentMethod = PaymentMethod.Normalize(request.PaymentMethod);
 
+        var isCashPaidAtPos = initialPaymentMethod == PaymentMethod.CASH && isStaffOrAdmin;
+
         var orderPayment = new OrderPayment
         {
             OrderId = newOrder.Id,
             PaymentMethod = initialPaymentMethod,
             Amount = newOrder.FinalAmount,
-            PaymentStatus = PaymentStatus.PENDING,
+            PaymentStatus = isCashPaidAtPos ? PaymentStatus.SUCCESS : PaymentStatus.PENDING,
+            PaidAt = isCashPaidAtPos ? DateTime.UtcNow : null,
+            TransactionCode = isCashPaidAtPos ? $"CASH_POS_{randomSuffix}" : null,
             CreatedAt = DateTime.UtcNow
         };
         newOrder.OrderPayments.Add(orderPayment);
+
+        if (isCashPaidAtPos)
+        {
+            newOrder.Status = OrderStatus.PROCESSING; // Thu tiền mặt tại quầy xong thì chuyển ngay sang pha chế
+        }
 
         await _dbContext.Orders.AddAsync(newOrder, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -139,10 +156,22 @@ public class OrderService : IOrderService
         _logger.LogInformation("Tạo đơn hàng thành công: {OrderCode} (User: {UserId}, Tổng tiền: {FinalAmount}đ)",
             newOrder.OrderCode, targetUserId, newOrder.FinalAmount);
 
-        var orderDetailDto = MapToDetailDto(newOrder);
+        // Ánh xạ bằng AutoMapper
+        var orderDetailDto = _mapper.Map<OrderDetailDto>(newOrder);
 
-        // Bắn SignalR realtime cho Staff và Customer
-        await _notificationService.NotifyOrderCreatedAsync(orderDetailDto);
+        // Nếu phương thức thanh toán là VNPAY, tự động sinh luôn URL và mã QR để Staff/POS hiển thị ngay
+        if (initialPaymentMethod == PaymentMethod.VNPAY)
+        {
+            try
+            {
+                var ip = !string.IsNullOrWhiteSpace(clientIp) ? clientIp : "127.0.0.1";
+                orderDetailDto.VnPayPayment = _vnPayService.CreatePaymentUrl(newOrder, ip, request.ReturnUrl);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Không thể tự động sinh URL VNPay cho đơn {OrderCode}", newOrder.OrderCode);
+            }
+        }
 
         return ApiResponse<OrderDetailDto>.Success(orderDetailDto, "Đặt hàng thành công.", 201);
     }
@@ -196,28 +225,14 @@ public class OrderService : IOrderService
         var pageNumber = filter.PageNumber > 0 ? filter.PageNumber : 1;
         var pageSize = filter.PageSize > 0 ? filter.PageSize : 10;
 
-        var items = await query
+        var pagedOrders = await query
             .OrderByDescending(o => o.CreatedAt)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
-            .Select(o => new OrderDto
-            {
-                Id = o.Id,
-                UserId = o.UserId,
-                OrderCode = o.OrderCode,
-                TotalAmount = o.TotalAmount,
-                DiscountAmount = o.DiscountAmount,
-                FinalAmount = o.FinalAmount,
-                Status = o.Status,
-                CancelReason = o.CancelReason,
-                Note = o.Note,
-                CreatedAt = o.CreatedAt,
-                UpdatedAt = o.UpdatedAt,
-                TotalItems = o.OrderItems.Sum(i => i.Quantity),
-                PaymentMethod = o.OrderPayments.OrderByDescending(p => p.CreatedAt).Select(p => p.PaymentMethod).FirstOrDefault(),
-                PaymentStatus = o.OrderPayments.OrderByDescending(p => p.CreatedAt).Select(p => p.PaymentStatus).FirstOrDefault()
-            })
             .ToListAsync(cancellationToken);
+
+        // Ánh xạ danh sách Order sang OrderDto bằng AutoMapper
+        var items = _mapper.Map<List<OrderDto>>(pagedOrders);
 
         var pagedResult = new PagedResult<OrderDto>
         {
@@ -256,7 +271,7 @@ public class OrderService : IOrderService
             return ApiResponse<OrderDetailDto>.Fail("Bạn không có quyền truy cập đơn hàng này.", 403);
         }
 
-        var detailDto = MapToDetailDto(order);
+        var detailDto = _mapper.Map<OrderDetailDto>(order);
         return ApiResponse<OrderDetailDto>.Success(detailDto, "Lấy chi tiết đơn hàng thành công.");
     }
 
@@ -308,17 +323,13 @@ public class OrderService : IOrderService
         _logger.LogInformation("Cập nhật trạng thái đơn {OrderCode} -> {Status} bởi {UserId} ({Role})",
             order.OrderCode, nextStatus, currentUserId, currentUserRole);
 
-        // Bắn SignalR realtime
-        await _notificationService.NotifyOrderStatusChangedAsync(order.Id, order.OrderCode, order.UserId, nextStatus);
-
-        return ApiResponse<OrderDetailDto>.Success(MapToDetailDto(order), $"Cập nhật trạng thái sang '{nextStatus}' thành công.");
+        return ApiResponse<OrderDetailDto>.Success(_mapper.Map<OrderDetailDto>(order), $"Cập nhật trạng thái sang '{nextStatus}' thành công.");
     }
 
     public async Task<ApiResponse<OrderDetailDto>> CancelOrderAsync(
         Guid orderId, CancelOrderRequest request, Guid currentUserId, string currentUserRole, CancellationToken cancellationToken = default)
     {
-        var isStaffOrAdmin = string.Equals(currentUserRole, "Staff", StringComparison.OrdinalIgnoreCase) ||
-                             string.Equals(currentUserRole, "Admin", StringComparison.OrdinalIgnoreCase);
+        var isStaff = string.Equals(currentUserRole, "Staff", StringComparison.OrdinalIgnoreCase);
 
         var order = await _dbContext.Orders
             .Include(o => o.OrderItems)
@@ -331,7 +342,7 @@ public class OrderService : IOrderService
         }
 
         // BOLA / IDOR Protection: Nếu là Customer, chỉ được hủy đơn của chính mình
-        if (!isStaffOrAdmin && order.UserId != currentUserId)
+        if (!isStaff && order.UserId != currentUserId)
         {
             _logger.LogWarning("BOLA/IDOR Violation: User {UserId} cố gắng hủy đơn {OrderId} của User {OwnerId}",
                 currentUserId, orderId, order.UserId);
@@ -350,7 +361,7 @@ public class OrderService : IOrderService
         }
 
         // Điều kiện đối với Khách hàng: Chỉ được hủy khi đơn còn ở trạng thái "Tiếp nhận" (PENDING)
-        if (!isStaffOrAdmin)
+        if (!isStaff)
         {
             if (order.Status != OrderStatus.PENDING)
             {
@@ -360,10 +371,10 @@ public class OrderService : IOrderService
         }
         else
         {
-            // Điều kiện đối với Staff / Admin: Bắt buộc phải có lý do hủy
+            // Điều kiện đối với Staff: Bắt buộc phải có lý do hủy
             if (string.IsNullOrWhiteSpace(request.Reason))
             {
-                return ApiResponse<OrderDetailDto>.Fail("Nhân viên hoặc Quản trị viên bắt buộc phải nhập lý do hủy đơn.", 400);
+                return ApiResponse<OrderDetailDto>.Fail("Nhân viên (Staff) bắt buộc phải nhập lý do hủy đơn.", 400);
             }
         }
 
@@ -376,54 +387,6 @@ public class OrderService : IOrderService
         _logger.LogInformation("Hủy đơn hàng {OrderCode} bởi {UserId} ({Role}). Lý do: {Reason}",
             order.OrderCode, currentUserId, currentUserRole, order.CancelReason);
 
-        // Bắn SignalR realtime
-        await _notificationService.NotifyOrderStatusChangedAsync(order.Id, order.OrderCode, order.UserId, OrderStatus.CANCELLED, order.CancelReason);
-
-        return ApiResponse<OrderDetailDto>.Success(MapToDetailDto(order), "Hủy đơn hàng thành công.");
-    }
-
-    private static OrderDetailDto MapToDetailDto(Entities.Order order)
-    {
-        var latestPayment = order.OrderPayments.OrderByDescending(p => p.CreatedAt).FirstOrDefault();
-
-        return new OrderDetailDto
-        {
-            Id = order.Id,
-            UserId = order.UserId,
-            OrderCode = order.OrderCode,
-            TotalAmount = order.TotalAmount,
-            DiscountAmount = order.DiscountAmount,
-            FinalAmount = order.FinalAmount,
-            Status = order.Status,
-            CancelReason = order.CancelReason,
-            Note = order.Note,
-            CreatedAt = order.CreatedAt,
-            UpdatedAt = order.UpdatedAt,
-            TotalItems = order.OrderItems.Sum(i => i.Quantity),
-            PaymentMethod = latestPayment?.PaymentMethod,
-            PaymentStatus = latestPayment?.PaymentStatus,
-            Items = order.OrderItems.Select(i => new OrderItemDto
-            {
-                Id = i.Id,
-                OrderId = i.OrderId,
-                ProductId = i.ProductId,
-                ProductName = i.ProductName,
-                UnitPrice = i.UnitPrice,
-                Quantity = i.Quantity,
-                OptionsSummary = i.OptionsSummary,
-                Subtotal = i.Subtotal
-            }).ToList(),
-            Payments = order.OrderPayments.Select(p => new OrderPaymentDto
-            {
-                Id = p.Id,
-                OrderId = p.OrderId,
-                PaymentMethod = p.PaymentMethod,
-                TransactionCode = p.TransactionCode,
-                Amount = p.Amount,
-                PaymentStatus = p.PaymentStatus,
-                PaidAt = p.PaidAt,
-                CreatedAt = p.CreatedAt
-            }).ToList()
-        };
+        return ApiResponse<OrderDetailDto>.Success(_mapper.Map<OrderDetailDto>(order), "Hủy đơn hàng thành công.");
     }
 }

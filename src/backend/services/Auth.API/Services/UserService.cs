@@ -88,7 +88,7 @@ public class UserService : IUserService
             RoleId = staffRole.Id,
             Role = staffRole,
             Email = normalizedEmail,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password.Trim()),
             FullName = request.FullName.Trim(),
             PhoneNumber = request.PhoneNumber?.Trim(),
             Address = request.Address?.Trim(),
@@ -121,6 +121,33 @@ public class UserService : IUserService
 
         var statusMessage = request.IsActive ? "Mở khóa tài khoản thành công" : "Khóa tài khoản thành công";
         return ApiResponse<UserDto>.Success(MapToDto(user), statusMessage);
+    }
+
+    public async Task<ApiResponse<UserDto>> UpdateUserAsync(Guid id, UpdateUserRequest request, CancellationToken cancellationToken = default)
+    {
+        var user = await _userRepository.GetByIdAsync(id, cancellationToken);
+        if (user == null)
+        {
+            return ApiResponse<UserDto>.Fail("Không tìm thấy người dùng", 404);
+        }
+
+        user.FullName = request.FullName.Trim();
+        if (!string.IsNullOrWhiteSpace(request.PhoneNumber))
+        {
+            user.PhoneNumber = request.PhoneNumber.Trim();
+        }
+        if (request.Address != null)
+        {
+            user.Address = request.Address.Trim();
+        }
+        if (!string.IsNullOrWhiteSpace(request.AvatarUrl))
+        {
+            user.AvatarUrl = request.AvatarUrl.Trim();
+        }
+        user.UpdatedAt = DateTime.UtcNow;
+
+        await _userRepository.UpdateAsync(user, cancellationToken);
+        return ApiResponse<UserDto>.Success(MapToDto(user), "Cập nhật thông tin người dùng thành công");
     }
 
     public async Task<ApiResponse<bool>> DeleteUserAsync(Guid id, CancellationToken cancellationToken = default)

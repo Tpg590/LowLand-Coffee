@@ -1,0 +1,432 @@
+@page
+@model CoffeeShop.WebRazorPages.Pages.Staff.ProductsModel
+@{
+    Layout = "_StaffLayout";
+    ViewData["Title"] = "Quản lý Sản phẩm - Nhân viên";
+}
+
+<div class="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-gray-200 gap-4">
+        <div class="flex items-center gap-3.5">
+            <span class="w-12 h-12 rounded-2xl bg-amber-600 text-white flex items-center justify-center font-black text-xl shadow-md">
+                <i class="fi fi-rr-box-alt"></i>
+            </span>
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+                    <span>Quản lý Sản phẩm</span>
+                    <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black uppercase border border-emerald-200">Khu vực Nhân viên</span>
+                </h1>
+                <p class="text-sm text-gray-500 font-medium mt-0.5">Kiểm tra thực đơn món, theo dõi đơn giá và cập nhật nhanh trạng thái <strong class="text-gray-700">Còn hàng / Hết hàng</strong> cho quầy Bar</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+            <a href="/Staff/Categories" class="px-4 py-2.5 rounded-xl bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-bold shadow-xs flex items-center gap-2 transition">
+                <i class="fi fi-rr-apps text-sm text-amber-600"></i>
+                <span>Xem Phân loại danh mục</span>
+            </a>
+            <button type="button" onclick="loadCatalogData()" class="px-4 py-2.5 rounded-xl bg-red-highland hover:bg-red-700 text-white text-sm font-bold shadow-sm flex items-center gap-2 transition active:scale-95">
+                <i class="fi fi-rr-refresh text-sm"></i>
+                <span>Làm mới dữ liệu</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Thống kê nhanh (KPI Metrics) -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-xl shrink-0">
+                <i class="fi fi-rr-apps"></i>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Danh mục</div>
+                <div class="text-2xl font-black text-gray-900" id="stat-category-count">0</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-xl shrink-0">
+                <i class="fi fi-rr-mug-hot"></i>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Tổng số món</div>
+                <div class="text-2xl font-black text-gray-900" id="stat-product-count">0</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-xl shrink-0">
+                <i class="fi fi-rr-check-circle"></i>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Đang phục vụ</div>
+                <div class="text-2xl font-black text-emerald-600" id="stat-available-count">0</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-700 flex items-center justify-center text-xl shrink-0">
+                <i class="fi fi-rr-cross-circle"></i>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Tạm hết hàng</div>
+                <div class="text-2xl font-black text-rose-600" id="stat-out-of-stock-count">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KHỐI 2: DANH SÁCH SẢN PHẨM & BẬT/TẮT TỒN KHO -->
+    <div class="bg-white rounded-3xl border border-gray-200 shadow-xs overflow-hidden">
+        <!-- Bộ lọc & Tìm kiếm -->
+        <div class="p-6 border-b border-gray-200 flex flex-col lg:flex-row gap-4 items-center justify-between bg-slate-50/50">
+            <div class="flex items-center gap-3 w-full lg:w-auto">
+                <div class="relative flex-1 sm:w-80">
+                    <input type="text" id="filter-search" onkeyup="applyProductFilters()" placeholder="Tìm món nhanh (tên món)..." class="w-full bg-white border border-gray-300 rounded-xl pl-10 pr-4 py-2.5 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland focus:border-red-highland placeholder-gray-400 transition" />
+                    <span class="absolute left-3.5 top-3 text-gray-400">
+                        <i class="fi fi-rr-search text-sm"></i>
+                    </span>
+                </div>
+
+                <!-- Lọc trạng thái còn/hết hàng -->
+                <select id="filter-status" onchange="applyProductFilters()" class="bg-white border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-red-highland transition">
+                    <option value="ALL">Tất cả trạng thái</option>
+                    <option value="AVAILABLE">Chỉ món Còn hàng</option>
+                    <option value="OUT_OF_STOCK">Chỉ món Hết hàng</option>
+                </select>
+            </div>
+
+            <!-- Tabs danh mục -->
+            <div id="filter-cat-tabs" class="flex items-center gap-1.5 overflow-x-auto w-full lg:w-auto pb-1 lg:pb-0">
+                <button type="button" onclick="selectCategoryTab('ALL')" class="cat-pill active px-4 py-2 rounded-xl text-xs font-black bg-[#4F392E] text-white shadow-xs shrink-0 transition">
+                    Tất cả
+                </button>
+            </div>
+        </div>
+
+        <!-- Bảng Sản phẩm -->
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-600">
+                <thead class="text-xs font-black text-gray-400 uppercase bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="px-6 py-4">Sản phẩm</th>
+                        <th class="px-6 py-4">Danh mục</th>
+                        <th class="px-6 py-4">Đơn giá</th>
+                        <th class="px-6 py-4 text-center">Trạng thái kho</th>
+                        <th class="px-6 py-4 text-center">Hành động của Staff</th>
+                    </tr>
+                </thead>
+                <tbody id="product-table-body" class="divide-y divide-gray-100 font-medium">
+                    <tr>
+                        <td colspan="5" class="py-12 text-center text-gray-400">
+                            <i class="fi fi-rr-spinner animate-spin text-2xl mb-2 inline-block"></i>
+                            <p class="text-xs font-semibold">Đang tải dữ liệu sản phẩm từ máy chủ...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL CHI TIẾT SẢN PHẨM (VIEW PRODUCT DETAIL) -->
+<!-- ========================================================================= -->
+<div id="product-detail-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-gray-200 animate-in fade-in zoom-in duration-150">
+        <div class="relative h-48 bg-amber-50 flex items-center justify-center overflow-hidden border-b border-gray-100">
+            <img id="modal-img" src="" alt="Product" class="w-full h-full object-cover" />
+            <button type="button" onclick="closeProductModal()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition">
+                <i class="fi fi-rr-cross text-xs"></i>
+            </button>
+            <span id="modal-category-badge" class="absolute bottom-4 left-4 px-3 py-1 rounded-full bg-black/60 backdrop-blur-sm text-white text-xs font-bold">
+                Danh mục
+            </span>
+        </div>
+
+        <div class="p-6 space-y-4">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <h3 id="modal-title" class="text-xl font-black text-gray-900">Tên sản phẩm</h3>
+                    <div id="modal-price" class="text-lg font-black text-red-highland mt-0.5">0 đ</div>
+                </div>
+                <div id="modal-status-badge">
+                    <!-- Badge trạng thái -->
+                </div>
+            </div>
+
+            <div>
+                <div class="text-xs font-black uppercase tracking-wider text-gray-400 mb-1">Mô tả sản phẩm</div>
+                <p id="modal-desc" class="text-sm text-gray-600 bg-gray-50 p-3.5 rounded-2xl border border-gray-100 leading-relaxed">
+                    Không có mô tả.
+                </p>
+            </div>
+
+            <div class="pt-2 border-t border-gray-100 flex items-center justify-end gap-3">
+                <button type="button" onclick="closeProductModal()" class="px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 font-bold text-xs text-gray-700 transition">
+                    Đóng cửa sổ
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const PRODUCT_API_BASE = 'http://localhost:5002';
+    let allCategories = [];
+    let allProducts = [];
+    let currentSelectedCategory = 'ALL';
+
+    // Khởi tạo tải dữ liệu
+    document.addEventListener('DOMContentLoaded', () => {
+        loadCatalogData();
+    });
+
+    async function loadCatalogData() {
+        try {
+            // 1. Tải danh mục
+            const catRes = await fetch(`${PRODUCT_API_BASE}/api/categories`);
+            if (catRes.ok) {
+                const catJson = await catRes.json();
+                allCategories = catJson.data || [];
+            }
+
+            // 2. Tải toàn bộ sản phẩm
+            const prodRes = await fetch(`${PRODUCT_API_BASE}/api/products?pageSize=100`);
+            if (prodRes.ok) {
+                const prodJson = await prodRes.json();
+                allProducts = (prodJson.data && prodJson.data.items) ? prodJson.data.items : [];
+            }
+
+            renderMetrics();
+            renderCategoryTabs();
+            
+            // Tự động kích hoạt tab phân loại nếu truyền từ trang Categories sang (?category=ID)
+            const urlParams = new URLSearchParams(window.location.search);
+            const catParam = urlParams.get('category');
+            if (catParam) {
+                selectCategoryTab(catParam);
+            } else {
+                applyProductFilters();
+            }
+
+        } catch (error) {
+            console.error('Lỗi khi tải dữ liệu catalog:', error);
+            if (typeof showToast === 'function') {
+                showToast('Lỗi kết nối', 'Không thể kết nối đến máy chủ Product.API (5002)', 'error');
+            }
+        }
+    }
+
+    // Hiển thị KPI Cards
+    function renderMetrics() {
+        const catCount = allCategories.length;
+        const prodCount = allProducts.length;
+        const availableCount = allProducts.filter(p => p.isAvailable).length;
+        const outOfStockCount = prodCount - availableCount;
+
+        document.getElementById('stat-category-count').innerText = catCount;
+        document.getElementById('stat-product-count').innerText = prodCount;
+        document.getElementById('stat-available-count').innerText = availableCount;
+        document.getElementById('stat-out-of-stock-count').innerText = outOfStockCount;
+    }
+
+    // Hiển thị pills lọc danh mục
+    function renderCategoryTabs() {
+        const container = document.getElementById('filter-cat-tabs');
+        if (!container) return;
+
+        let html = `
+            <button type="button" onclick="selectCategoryTab('ALL')" class="cat-pill active px-4 py-2 rounded-xl text-xs font-black bg-[#4F392E] text-white shadow-xs shrink-0 transition" data-cat="ALL">
+                Tất cả
+            </button>
+        `;
+
+        allCategories.forEach(cat => {
+            html += `
+                <button type="button" onclick="selectCategoryTab('${cat.id}')" class="cat-pill px-4 py-2 rounded-xl text-xs font-bold bg-white text-gray-600 hover:bg-gray-100 border border-gray-200 shrink-0 transition" data-cat="${cat.id}">
+                    ${cat.name}
+                </button>
+            `;
+        });
+
+        container.innerHTML = html;
+    }
+
+    function selectCategoryTab(catId) {
+        currentSelectedCategory = catId;
+        document.querySelectorAll('.cat-pill').forEach(btn => {
+            if (btn.getAttribute('data-cat') === catId) {
+                btn.className = "cat-pill active px-4 py-2 rounded-xl text-xs font-black bg-[#4F392E] text-white shadow-xs shrink-0 transition";
+            } else {
+                btn.className = "cat-pill px-4 py-2 rounded-xl text-xs font-bold bg-white text-gray-600 hover:bg-gray-100 border border-gray-200 shrink-0 transition";
+            }
+        });
+        applyProductFilters();
+    }
+
+    // Lọc và render bảng sản phẩm
+    function applyProductFilters() {
+        const keyword = (document.getElementById('filter-search')?.value || '').toLowerCase().trim();
+        const statusFilter = document.getElementById('filter-status')?.value || 'ALL';
+
+        let filtered = allProducts.filter(p => {
+            // Danh mục
+            if (currentSelectedCategory !== 'ALL' && p.categoryId !== currentSelectedCategory) {
+                return false;
+            }
+            // Trạng thái kho
+            if (statusFilter === 'AVAILABLE' && !p.isAvailable) return false;
+            if (statusFilter === 'OUT_OF_STOCK' && p.isAvailable) return false;
+            // Từ khóa
+            if (keyword) {
+                const matchName = (p.name || '').toLowerCase().includes(keyword);
+                const matchCat = (p.categoryName || '').toLowerCase().includes(keyword);
+                if (!matchName && !matchCat) return false;
+            }
+            return true;
+        });
+
+        renderProductTable(filtered);
+    }
+
+    function renderProductTable(products) {
+        const tbody = document.getElementById('product-table-body');
+        if (!tbody) return;
+
+        if (products.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="py-12 text-center text-gray-400">
+                        <i class="fi fi-rr-box text-3xl mb-2 inline-block"></i>
+                        <p class="text-sm font-bold text-gray-600">Không tìm thấy món nào phù hợp</p>
+                        <p class="text-xs text-gray-400 mt-1">Thử thay đổi từ khóa tìm kiếm hoặc bỏ chọn bộ lọc</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = products.map(p => {
+            const isAvail = p.isAvailable === true;
+            const statusBadge = isAvail
+                ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Còn hàng
+                   </span>`
+                : `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                     <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Hết hàng
+                   </span>`;
+
+            const actionBtn = isAvail
+                ? `<button type="button" onclick="toggleStock('${p.id}', false, '${p.name}')" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs flex items-center gap-1.5 transition">
+                     <i class="fi fi-rr-cross text-xs"></i>
+                     <span>Báo Hết hàng</span>
+                   </button>`
+                : `<button type="button" onclick="toggleStock('${p.id}', true, '${p.name}')" class="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold text-xs flex items-center gap-1.5 transition">
+                     <i class="fi fi-rr-check text-xs"></i>
+                     <span>Báo Còn hàng</span>
+                   </button>`;
+
+            return `
+                <tr class="hover:bg-gray-50/80 transition">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3.5">
+                            <img src="${p.imageUrl || '/images/logo.jpg'}" alt="${p.name}" class="w-12 h-12 object-cover rounded-xl border border-gray-200 bg-gray-50 shrink-0" onerror="this.src='/images/logo.jpg'" />
+                            <div>
+                                <div class="font-black text-gray-900">${p.name}</div>
+                                <div class="text-xs text-gray-400 line-clamp-1">${p.description || 'Món đồ uống đặc trưng LowLand Coffee'}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 text-xs font-bold">
+                            ${p.categoryName || 'Cà phê'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 font-black text-gray-900">
+                        ${(p.basePrice || p.price || 0).toLocaleString('vi-VN')} đ
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        ${statusBadge}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center justify-center gap-2">
+                            ${actionBtn}
+                            <button type="button" onclick="viewProductDetail('${p.id}')" title="Xem chi tiết" class="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition">
+                                <i class="fi fi-rr-eye flex items-center"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // Toggle trạng thái Còn hàng / Hết hàng
+    async function toggleStock(productId, newStatus, productName) {
+        try {
+            const response = await fetch(`${PRODUCT_API_BASE}/api/products/${productId}/toggle-stock`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ isAvailable: newStatus })
+            });
+
+            if (!response.ok) {
+                throw new Error('Cập nhật trạng thái thất bại');
+            }
+
+            const resJson = await response.json();
+            if (resJson.success) {
+                // Cập nhật trạng thái trong local array
+                const prod = allProducts.find(p => p.id === productId);
+                if (prod) {
+                    prod.isAvailable = newStatus;
+                }
+
+                renderMetrics();
+                applyProductFilters();
+
+                const statusText = newStatus ? 'Còn hàng' : 'Hết hàng';
+                if (typeof showToast === 'function') {
+                    showToast('Đã cập nhật tồn kho', `Món "${productName}" đã được chuyển sang trạng thái: ${statusText}.`, 'success');
+                }
+            } else {
+                throw new Error(resJson.message || 'Lỗi cập nhật');
+            }
+        } catch (error) {
+            console.error('Lỗi toggle stock:', error);
+            if (typeof showToast === 'function') {
+                showToast('Lỗi cập nhật', error.message || 'Không thể cập nhật trạng thái món.', 'error');
+            }
+        }
+    }
+
+    // Xem chi tiết món
+    function viewProductDetail(productId) {
+        const prod = allProducts.find(p => p.id === productId);
+        if (!prod) return;
+
+        document.getElementById('modal-img').src = prod.imageUrl || '/images/logo.jpg';
+        document.getElementById('modal-title').innerText = prod.name;
+        document.getElementById('modal-price').innerText = `${(prod.basePrice || prod.price || 0).toLocaleString('vi-VN')} đ`;
+        document.getElementById('modal-desc').innerText = prod.description || 'Không có mô tả chi tiết cho sản phẩm này.';
+        document.getElementById('modal-category-badge').innerText = prod.categoryName || 'Danh mục';
+
+        const statusBadge = document.getElementById('modal-status-badge');
+        if (prod.isAvailable) {
+            statusBadge.innerHTML = `<span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">Còn hàng</span>`;
+        } else {
+            statusBadge.innerHTML = `<span class="px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200">Tạm hết hàng</span>`;
+        }
+
+        document.getElementById('product-detail-modal').classList.remove('hidden');
+    }
+
+    function closeProductModal() {
+        document.getElementById('product-detail-modal').classList.add('hidden');
+    }
+</script>
+}

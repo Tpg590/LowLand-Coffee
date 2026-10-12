@@ -1,0 +1,30 @@
+@page
+@model CoffeeShop.WebRazorPages.Pages.Admin.ProductsModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý Sản phẩm";
+}
+
+<div class="w-full space-y-6">
+    <!-- Tiêu đề trang đơn giản -->
+    <div class="flex items-center justify-between pb-4 border-b border-gray-200">
+        <div class="flex items-center gap-3">
+            <span class="p-3 rounded-2xl bg-amber-100 text-amber-700 shadow-sm flex items-center justify-center">
+                <i class="fi fi-rr-box-alt text-2xl"></i>
+            </span>
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Quản lý Sản phẩm</h1>
+                <p class="text-sm text-gray-500 mt-0.5">Trang dành cho thành viên phụ trách Module Product phát triển giao diện</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Khung trống chờ người làm Product ghép giao diện -->
+    <div class="bg-white rounded-3xl border-2 border-dashed border-gray-300 p-12 text-center text-gray-500">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-50 text-gray-400 flex items-center justify-center text-3xl">
+            <i class="fi fi-rr-box-alt"></i>
+        </div>
+        <h3 class="text-lg font-bold text-gray-800 mb-1">Khu vực Giao diện Sản phẩm</h3>
+        <p class="text-sm text-gray-500 max-w-md mx-auto">Trang này đã được tích hợp sẵn vào thanh Sidebar bên trái của Quản trị viên. Người làm Product chỉ cần bắt đầu lập trình giao diện tại đây.</p>
+    </div>
+</div>
