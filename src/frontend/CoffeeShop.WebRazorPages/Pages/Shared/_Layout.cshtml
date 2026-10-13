@@ -799,7 +799,6 @@ function renderNotifications() {
                     throw new Error(`Xóa thông báo thất bại (${response.status}).`);
                 }
 
-               
                 notifications = notifications.filter(
                     item => String(getField(item, "id", "Id")) !== String(id)
                 );
@@ -902,7 +901,6 @@ function renderNotifications() {
 
                 const result = await response.json();
 
-              
                 const item = result.data ?? result.Data ?? result;
 
                 currentDetailNotificationId =
@@ -911,7 +909,7 @@ function renderNotifications() {
                 detailTitle.textContent =
                     item.title ?? item.Title ?? "Thông báo";
 
-              
+
                 detailMessage.textContent =
                     item.message ?? item.Message ?? "";
 
@@ -964,7 +962,6 @@ function renderNotifications() {
 
             const id = currentDetailNotificationId;
 
-            
             const item = notifications.find(
                 x => String(getField(x, "id", "Id")) === String(id)
             );
@@ -975,7 +972,6 @@ function renderNotifications() {
                 await markAsRead(id);
             }
 
-           
             const updatedItem = notifications.find(
                 x => String(getField(x, "id", "Id")) === String(id)
             );
@@ -1023,11 +1019,9 @@ function renderNotifications() {
                     .withAutomaticReconnect()
                     .build();
 
-
                 connection.on("ReceiveNotification", async notification => {
                     console.log("Nhận thông báo SignalR:", notification);
 
-                   
                     await loadNotifications();
 
                     if (typeof showToast === "function") {

@@ -19,7 +19,11 @@ public partial class CoffeeNotificationDbContext : DbContext
 
     public virtual DbSet<NotifNotificationLog> NotifNotificationLogs { get; set; }
 
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> 2c9396c (Implement notification service)
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
