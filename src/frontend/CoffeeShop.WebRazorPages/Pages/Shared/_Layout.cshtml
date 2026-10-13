@@ -68,6 +68,7 @@
     <!-- Custom Global CSS -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
+
 <body class="font-sans bg-[#FBFBFB] text-gray-800 flex flex-col min-h-screen">
     <!-- ========================================================================= -->
     <!-- Flowbite Navbar Component (LowLand Coffee Theme) -->
@@ -109,6 +110,59 @@
 
                 <!-- Mobile Toggle Button -->
                 <div class="flex items-center lg:order-2 gap-3.5">
+
+                    <!-- Notification Bell -->
+                    <div id="notification-wrapper" class="relative">
+                        <button id="notification-bell"
+                                type="button"
+                                class="relative p-3 rounded-full bg-red-700/70 hover:bg-red-700 text-white transition flex items-center justify-center shadow-md"
+                                aria-label="Thông báo"
+                                aria-expanded="false"
+                                title="Thông báo">
+
+                            <i class="fi fi-rr-bell text-xl"></i>
+
+                            <span id="notification-unread-count"
+                                  class="hidden absolute -top-1 -right-1 min-w-5 h-5 px-1 bg-amber-300 text-red-950 text-xs font-black rounded-full items-center justify-center shadow-md">
+                                0
+                            </span>
+                        </button>
+
+                        <!-- Notification Dropdown -->
+                        <div id="notification-dropdown"
+                             class="hidden absolute right-0 top-full mt-3 w-[min(90vw,380px)] bg-white rounded-2xl shadow-2xl border border-gray-100 z-[60] overflow-hidden">
+
+                            <div class="flex items-center justify-between px-4 py-3 border-b bg-gray-50">
+                                <div>
+                                    <h3 class="font-black text-gray-900">Thông báo</h3>
+                                    <p id="notification-subtitle" class="text-xs text-gray-500 mt-0.5">
+                                        Các cập nhật mới nhất
+                                    </p>
+                                </div>
+
+                                <button id="notification-refresh"
+                                        type="button"
+                                        class="text-sm font-bold text-red-highland hover:underline">
+                                    Làm mới
+                                </button>
+                            </div>
+
+                            <div id="notification-list"
+                                 class="max-h-[380px] overflow-y-auto divide-y divide-gray-100">
+                                <div class="p-6 text-center text-sm text-gray-500">
+                                    Đang tải thông báo...
+                                </div>
+                            </div>
+
+                            <div class="px-4 py-3 border-t bg-gray-50 text-center">
+                                <span id="notification-connection-status"
+                                      class="text-xs text-gray-500">
+                                    Đang kết nối...
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Cart Button with Flaticon-style icon & Badge -->
                     <a asp-page="/Order" class="relative p-3 rounded-full bg-red-700/70 hover:bg-red-700 text-white transition flex items-center justify-center shadow-md" title="Xem giỏ hàng & Đặt hàng">
                         <i class="fi fi-rr-shopping-bag text-xl"></i>
@@ -251,6 +305,54 @@
         </div>
     </footer>
 
+    <!-- Notification Detail Modal -->
+    <div id="notification-detail-modal"
+         class="hidden fixed inset-0 z-[100] items-center justify-center bg-black/50 p-4">
+
+        <div class="w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between border-b px-5 py-4">
+                <h3 class="text-lg font-black text-gray-900">
+                    Chi tiết thông báo
+                </h3>
+
+                <button id="notification-detail-close"
+                        type="button"
+                        class="text-2xl text-gray-500 hover:text-red-600"
+                        aria-label="Đóng">
+                    &times;
+                </button>
+            </div>
+
+            <div class="p-5">
+                <h4 id="notification-detail-title"
+                    class="text-base font-bold text-gray-900">
+                </h4>
+
+                <p id="notification-detail-time"
+                   class="mt-2 text-xs text-gray-500">
+                </p>
+
+                <div id="notification-detail-message"
+                     class="mt-4 whitespace-pre-line break-words text-sm leading-7 text-gray-700">
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 border-t bg-gray-50 px-5 py-4">
+                <button id="notification-detail-mark-read"
+                        type="button"
+                        class="rounded-lg bg-green-600 px-4 py-2 text-sm font-bold text-white hover:bg-green-700">
+                    Đánh dấu đã đọc
+                </button>
+
+                <button id="notification-detail-done"
+                        type="button"
+                        class="rounded-lg bg-gray-200 px-4 py-2 text-sm font-bold text-gray-800 hover:bg-gray-300">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification Container (Requirement 1: Thay thế hoàn toàn alert) -->
     <div id="toast-container"></div>
 
@@ -258,6 +360,7 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     <script>
@@ -341,6 +444,688 @@
                 }
             } catch (e) {}
         }
+
+
+        (() => {
+           const API_BASE = "http://localhost:5005";
+
+            const bell = document.getElementById("notification-bell");
+            const dropdown = document.getElementById("notification-dropdown");
+            const list = document.getElementById("notification-list");
+            const badge = document.getElementById("notification-unread-count");
+            const subtitle = document.getElementById("notification-subtitle");
+            const status = document.getElementById("notification-connection-status");
+            const refreshButton = document.getElementById("notification-refresh");
+
+            if (!bell || !dropdown || !list || !badge) return;
+
+            let connection = null;
+            let notifications = [];
+            let unreadCount = 0;
+            let started = false;
+
+            function getToken() {
+                return localStorage.getItem("auth_token");
+            }
+
+            function getField(item, ...names) {
+                for (const name of names) {
+                    if (item && item[name] !== undefined && item[name] !== null) {
+                        return item[name];
+                    }
+                }
+                return "";
+            }
+
+            function showMessage(message) {
+                list.replaceChildren();
+
+                const element = document.createElement("div");
+                element.className = "p-6 text-center text-sm text-gray-500";
+                element.textContent = message;
+
+                list.appendChild(element);
+            }
+
+            function updateBadge(count) {
+                unreadCount = Math.max(0, Number(count) || 0);
+
+                badge.textContent = unreadCount > 99 ? "99+" : String(unreadCount);
+                badge.classList.toggle("hidden", unreadCount === 0);
+                badge.classList.toggle("flex", unreadCount > 0);
+
+                subtitle.textContent = unreadCount > 0
+                    ? `${unreadCount} thông báo chưa đọc`
+                    : "Bạn đã xem hết thông báo";
+            }
+
+            function formatDate(value) {
+                if (!value) return "";
+
+                const date = new Date(value);
+
+                if (Number.isNaN(date.getTime())) return "";
+
+                return date.toLocaleString("vi-VN", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit"
+                });
+            }
+
+            
+function isNotificationRead(item) {
+    const value = getField(item, "isRead", "IsRead");
+    return value === true || value === 1;
+}
+
+function renderNotifications() {
+    list.replaceChildren();
+
+    if (!notifications.length) {
+        showMessage("Bạn chưa có thông báo nào.");
+        updateBadge(0);
+        return;
+    }
+
+    updateBadge(
+        notifications.filter(item => !isNotificationRead(item)).length
+    );
+
+    notifications.forEach(item => {
+        const id = getField(item, "id", "Id");
+        const title = getField(item, "title", "Title") || "Thông báo";
+                const content =
+            getField(item, "message", "Message", "content", "Content") ||
+            getField(item, "type", "Type") ||
+            "";
+        const type = String(getField(item, "type", "Type") || "");
+        const createdAt = getField(item, "createdAt", "CreatedAt");
+        const isRead = isNotificationRead(item);
+
+        const row = document.createElement("div");
+        row.className =
+            "p-4 hover:bg-red-50/60 transition flex gap-3 items-start";
+
+        if (!isRead) {
+            row.classList.add("bg-amber-50/50");
+        }
+
+        // Icon thông báo
+        const icon = document.createElement("div");
+        icon.className =
+            "w-10 h-10 rounded-full bg-red-100 text-red-highland " +
+            "flex items-center justify-center shrink-0";
+
+        const iconElement = document.createElement("i");
+        iconElement.className = type.toLowerCase().includes("promo")
+            ? "fi fi-rr-gift text-lg"
+            : "fi fi-rr-bell text-lg";
+
+        icon.appendChild(iconElement);
+
+        // Nội dung
+        const body = document.createElement("div");
+        body.className = "min-w-0 flex-1";
+
+        const heading = document.createElement("div");
+        heading.className = "flex items-start justify-between gap-2";
+
+        const titleElement = document.createElement("p");
+        titleElement.className = "text-sm font-bold text-gray-900";
+        titleElement.textContent = title;
+
+        heading.appendChild(titleElement);
+
+        if (!isRead) {
+            const dot = document.createElement("span");
+            dot.className =
+                "w-2 h-2 rounded-full bg-red-600 shrink-0 mt-1.5";
+            dot.title = "Chưa đọc";
+            heading.appendChild(dot);
+        }
+
+        const contentElement = document.createElement("p");
+        contentElement.className =
+            "text-sm text-gray-600 mt-1 whitespace-pre-line break-words";
+        contentElement.textContent = content;
+
+        const timeElement = document.createElement("p");
+        timeElement.className = "text-xs text-gray-400 mt-2";
+        timeElement.textContent = formatDate(createdAt);
+
+        body.append(heading, contentElement, timeElement);
+
+        // Khu vực các nút thao tác
+        const actions = document.createElement("div");
+        actions.className = "flex flex-col items-end gap-2 shrink-0";
+
+        // Nút Đã đọc: chỉ hiện khi thông báo chưa đọc
+        if (!isRead && id) {
+            const readButton = document.createElement("button");
+            readButton.type = "button";
+            readButton.className =
+                "text-xs font-bold text-red-highland hover:underline";
+            readButton.textContent = "Đã đọc";
+
+            readButton.addEventListener("click", async event => {
+                event.stopPropagation();
+                await markAsRead(id);
+            });
+
+            actions.appendChild(readButton);
+        }
+
+        // Nút Xóa: hiện với tất cả thông báo
+        if (id) {
+            const deleteButton = document.createElement("button");
+            deleteButton.type = "button";
+            deleteButton.className =
+                "text-xs font-bold text-gray-500 hover:text-red-700 hover:underline";
+            deleteButton.textContent = "Xóa";
+
+            deleteButton.addEventListener("click", async event => {
+                event.stopPropagation();
+                await deleteNotification(id);
+            });
+
+            actions.appendChild(deleteButton);
+        }
+
+                // Nút xem chi tiết
+        const detailButton = document.createElement("button");
+
+        detailButton.type = "button";
+        detailButton.className =
+            "mt-2 text-xs font-bold text-blue-700 hover:text-blue-900 hover:underline";
+
+        detailButton.textContent = "Xem chi tiết";
+
+        detailButton.addEventListener("click", event => {
+            event.stopPropagation();
+            viewNotificationDetail(id);
+        });
+
+        body.appendChild(detailButton);
+
+        row.append(icon, body, actions);
+        list.appendChild(row);
+    });
+}
+
+
+            async function loadNotifications() {
+                const token = getToken();
+
+                if (!token) {
+                    notifications = [];
+                    updateBadge(0);
+                    showMessage("Vui lòng đăng nhập để xem thông báo.");
+                    return;
+                }
+
+                try {
+                    const response = await fetch(
+                        `${API_BASE}/api/notifications/inbox`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${token}`
+                            }
+                        }
+                    );
+
+                    if (!response.ok) {
+                        if (response.status === 401 || response.status === 403) {
+                            showMessage("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+                            return;
+                        }
+
+                        throw new Error(`Không tải được thông báo (${response.status}).`);
+                    }
+
+                    const result = await response.json();
+
+                    // Hỗ trợ một số cấu trúc response phổ biến.
+                    const data = result.data ?? result.Data ?? result;
+
+                    notifications = Array.isArray(data)
+                        ? data
+                        : (data.items ?? data.Items ?? data.notifications ?? data.Notifications ?? []);
+
+                    renderNotifications();
+                } catch (error) {
+                    console.error("Load notifications error:", error);
+                    showMessage("Không tải được thông báo. Vui lòng thử làm mới.");
+                }
+            }
+
+
+        async function markAsRead(id) {
+            const token = getToken();
+
+            if (!token) {
+                showMessage("Vui lòng đăng nhập để tiếp tục.");
+                return;
+            }
+
+            try {
+                const response = await fetch(
+                    `${API_BASE}/api/notifications/${encodeURIComponent(id)}/read`,
+                    {
+                        method: "PATCH",
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        showMessage("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+                        return;
+                    }
+
+                    throw new Error(
+                        `Đánh dấu đã đọc thất bại (${response.status}).`
+                    );
+                }
+
+                // Đồng bộ trạng thái trong danh sách hiện tại
+                const item = notifications.find(
+                    x => String(getField(x, "id", "Id")) === String(id)
+                );
+
+                if (item) {
+                    if ("isRead" in item) {
+                        item.isRead = true;
+                    } else {
+                        item.IsRead = true;
+                    }
+                }
+
+                renderNotifications();
+
+                if (typeof showToast === "function") {
+                    showToast(
+                        "Thành công",
+                        "Đã đánh dấu thông báo là đã đọc.",
+                        "success"
+                    );
+                }
+            } catch (error) {
+                console.error("Mark notification read error:", error);
+
+                if (typeof showToast === "function") {
+                    showToast(
+                        "Lỗi",
+                        "Không thể đánh dấu thông báo đã đọc.",
+                        "error"
+                    );
+                }
+            }
+        }
+
+        async function deleteNotification(id) {
+            const token = getToken();
+
+            if (!token) {
+                showMessage("Vui lòng đăng nhập để tiếp tục.");
+                return;
+            }
+
+            try {
+                const response = await fetch(
+                    `${API_BASE}/api/notifications/${encodeURIComponent(id)}`,
+                    {
+                        method: "DELETE",
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        showMessage("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+                        return;
+                    }
+
+                    if (response.status === 404) {
+                        throw new Error("Thông báo không tồn tại hoặc đã bị xóa.");
+                    }
+
+                    throw new Error(`Xóa thông báo thất bại (${response.status}).`);
+                }
+
+                // Xóa khỏi danh sách trên giao diện
+                notifications = notifications.filter(
+                    item => String(getField(item, "id", "Id")) !== String(id)
+                );
+
+                renderNotifications();
+
+                if (typeof showToast === "function") {
+                    showToast(
+                        "Thành công",
+                        "Đã xóa thông báo.",
+                        "success"
+                    );
+                }
+            } catch (error) {
+                console.error("Delete notification error:", error);
+
+                if (typeof showToast === "function") {
+                    showToast(
+                        "Lỗi",
+                        error.message || "Không thể xóa thông báo.",
+                        "error"
+                    );
+                }
+            }
+        }
+
+        const detailModal = document.getElementById(
+            "notification-detail-modal"
+        );
+
+        const detailTitle = document.getElementById(
+            "notification-detail-title"
+        );
+
+        const detailTime = document.getElementById(
+            "notification-detail-time"
+        );
+
+        const detailMessage = document.getElementById(
+            "notification-detail-message"
+        );
+
+        const detailMarkReadButton = document.getElementById(
+            "notification-detail-mark-read"
+        );
+
+        let currentDetailNotificationId = null;
+
+        function closeNotificationDetail() {
+            detailModal.classList.add("hidden");
+            detailModal.classList.remove("flex");
+            currentDetailNotificationId = null;
+        }
+
+        async function viewNotificationDetail(id) {
+            const token = getToken();
+
+            if (!token || !id) {
+                showMessage("Vui lòng đăng nhập để xem thông báo.");
+                return;
+            }
+
+            try {
+                const response = await fetch(
+                    `${API_BASE}/api/notifications/${encodeURIComponent(id)}`,
+                    {
+                        method: "GET",
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            Accept: "application/json"
+                        }
+                    }
+                );
+
+                if (response.status === 401 || response.status === 403) {
+                    if (typeof showToast === "function") {
+                        showToast(
+                            "Lỗi",
+                            "Phiên đăng nhập không hợp lệ hoặc đã hết hạn.",
+                            "error"
+                        );
+                    }
+                    return;
+                }
+
+                if (response.status === 404) {
+                    if (typeof showToast === "function") {
+                        showToast(
+                            "Thông báo",
+                            "Không tìm thấy thông báo.",
+                            "error"
+                        );
+                    }
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                // Hỗ trợ cả response object trực tiếp và response.data.
+                const item = result.data ?? result.Data ?? result;
+
+                currentDetailNotificationId =
+                    item.id ?? item.Id ?? id;
+
+                detailTitle.textContent =
+                    item.title ?? item.Title ?? "Thông báo";
+
+                // API hiện tại trả message = notification.Type.
+                detailMessage.textContent =
+                    item.message ?? item.Message ?? "";
+
+                const createdAt =
+                    item.createdAt ?? item.CreatedAt;
+
+                if (createdAt) {
+                    const date = new Date(createdAt);
+
+                    detailTime.textContent =
+                        Number.isNaN(date.getTime())
+                            ? String(createdAt)
+                            : date.toLocaleString("vi-VN", {
+                                dateStyle: "medium",
+                                timeStyle: "short",
+                                timeZone: "Asia/Ho_Chi_Minh"
+                            });
+                } else {
+                    detailTime.textContent = "";
+                }
+
+                const isRead =
+                    item.isRead ?? item.IsRead ?? false;
+
+                detailMarkReadButton.style.display =
+                    isRead === true ||
+                    isRead === 1 ||
+                    isRead === "true"
+                        ? "none"
+                        : "inline-block";
+
+                detailModal.classList.remove("hidden");
+                detailModal.classList.add("flex");
+
+            } catch (error) {
+                console.error("Lỗi lấy chi tiết thông báo:", error);
+
+                if (typeof showToast === "function") {
+                    showToast(
+                        "Lỗi",
+                        "Không thể tải chi tiết thông báo.",
+                        "error"
+                    );
+                }
+            }
+        }
+
+        async function markDetailAsRead() {
+            if (!currentDetailNotificationId) return;
+
+            const id = currentDetailNotificationId;
+
+            // Tái sử dụng hàm đánh dấu đã đọc đang có.
+            const item = notifications.find(
+                x => String(getField(x, "id", "Id")) === String(id)
+            );
+
+            const alreadyRead = item && isNotificationRead(item);
+
+            if (!alreadyRead) {
+                await markAsRead(id);
+            }
+
+            // Chỉ ẩn nút nếu trạng thái đã đọc được cập nhật thành công.
+            const updatedItem = notifications.find(
+                x => String(getField(x, "id", "Id")) === String(id)
+            );
+
+            if (updatedItem && isNotificationRead(updatedItem)) {
+                detailMarkReadButton.style.display = "none";
+            }
+        }
+
+        document.getElementById("notification-detail-close")
+            .addEventListener("click", closeNotificationDetail);
+
+        document.getElementById("notification-detail-done")
+            .addEventListener("click", closeNotificationDetail);
+
+        detailModal.addEventListener("click", event => {
+            if (event.target === detailModal) {
+                closeNotificationDetail();
+            }
+        });
+
+        detailMarkReadButton.addEventListener(
+            "click",
+            markDetailAsRead
+        );
+
+
+            async function connectSignalR() {
+                if (!getToken()) {
+                    status.textContent = "Đăng nhập để nhận thông báo";
+                    return;
+                }
+
+                if (started || !window.signalR) {
+                    if (!window.signalR) {
+                        status.textContent = "Không tải được thư viện SignalR";
+                    }
+                    return;
+                }
+
+                connection = new signalR.HubConnectionBuilder()
+                    .withUrl(`${API_BASE}/hubs/notifications`, {
+                        accessTokenFactory: () => getToken() || ""
+                    })
+                    .withAutomaticReconnect()
+                    .build();
+
+                // Event phải trùng tên server đang gửi.
+                connection.on("ReceiveNotification", async notification => {
+                    console.log("Nhận thông báo SignalR:", notification);
+
+                    // Tải lại inbox để đồng bộ IsRead và số lượng chưa đọc từ DB.
+                    await loadNotifications();
+
+                    if (typeof showToast === "function") {
+                        showToast(
+                            getField(notification, "title", "Title") || "Thông báo mới",
+                            getField(notification, "content", "Content") || "Bạn có cập nhật mới.",
+                            "info"
+                        );
+                    }
+                });
+
+                connection.onreconnecting(() => {
+                    status.textContent = "Đang kết nối lại...";
+                });
+
+                connection.onreconnected(async () => {
+                    status.textContent = "Đã kết nối thời gian thực";
+                    await loadNotifications();
+                });
+
+                connection.onclose(() => {
+                    started = false;
+                    status.textContent = "Mất kết nối thời gian thực";
+                });
+
+                try {
+                    await connection.start();
+                    started = true;
+                    status.textContent = "Đã kết nối thời gian thực";
+                    await loadNotifications();
+                } catch (error) {
+                    started = false;
+                    status.textContent = "Không kết nối được SignalR";
+                    console.error("SignalR connection error:", error);
+                }
+            }
+
+            bell.addEventListener("click", async () => {
+                const willOpen = dropdown.classList.contains("hidden");
+
+                dropdown.classList.toggle("hidden", !willOpen);
+                bell.setAttribute("aria-expanded", String(willOpen));
+
+                if (willOpen) {
+                    await loadNotifications();
+                }
+            });
+
+            refreshButton.addEventListener("click", loadNotifications);
+
+            document.addEventListener("click", event => {
+                const wrapper = document.getElementById("notification-wrapper");
+
+                if (wrapper && !wrapper.contains(event.target)) {
+                    dropdown.classList.add("hidden");
+                    bell.setAttribute("aria-expanded", "false");
+                }
+            });
+
+            // Chạy khi trang đã tải xong.
+                   // Khởi tạo ngay nếu DOM đã tải xong,
+        // nếu chưa thì đợi DOMContentLoaded.
+        async function initializeNotifications() {
+            await loadNotifications();
+            await connectSignalR();
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener(
+                "DOMContentLoaded",
+                initializeNotifications,
+                { once: true }
+            );
+        } else {
+            initializeNotifications();
+        }
+
+            // Cho phép kết nối lại sau khi đăng nhập mà không cần tải lại trang.
+            window.addEventListener("storage", event => {
+                if (event.key === "auth_token") {
+                    started = false;
+
+                    if (connection) {
+                        connection.stop().catch(console.error);
+                        connection = null;
+                    }
+
+                    if (getToken()) {
+                        connectSignalR();
+                        loadNotifications();
+                    } else {
+                        status.textContent = "Đăng nhập để nhận thông báo";
+                        updateBadge(0);
+                        showMessage("Vui lòng đăng nhập để xem thông báo.");
+                    }
+                }
+            });
+        })();
 
         function logoutCustomer() {
             localStorage.removeItem('current_user');
