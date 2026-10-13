@@ -1,0 +1,164 @@
+@page
+@model CoffeeShop.WebRazorPages.Pages.Auth.LoginModel
+@{
+    ViewData["Title"] = "Đăng nhập - LowLand Coffee";
+}
+
+<div class="w-full min-h-[calc(100vh-160px)] flex items-center justify-center px-4 sm:px-8 py-10">
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden">
+        <!-- Header Banner with Brand Red -->
+        <div class="bg-gradient-to-r from-red-highland via-[#B32028] to-red-highland-dark text-white p-8 text-center relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-white/10 blur-xl pointer-events-none"></div>
+            <img src="~/images/logo.jpg" alt="LowLand Coffee" class="w-16 h-16 mx-auto rounded-full object-contain bg-amber-50 shadow-md border-2 border-amber-200 mb-3" />
+            <h2 class="text-2xl sm:text-3xl font-black tracking-tight uppercase">Đăng nhập</h2>
+            <p class="text-sm text-amber-200 mt-1 font-medium">Chào mừng bạn quay lại với LowLand Coffee</p>
+        </div>
+
+        <!-- Form Body -->
+        <div class="p-6 sm:p-8 space-y-6">
+            <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Email hoặc Số điện thoại</label>
+                    <div class="relative">
+                        <input type="text" id="login-identifier" required class="w-full bg-[#F3F4F6] border border-gray-200 rounded-xl px-4 py-3.5 text-base font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland focus:bg-white placeholder-gray-400 transition" placeholder="Nhập email hoặc số điện thoại của bạn" />
+                        <span class="absolute right-3.5 top-3.5 text-gray-400 flex items-center">
+                            <i class="fi fi-rr-user text-base"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-sm font-bold text-gray-700 uppercase tracking-wider">Mật khẩu</label>
+                        <a href="#" onclick="showToast('Quên mật khẩu', 'Vui lòng liên hệ nhân viên quản trị để được hỗ trợ cấp lại mật khẩu.', 'info')" class="text-xs text-red-highland font-bold hover:underline">Quên mật khẩu?</a>
+                    </div>
+                    <div class="relative">
+                        <input type="password" id="login-password" required class="w-full bg-[#F3F4F6] border border-gray-200 rounded-xl px-4 py-3.5 text-base font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland focus:bg-white placeholder-gray-400 transition" placeholder="Nhập mật khẩu" />
+                        <button type="button" onclick="togglePasswordVisibility('login-password')" class="absolute right-3.5 top-3.5 text-gray-400 hover:text-gray-600 flex items-center">
+                            <i class="fi fi-rr-eye text-base"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-1">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="remember-me" checked class="w-4 h-4 rounded text-red-highland focus:ring-red-highland" />
+                        <span class="text-xs text-gray-600 font-semibold">Ghi nhớ đăng nhập trên thiết bị này</span>
+                    </label>
+                </div>
+
+                <button type="submit" id="btn-login-submit" class="w-full py-4 rounded-xl bg-red-highland hover:bg-red-700 text-white font-black text-base uppercase tracking-wider shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fi fi-rr-sign-in-alt text-lg"></i>
+                    <span>Đăng nhập ngay</span>
+                </button>
+            </form>
+
+            <div class="text-center text-sm text-gray-600 pt-4 border-t border-gray-100 font-medium">
+                Chưa có tài khoản thành viên?
+                <a asp-page="/Auth/Register" class="font-bold text-red-highland hover:underline ml-1">Đăng ký tài khoản mới</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function togglePasswordVisibility(fieldId) {
+            const input = document.getElementById(fieldId);
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-login-submit');
+            const identifier = document.getElementById('login-identifier').value.trim();
+            const password = document.getElementById('login-password').value.trim();
+
+            btn.disabled = true;
+            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Đang đăng nhập...`;
+
+            try {
+                // Gọi trực tiếp Auth.API (Cổng 5001) kết nối 100% CSDL SQL Server thật
+                const res = await fetch('http://localhost:5001/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ emailOrPhone: identifier, password: password })
+                });
+
+                const data = await res.json().catch(() => null);
+
+                // Kiểm tra kết quả từ CSDL backend (ApiResponse có trường isSuccess)
+                const isSuccessful = res.ok && data && (data.isSuccess === true || data.success === true || data.data?.accessToken);
+                if (!isSuccessful) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<span>Đăng nhập ngay</span>`;
+                    const errMsg = data?.message || (data?.errors && data.errors[0]) || 'Email/Số điện thoại hoặc mật khẩu không chính xác.';
+                    showToast('Đăng nhập thất bại', errMsg, 'error');
+                    return;
+                }
+
+                // Đăng nhập thành công từ CSDL thật
+                const authData = data.data || {};
+                const apiUser = authData.user || {};
+                const role = apiUser.role || apiUser.roleName || (apiUser.roles && apiUser.roles[0]) || 'Customer';
+
+                const userObj = {
+                    ...apiUser,
+                    role: role,
+                    roleName: role
+                };
+
+                localStorage.setItem('auth_token', authData.accessToken || '');
+                localStorage.setItem('current_user', JSON.stringify(userObj));
+                showToast('Đăng nhập thành công', `Xin chào ${userObj.fullName}! Đang chuyển hướng...`, 'success');
+
+                setTimeout(() => {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const returnUrl = urlParams.get('returnUrl');
+                    const finalRole = (userObj.role || userObj.roleName || '').toLowerCase();
+
+                    if (finalRole === 'admin') {
+                        if (returnUrl && returnUrl.toLowerCase().startsWith('/admin')) {
+                            window.location.href = returnUrl;
+                        } else {
+                            window.location.href = '/Admin/Users';
+                        }
+                    } else if (finalRole === 'staff') {
+                        if (returnUrl && returnUrl.toLowerCase().startsWith('/staff')) {
+                            window.location.href = returnUrl;
+                        } else {
+                            window.location.href = '/Staff/Orders';
+                        }
+                    } else {
+                        if (returnUrl && !returnUrl.toLowerCase().startsWith('/admin') && !returnUrl.toLowerCase().startsWith('/staff')) {
+                            window.location.href = returnUrl;
+                        } else {
+                            window.location.href = '/Index';
+                        }
+                    }
+                }, 900);
+
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = `<span>Đăng nhập ngay</span>`;
+                showToast('Lỗi kết nối CSDL', 'Không thể kết nối đến máy chủ Auth.API (Cổng 5001). Vui lòng thử lại sau.', 'error');
+            }
+        }
+
+        // Tự động điền tài khoản vừa đăng ký nếu có
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                const lastAcc = sessionStorage.getItem('last_registered_account');
+                if (lastAcc) {
+                    const idInput = document.getElementById('login-identifier');
+                    if (idInput) {
+                        idInput.value = lastAcc;
+                        const passInput = document.getElementById('login-password');
+                        if (passInput) passInput.focus();
+                    }
+                    sessionStorage.removeItem('last_registered_account');
+                }
+            } catch (e) {}
+        });
+    </script>
+}

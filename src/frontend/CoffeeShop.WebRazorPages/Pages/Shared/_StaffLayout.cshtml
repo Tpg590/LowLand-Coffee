@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - POS & Quản lý Đơn Nhân viên</title>
+
+    <!-- Favicon (Sử dụng ảnh Logo thương hiệu) -->
+    <link rel="icon" type="image/jpeg" href="~/images/logo.jpg" asp-append-version="true" />
+    <link rel="shortcut icon" type="image/jpeg" href="~/images/logo.jpg" asp-append-version="true" />
+    <link rel="apple-touch-icon" href="~/images/logo.jpg" asp-append-version="true" />
+
+    <!-- Google Font: Be Vietnam Pro -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS (Play CDN with Brand Configuration) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'red-highland': '#C62831',
+                        'red-highland-dark': '#9E1C23',
+                        'red-highland-light': '#E8454D',
+                        'cream-highland': '#FAE9AD',
+                        'brown-highland': '#4F392E',
+                        'orange-highland': '#F27A25',
+                        'green-highland': '#8FA876',
+                        'blue-highland': '#98D4E5'
+                    },
+                    fontFamily: {
+                        sans: ['"Be Vietnam Pro"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Flowbite UI Component Library -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+
+    <!-- Flaticon UIcons (https://www.flaticon.com/uicons) -->
+    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
+    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-bold-rounded/css/uicons-bold-rounded.css">
+    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css">
+
+    <!-- Auth Guard: Chỉ cho phép Nhân viên (Staff) và Quản trị viên (Admin) truy cập -->
+    <script>
+        (function enforceStaffAuth() {
+            try {
+                const userStr = localStorage.getItem('current_user');
+                if (!userStr) {
+                    window.location.replace('/Auth/Login?returnUrl=' + encodeURIComponent(window.location.pathname));
+                    return;
+                }
+                const user = JSON.parse(userStr);
+                const role = (user.role || user.roleName || '').toString().toLowerCase();
+                const isEmailStaffOrAdmin = user.email && (user.email.toLowerCase().includes('staff') || user.email.toLowerCase().includes('admin'));
+                const isNameStaffOrAdmin = user.fullName && (user.fullName.toLowerCase().includes('thu ngân') || user.fullName.toLowerCase().includes('quản trị viên'));
+                if (role !== 'staff' && role !== 'admin' && !isEmailStaffOrAdmin && !isNameStaffOrAdmin) {
+                    window.location.replace('/Index');
+                }
+            } catch (e) {
+                window.location.replace('/Auth/Login');
+            }
+        })();
+    </script>
+
+    <!-- Custom Global CSS -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="font-sans bg-[#F8FAFC] text-gray-800 min-h-screen text-[15px]">
+    <div class="min-h-screen flex bg-[#F8FAFC]">
+        <!-- ========================================================================= -->
+        <!-- SIDEBAR BÊN TRÁI DÀNH CHO NHÂN VIÊN (STAFF SIDEBAR) -->
+        <!-- ========================================================================= -->
+        <aside id="staff-sidebar" class="w-64 lg:w-72 bg-[#0F172A] text-slate-300 flex flex-col shrink-0 fixed inset-y-0 left-0 z-40 transition-transform -translate-x-full lg:translate-x-0 border-r border-slate-800 shadow-2xl">
+            <!-- Header Sidebar: Logo & Tiêu đề quầy POS -->
+            <div class="h-20 flex items-center px-6 border-b border-slate-800/80 bg-[#0B1120]">
+                <div class="flex items-center gap-3.5">
+                    <img src="~/images/logo.jpg" alt="LowLand Coffee" class="w-11 h-11 object-contain rounded-full bg-amber-50 border-2 border-red-500 shadow-md" />
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-base font-black tracking-wider text-white uppercase">LOWLAND POS</span>
+                        </div>
+                        <span class="inline-block px-2 py-0.5 mt-0.5 rounded-md bg-red-500/20 text-red-400 text-[11px] font-bold tracking-wider">Khu Vực Nhân Viên</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danh sách Menu Điều hướng Staff -->
+            <div class="flex-1 overflow-y-auto px-4 py-6 space-y-1.5">
+                <div class="px-3 pb-2 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                    Nghiệp Vụ Quầy Bar
+                </div>
+
+                <!-- 1. Bán hàng tại quầy POS -->
+                <a href="/Staff/Orders" id="nav-staff-pos" class="flex items-center gap-3.5 px-4 py-3.5 rounded-2xl font-bold text-sm text-slate-300 hover:text-white hover:bg-slate-800/80 transition group">
+                    <i class="fi fi-rr-shop text-lg text-slate-400 group-hover:text-amber-400 transition"></i>
+                    <span>Bán hàng POS</span>
+                </a>
+
+                <!-- 2. Quản lý Đơn hàng (Xem tất cả đơn & chi tiết) -->
+                <a href="/Staff/Orders?view=orders" id="nav-staff-orders" class="flex items-center gap-3.5 px-4 py-3.5 rounded-2xl font-bold text-sm text-slate-300 hover:text-white hover:bg-slate-800/80 transition group">
+                    <i class="fi fi-rr-clipboard-list text-lg text-slate-400 group-hover:text-amber-400 transition"></i>
+                    <span>Đơn hàng</span>
+                </a>
+
+                <!-- 3. Quản lý Sản phẩm -->
+                <a href="/Staff/Products" id="nav-staff-products" class="flex items-center gap-3.5 px-4 py-3.5 rounded-2xl font-bold text-sm text-slate-300 hover:text-white hover:bg-slate-800/80 transition group">
+                    <i class="fi fi-rr-box-alt text-lg text-slate-400 group-hover:text-amber-400 transition"></i>
+                    <span>Sản phẩm</span>
+                </a>
+
+                <!-- 4. Phân loại / Danh mục -->
+                <a href="/Staff/Categories" id="nav-staff-categories" class="flex items-center gap-3.5 px-4 py-3.5 rounded-2xl font-bold text-sm text-slate-300 hover:text-white hover:bg-slate-800/80 transition group">
+                    <i class="fi fi-rr-apps text-lg text-slate-400 group-hover:text-amber-400 transition"></i>
+                    <span>Phân loại</span>
+                </a>
+            </div>
+
+            <!-- Footer Sidebar: Thông tin nhân viên & Nút Đăng xuất -->
+            <div class="p-4 border-t border-slate-800/80 bg-[#0B1120] space-y-3">
+                <div class="flex items-center gap-3 px-2 py-1.5 rounded-xl bg-slate-900/60 border border-slate-800">
+                    <div class="w-9 h-9 rounded-xl bg-red-highland text-white flex items-center justify-center font-bold text-xs uppercase shadow-sm">
+                        TN
+                    </div>
+                    <div class="overflow-hidden">
+                        <div class="text-xs font-black text-white truncate" id="staff-display-name">Thu Ngân 01</div>
+                        <div class="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span>Đang trực tuyến</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" onclick="logoutStaff()" class="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-red-highland/15 hover:bg-red-highland text-red-300 hover:text-white font-bold text-xs transition border border-red-500/30">
+                    <i class="fi fi-rr-sign-out-alt"></i>
+                    <span>Đăng xuất</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Backdrop khi mở menu trên di động -->
+        <div id="staff-backdrop" onclick="toggleStaffSidebar()" class="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm hidden lg:hidden"></div>
+
+        <!-- ========================================================================= -->
+        <!-- KHU VỰC NỘI DUNG CHÍNH (MAIN WORKSPACE BÊN PHẢI) -->
+        <!-- ========================================================================= -->
+        <div class="flex-1 flex flex-col min-w-0 lg:pl-64 lg:w-[calc(100%-16rem)]">
+            <!-- Header Top Bar -->
+            <header class="h-14 bg-white border-b border-gray-200/80 sticky top-0 z-20 flex items-center justify-between px-4 sm:px-8 shadow-xs">
+                <div class="flex items-center gap-3">
+                    <button type="button" onclick="toggleStaffSidebar()" class="lg:hidden p-2 rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-100 focus:outline-none" title="Mở danh mục">
+                        <i class="fi fi-rr-menu-burger text-lg"></i>
+                    </button>
+                </div>
+
+                <!-- Clock -->
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2 text-xs font-bold text-gray-500 bg-gray-50 px-3.5 py-2 rounded-xl border border-gray-200/80">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span id="staff-realtime-clock">--:--:--</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Page Content -->
+            <main class="flex-1 p-4 sm:p-6 lg:p-8">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        // Đồng hồ thời gian thực cho ca trực
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('vi-VN', { hour12: false });
+            const dateStr = now.toLocaleDateString('vi-VN');
+            const el = document.getElementById('staff-realtime-clock');
+            if (el) {
+                el.innerText = `${timeStr} • ${dateStr}`;
+            }
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Cập nhật trạng thái active cho menu sidebar
+        try {
+            const currentPath = window.location.pathname.toLowerCase();
+            const navPos = document.getElementById('nav-staff-pos');
+            const navOrders = document.getElementById('nav-staff-orders');
+            const navProducts = document.getElementById('nav-staff-products');
+            const navCategories = document.getElementById('nav-staff-categories');
+
+            const activeClass = "flex items-center gap-3.5 px-4 py-3.5 rounded-2xl font-bold text-sm text-white bg-red-highland shadow-md transition group";
+            const inactiveClass = "flex items-center gap-3.5 px-4 py-3.5 rounded-2xl font-bold text-sm text-slate-300 hover:text-white hover:bg-slate-800/80 transition group";
+
+            if (navPos) navPos.className = inactiveClass;
+            if (navOrders) navOrders.className = inactiveClass;
+            if (navProducts) navProducts.className = inactiveClass;
+            if (navCategories) navCategories.className = inactiveClass;
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const viewParam = urlParams.get('view');
+
+            if (currentPath.includes('/staff/products')) {
+                if (navProducts) navProducts.className = activeClass;
+            } else if (currentPath.includes('/staff/categories')) {
+                if (navCategories) navCategories.className = activeClass;
+            } else if (currentPath.includes('/staff/orders') && viewParam === 'orders') {
+                if (navOrders) navOrders.className = activeClass;
+            } else {
+                if (navPos) navPos.className = activeClass;
+            }
+        } catch(e) {}
+
+        // Cập nhật tên nhân viên từ LocalStorage nếu có
+        try {
+            const userStr = localStorage.getItem('current_user');
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                const nameEl = document.getElementById('staff-display-name');
+                if (nameEl && user.fullName) {
+                    nameEl.innerText = `${user.fullName} (${user.role || 'Staff'})`;
+                }
+            }
+        } catch (e) {}
+
+        // Đăng xuất nhân viên
+        function logoutStaff() {
+            localStorage.removeItem('current_user');
+            localStorage.removeItem('auth_token');
+            if (typeof showToast === 'function') {
+                showToast('Đăng xuất thành công', 'Đã đăng xuất khỏi tài khoản nhân viên.', 'info');
+            }
+            setTimeout(() => {
+                window.location.href = '/Auth/Login';
+            }, 600);
+        }
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

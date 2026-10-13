@@ -1,9 +1,32 @@
 using System.Text;
+using Auth.API.Data;
+using Auth.API.Repositories;
+using Auth.API.Repositories.Interfaces;
+using Auth.API.Services;
+using Auth.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add Database Context
+var connectionString = builder.Configuration.GetConnectionString("AuthConnection")
+    ?? "Server=localhost,1433;Database=Coffee_AuthDB;User Id=sa;Password=YourPassword123!;TrustServerCertificate=True;";
+builder.Services.AddDbContext<AuthDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
+// Add Repositories
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+// Add Services
+builder.Services.AddSingleton<ITokenStore, InMemoryTokenStore>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // Add Controllers
 builder.Services.AddControllers();
@@ -53,7 +76,7 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "LowLand Coffee - Auth & User API",
         Version = "v1",
-        Description = "Microservice quản lý Authentication, Authorization & User Management"
+        Description = "Microservice quản lý Authentication, Authorization & User Management (PRN232)"
     });
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme

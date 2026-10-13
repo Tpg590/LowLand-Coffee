@@ -38,7 +38,7 @@ BEGIN
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
         order_id UNIQUEIDENTIFIER NOT NULL,
         product_id UNIQUEIDENTIFIER NOT NULL, -- Logical Ref -> product_products.id
-        product_name VARCHAR(150) NOT NULL,
+        product_name NVARCHAR(150) NOT NULL,
         unit_price DECIMAL(12,2) NOT NULL,
         quantity INT NOT NULL,
         options_summary NVARCHAR(MAX) NULL, -- 'Size L, Topping Thach Ca Phe'
