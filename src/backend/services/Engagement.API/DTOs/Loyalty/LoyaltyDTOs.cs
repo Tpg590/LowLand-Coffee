@@ -9,9 +9,7 @@ public class LoyaltyTierDto
     public string TierName { get; set; } = string.Empty;
     public int MinPoints { get; set; }
     public decimal PointMultiplier { get; set; }
-    public decimal BirthdayDiscountPercent { get; set; }
-    public decimal FreeToppingMinOrder { get; set; }
-    public int FreeToppingCount { get; set; }
+    public decimal DiscountPercent { get; set; }
     public string? BenefitsDescription { get; set; }
 }
 
@@ -23,9 +21,7 @@ public class LoyaltyMemberProfileDto
     public int CurrentPoints { get; set; }
     public int TotalAccumulatedPoints { get; set; }
     public decimal PointMultiplier { get; set; } = 1.0m;
-    public decimal BirthdayDiscountPercent { get; set; }
-    public int FreeToppingCount { get; set; }
-    public decimal FreeToppingMinOrder { get; set; }
+    public decimal DiscountPercent { get; set; }
     public string? NextTierName { get; set; }
     public int? PointsNeededForNextTier { get; set; }
     public string? BenefitsDescription { get; set; }

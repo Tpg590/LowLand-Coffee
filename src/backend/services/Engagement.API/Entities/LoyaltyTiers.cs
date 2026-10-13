@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace Engagement.API.Entities;
@@ -15,11 +15,7 @@ public partial class LoyaltyTiers
 
     public decimal PointMultiplier { get; set; }
 
-    public decimal BirthdayDiscountPercent { get; set; }
-
-    public decimal FreeToppingMinOrder { get; set; }
-
-    public int FreeToppingCount { get; set; }
+    public decimal DiscountPercent { get; set; }
 
     public string? BenefitsDescription { get; set; }
 
