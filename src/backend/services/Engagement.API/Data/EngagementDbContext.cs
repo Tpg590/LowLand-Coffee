@@ -105,16 +105,12 @@ public partial class EngagementDbContext : DbContext
                 .HasDefaultValueSql("(newid())")
                 .HasColumnName("id");
             entity.Property(e => e.BenefitsDescription).HasColumnName("benefits_description");
-            entity.Property(e => e.BirthdayDiscountPercent)
-                .HasColumnType("decimal(5, 2)")
-                .HasColumnName("birthday_discount_percent");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnName("created_at");
-            entity.Property(e => e.FreeToppingCount).HasColumnName("free_topping_count");
-            entity.Property(e => e.FreeToppingMinOrder)
-                .HasColumnType("decimal(12, 2)")
-                .HasColumnName("free_topping_min_order");
+            entity.Property(e => e.DiscountPercent)
+                .HasColumnType("decimal(5, 2)")
+                .HasColumnName("discount_percent");
             entity.Property(e => e.MinPoints).HasColumnName("min_points");
             entity.Property(e => e.PointMultiplier)
                 .HasDefaultValue(1.00m)

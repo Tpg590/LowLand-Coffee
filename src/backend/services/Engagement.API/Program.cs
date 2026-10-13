@@ -104,11 +104,8 @@ builder.Services.AddSwaggerGen(options =>
 var app = builder.Build();
 
 // Configure HTTP request pipeline
-if (app.Environment.IsDevelopment() || true)
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Engagement.API v1"));
-}
+app.UseSwagger();
+app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Engagement.API v1"));
 
 app.UseCors("AllowAll");
 

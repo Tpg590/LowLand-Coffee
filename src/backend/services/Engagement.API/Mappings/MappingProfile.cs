@@ -35,9 +35,7 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.TierCode, opt => opt.MapFrom(src => src.Tier != null ? src.Tier.TierCode : "BRONZE"))
             .ForMember(dest => dest.TierName, opt => opt.MapFrom(src => src.Tier != null ? src.Tier.TierName : "Đồng"))
             .ForMember(dest => dest.PointMultiplier, opt => opt.MapFrom(src => src.Tier != null ? src.Tier.PointMultiplier : 1.0m))
-            .ForMember(dest => dest.BirthdayDiscountPercent, opt => opt.MapFrom(src => src.Tier != null ? src.Tier.BirthdayDiscountPercent : 0m))
-            .ForMember(dest => dest.FreeToppingCount, opt => opt.MapFrom(src => src.Tier != null ? src.Tier.FreeToppingCount : 0))
-            .ForMember(dest => dest.FreeToppingMinOrder, opt => opt.MapFrom(src => src.Tier != null ? src.Tier.FreeToppingMinOrder : 0m))
+            .ForMember(dest => dest.DiscountPercent, opt => opt.MapFrom(src => src.Tier != null ? src.Tier.DiscountPercent : 0m))
             .ForMember(dest => dest.BenefitsDescription, opt => opt.MapFrom(src => src.Tier != null ? src.Tier.BenefitsDescription : null));
     }
 }

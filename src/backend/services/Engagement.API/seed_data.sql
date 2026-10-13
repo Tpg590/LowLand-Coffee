@@ -26,12 +26,12 @@ DECLARE @PointTx2 UNIQUEIDENTIFIER = '43000000-0000-0000-0000-000000000002';
 -- 1. Nạp Danh mục 4 Hạng thành viên (Loyalty Tiers)
 IF NOT EXISTS (SELECT 1 FROM dbo.loyalty_tiers WHERE id = @TierBronze)
 BEGIN
-    INSERT INTO dbo.loyalty_tiers (id, tier_code, tier_name, min_points, point_multiplier, birthday_discount_percent, free_topping_min_order, free_topping_count, benefits_description, created_at)
+    INSERT INTO dbo.loyalty_tiers (id, tier_code, tier_name, min_points, point_multiplier, discount_percent, benefits_description, created_at)
     VALUES
-    (@TierBronze, 'BRONZE', N'Hạng Đồng (Member)', 0, 1.00, 5.00, 0.00, 0, N'Tích điểm chuẩn 10.000đ = 1đ, tặng voucher giảm 5% tháng sinh nhật', GETDATE()),
-    (@TierSilver, 'SILVER', N'Hạng Bạc (Silver)', 100, 1.10, 10.00, 100000.00, 1, N'Tích điểm x1.1, giảm 10% tháng sinh nhật, miễn phí 1 topping cho đơn > 100k', GETDATE()),
-    (@TierGold, 'GOLD', N'Hạng Vàng (Gold)', 300, 1.25, 15.00, 130000.00, 2, N'Tích điểm x1.25, giảm 15% tháng sinh nhật, miễn phí 2 topping cho đơn > 130k', GETDATE()),
-    (@TierDiamond, 'DIAMOND', N'Hạng Kim Cương (Diamond)', 600, 1.50, 20.00, 150000.00, 3, N'Tích điểm x1.5, giảm 20% tháng sinh nhật, tặng voucher -100% món giá thấp nhất, miễn phí 3 topping cho đơn > 150k', GETDATE());
+    (@TierBronze, 'BRONZE', N'Hạng Đồng (Member)', 0, 1.00, 0.00, N'Tích điểm chuẩn 10.000đ = 1đ', GETDATE()),
+    (@TierSilver, 'SILVER', N'Hạng Bạc (Silver)', 100, 1.10, 5.00, N'Tích điểm x1.1, giảm 5% trực tiếp cho mọi đơn hàng', GETDATE()),
+    (@TierGold, 'GOLD', N'Hạng Vàng (Gold)', 300, 1.25, 10.00, N'Tích điểm x1.25, giảm 10% trực tiếp cho mọi đơn hàng', GETDATE()),
+    (@TierDiamond, 'DIAMOND', N'Hạng Kim Cương (Diamond)', 600, 1.50, 15.00, N'Tích điểm x1.5, giảm 15% trực tiếp cho mọi đơn hàng', GETDATE());
 END
 
 -- 2. Nạp Danh sách Voucher khuyến mãi

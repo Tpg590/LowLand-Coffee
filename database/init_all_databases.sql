@@ -233,9 +233,7 @@ BEGIN
         tier_name NVARCHAR(50) NOT NULL,
         min_points INT NOT NULL DEFAULT 0,
         point_multiplier DECIMAL(4,2) NOT NULL DEFAULT 1.00,
-        birthday_discount_percent DECIMAL(5,2) NOT NULL DEFAULT 0.00,
-        free_topping_min_order DECIMAL(12,2) NOT NULL DEFAULT 0.00,
-        free_topping_count INT NOT NULL DEFAULT 0,
+        discount_percent DECIMAL(5,2) NOT NULL DEFAULT 0.00, -- % Giảm giá trực tiếp vào đơn hàng theo hạng
         benefits_description NVARCHAR(MAX) NULL,
         created_at DATETIME2 NOT NULL DEFAULT GETDATE()
     );

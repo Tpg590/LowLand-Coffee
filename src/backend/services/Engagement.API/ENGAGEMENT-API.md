@@ -48,7 +48,7 @@ Bao gồm 5 bảng chuẩn hóa theo UUID:
 
 1. **`dbo.promo_vouchers`**: Danh mục mã giảm giá (code, title, discount_type, discount_value, max_discount_amount, min_order_value, quantity, start_date, end_date, is_active).
 2. **`dbo.promo_voucher_usages`**: Lịch sử sử dụng voucher theo đơn hàng và người dùng (voucher_id, user_id, order_id, discount_amount, used_at).
-3. **`dbo.loyalty_tiers`**: 4 Cấp bậc hạng thành viên (BRONZE, SILVER, GOLD, DIAMOND) lưu cấu hình min_points, point_multiplier, quyền lợi sinh nhật và topping miễn phí.
+3. **`dbo.loyalty_tiers`**: 4 Cấp bậc hạng thành viên (BRONZE, SILVER, GOLD, DIAMOND) lưu cấu hình min_points, point_multiplier và % giảm giá trực tiếp vào đơn hàng (`discount_percent`).
 4. **`dbo.loyalty_members`**: Hồ sơ thành viên (user_id, tier_id, current_points khả dụng, total_accumulated_points trọn đời).
 5. **`dbo.loyalty_point_transactions`**: Lịch sử giao dịch điểm (EARN, REDEEM, REFUND, ADJUST).
 
