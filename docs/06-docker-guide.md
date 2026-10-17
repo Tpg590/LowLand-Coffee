@@ -37,19 +37,28 @@ Hệ thống được đóng gói thành các container độc lập hoạt đ�
 
 ---
 
-## 2. Kiểm Soát Phơi Lộ Cổng (Port Mapping)
+## 2. Bảng Tra Cứu Nhanh URL Test Trực Tiếp (Swagger UI & Web)
 
-| Service Container | Phụ trách | Port Host | Port Container | Mục đích |
-| :--- | :---: | :---: | :---: | :--- |
-| `web_frontend` | Cả nhóm | **`5000`** | `8080` | Trình duyệt người dùng truy cập giao diện web |
-| `api_gateway` | **Khang** | **`5000`** / `8080`| `8080` | Cổng tiếp nhận duy nhất cho toàn bộ API & SignalR |
-| `auth_api` | **Khang** | **`5001`** | `8080` | Mở tạm thời để test Swagger Auth |
-| `product_api` | **Phú** | **`5002`** | `8080` | Mở tạm thời để test Swagger Product |
-| `order_api` | **Tuấn** | **`5003`** | `8080` | Mở tạm thời để test Swagger Order |
-| `engagement_api` | **Trí** | **`5004`** | `8080` | Mở tạm thời để test Swagger Voucher |
-| `notification_api` | **Thành** | **`5005`** | `8080` | Mở tạm thời để test Swagger Notification |
-| `sqlserver` | Hạ tầng | **`1433`** | `1433` | Quản lý 5 Database bằng SSMS |
-| `db-init` | Tự động | *Không mở* | — | Tự động tạo 5 DB & nạp dữ liệu mẫu khi khởi động |
+Dưới đây là danh sách toàn bộ URL đầy đủ để các thành viên copy trực tiếp vào trình duyệt test API riêng của mình:
+
+| Dịch Vụ | Phụ Trách | URL Truy Cập Trực Tiếp (Swagger / Web) | Port Host | URL Mạng Nội Bộ Docker |
+| :--- | :---: | :--- | :---: | :--- |
+| **Web Frontend** | Cả nhóm | [http://localhost:5000](http://localhost:5000) | `5000` | `http://web-frontend:8080` |
+| **API Gateway** | **Khang** | [http://localhost:8080](http://localhost:8080) *(Swagger Tổng)* | `8080` | `http://api-gateway:8080` |
+| **Auth.API** | **Khang** | [http://localhost:5001/swagger](http://localhost:5001/swagger) | `5001` | `http://auth-api:8080` |
+| **Product.API** | **Phú** | [http://localhost:5002/swagger](http://localhost:5002/swagger) | `5002` | `http://product-api:8080` |
+| **Order.API** | **Tuấn** | [http://localhost:5003/swagger](http://localhost:5003/swagger) | `5003` | `http://order-api:8080` |
+| **Engagement.API** | **Trí** | [http://localhost:5004/swagger](http://localhost:5004/swagger) | `5004` | `http://engagement-api:8080` |
+| **Notification.API** | **Thành** | [http://localhost:5005/swagger](http://localhost:5005/swagger) | `5005` | `http://notification-api:8080` |
+| **SQL Server 2022** | Hạ tầng | `localhost:1433` *(User: `sa`, Pass: `YourPassword123!`)* | `1433` | `sqlserver:1433` |
+| **db-init** | Tự động | *(Tự động chạy nạp 5 DB khi khởi động, không mở cổng)* | — | — |
+
+> 💡 **Mẹo làm việc độc lập:** Nếu bạn chỉ muốn test riêng module của mình mà không cần bật toàn bộ các service khác, hãy dùng lệnh:
+> ```bash
+> # Ví dụ: Phú chỉ muốn code & test Product.API + Database:
+> docker compose up -d sqlserver db-init product-api
+> ```
+
 
 ---
 
