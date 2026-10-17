@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using AutoMapper;
 using Auth.API.DTOs;
 using Auth.API.Entities;
 using Auth.API.Repositories.Interfaces;
@@ -13,19 +14,22 @@ public class AuthService : IAuthService
     private readonly ITokenService _tokenService;
     private readonly IEmailService _emailService;
     private readonly ITokenStore _tokenStore;
+    private readonly IMapper _mapper;
 
     public AuthService(
         IUserRepository userRepository,
         IRoleRepository roleRepository,
         ITokenService tokenService,
         IEmailService emailService,
-        ITokenStore tokenStore)
+        ITokenStore tokenStore,
+        IMapper mapper)
     {
         _userRepository = userRepository;
         _roleRepository = roleRepository;
         _tokenService = tokenService;
         _emailService = emailService;
         _tokenStore = tokenStore;
+        _mapper = mapper;
     }
 
     public async Task<ApiResponse<AuthResponse>> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
@@ -59,19 +63,11 @@ public class AuthService : IAuthService
 
         var hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
-        var user = new User
-        {
-            Id = Guid.NewGuid(),
-            RoleId = customerRole.Id,
-            Role = customerRole,
-            Email = normalizedEmail,
-            PasswordHash = hashedPassword,
-            FullName = request.FullName.Trim(),
-            PhoneNumber = request.PhoneNumber?.Trim(),
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+        var user = _mapper.Map<User>(request);
+        user.Id = Guid.NewGuid();
+        user.RoleId = customerRole.Id;
+        user.Role = customerRole;
+        user.PasswordHash = hashedPassword;
 
         await _userRepository.AddAsync(user, cancellationToken);
 
@@ -86,7 +82,7 @@ public class AuthService : IAuthService
             RefreshToken = refreshTokenStr,
             TokenType = "Bearer",
             ExpiresIn = _tokenService.GetTokenExpiryMinutes() * 60,
-            User = MapToUserDto(user)
+            User = _mapper.Map<UserDto>(user)
         };
 
         return ApiResponse<AuthResponse>.Success(authResponse, "Đăng ký tài khoản thành công", 201);
@@ -122,7 +118,7 @@ public class AuthService : IAuthService
             RefreshToken = refreshTokenStr,
             TokenType = "Bearer",
             ExpiresIn = _tokenService.GetTokenExpiryMinutes() * 60,
-            User = MapToUserDto(user)
+            User = _mapper.Map<UserDto>(user)
         };
 
         return ApiResponse<AuthResponse>.Success(authResponse, "Đăng nhập thành công");
@@ -156,7 +152,7 @@ public class AuthService : IAuthService
             RefreshToken = newRefreshTokenStr,
             TokenType = "Bearer",
             ExpiresIn = _tokenService.GetTokenExpiryMinutes() * 60,
-            User = MapToUserDto(user)
+            User = _mapper.Map<UserDto>(user)
         };
 
         return ApiResponse<AuthResponse>.Success(authResponse, "Cấp lại Access Token thành công");
@@ -215,7 +211,7 @@ public class AuthService : IAuthService
             return ApiResponse<UserProfileDto>.Fail("Không tìm thấy thông tin người dùng", 404);
         }
 
-        return ApiResponse<UserProfileDto>.Success(MapToProfileDto(user), "Lấy thông tin hồ sơ thành công");
+        return ApiResponse<UserProfileDto>.Success(_mapper.Map<UserProfileDto>(user), "Lấy thông tin hồ sơ thành công");
     }
 
     public async Task<ApiResponse<UserProfileDto>> UpdateProfileAsync(Guid userId, UpdateProfileRequest request, CancellationToken cancellationToken = default)
@@ -234,22 +230,13 @@ public class AuthService : IAuthService
             {
                 return ApiResponse<UserProfileDto>.Fail("Số điện thoại đã được tài khoản khác sử dụng", 400);
             }
-            user.PhoneNumber = phoneClean;
         }
 
-        user.FullName = request.FullName.Trim();
-        if (request.AvatarUrl != null)
-        {
-            user.AvatarUrl = request.AvatarUrl;
-        }
-        if (request.Address != null)
-        {
-            user.Address = request.Address;
-        }
+        _mapper.Map(request, user);
 
         await _userRepository.UpdateAsync(user, cancellationToken);
 
-        return ApiResponse<UserProfileDto>.Success(MapToProfileDto(user), "Cập nhật thông tin hồ sơ thành công");
+        return ApiResponse<UserProfileDto>.Success(_mapper.Map<UserProfileDto>(user), "Cập nhật thông tin hồ sơ thành công");
     }
 
     public async Task<ApiResponse<bool>> ChangePasswordAsync(Guid userId, ChangePasswordRequest request, CancellationToken cancellationToken = default)
@@ -277,39 +264,5 @@ public class AuthService : IAuthService
         _tokenStore.RevokeUserTokens(user.Id);
 
         return ApiResponse<bool>.Success(true, "Đổi mật khẩu thành công");
-    }
-
-    private static UserDto MapToUserDto(User user)
-    {
-        return new UserDto
-        {
-            Id = user.Id,
-            RoleId = user.RoleId,
-            RoleName = user.Role?.Name ?? string.Empty,
-            Email = user.Email,
-            FullName = user.FullName,
-            PhoneNumber = user.PhoneNumber,
-            AvatarUrl = user.AvatarUrl,
-            Address = user.Address,
-            IsActive = user.IsActive,
-            CreatedAt = user.CreatedAt,
-            UpdatedAt = user.UpdatedAt
-        };
-    }
-
-    private static UserProfileDto MapToProfileDto(User user)
-    {
-        return new UserProfileDto
-        {
-            Id = user.Id,
-            RoleId = user.RoleId,
-            RoleName = user.Role?.Name ?? string.Empty,
-            Email = user.Email,
-            FullName = user.FullName,
-            PhoneNumber = user.PhoneNumber,
-            AvatarUrl = user.AvatarUrl,
-            Address = user.Address,
-            CreatedAt = user.CreatedAt
-        };
     }
 }
