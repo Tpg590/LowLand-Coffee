@@ -1,5 +1,6 @@
 using System.Text;
 using Auth.API.Data;
+using Auth.API.Mappings;
 using Auth.API.Repositories;
 using Auth.API.Repositories.Interfaces;
 using Auth.API.Services;
@@ -15,7 +16,10 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("AuthConnection")
     ?? "Server=localhost,1433;Database=Coffee_AuthDB;User Id=sa;Password=YourPassword123!;TrustServerCertificate=True;";
 builder.Services.AddDbContext<AuthDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(connectionString, sqlOptions => sqlOptions.EnableRetryOnFailure()));
+
+// Add AutoMapper
+builder.Services.AddAutoMapper(cfg => cfg.AddProfile<AuthMappingProfile>());
 
 // Add Repositories
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();

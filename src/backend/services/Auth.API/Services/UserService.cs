@@ -1,3 +1,4 @@
+using AutoMapper;
 using Auth.API.DTOs;
 using Auth.API.Entities;
 using Auth.API.Repositories.Interfaces;
@@ -10,15 +11,18 @@ public class UserService : IUserService
     private readonly IUserRepository _userRepository;
     private readonly IRoleRepository _roleRepository;
     private readonly ITokenStore _tokenStore;
+    private readonly IMapper _mapper;
 
     public UserService(
         IUserRepository userRepository,
         IRoleRepository roleRepository,
-        ITokenStore tokenStore)
+        ITokenStore tokenStore,
+        IMapper mapper)
     {
         _userRepository = userRepository;
         _roleRepository = roleRepository;
         _tokenStore = tokenStore;
+        _mapper = mapper;
     }
 
     public async Task<ApiResponse<PagedResult<UserDto>>> GetUsersAsync(UserQueryParameters query, CancellationToken cancellationToken = default)
@@ -33,7 +37,7 @@ public class UserService : IUserService
 
         var result = new PagedResult<UserDto>
         {
-            Items = pagedUsers.Items.Select(MapToDto),
+            Items = _mapper.Map<IEnumerable<UserDto>>(pagedUsers.Items),
             TotalItems = pagedUsers.TotalItems,
             PageNumber = pagedUsers.PageNumber,
             PageSize = pagedUsers.PageSize
@@ -50,7 +54,7 @@ public class UserService : IUserService
             return ApiResponse<UserDto>.Fail("Không tìm thấy người dùng", 404);
         }
 
-        return ApiResponse<UserDto>.Success(MapToDto(user), "Lấy thông tin người dùng thành công");
+        return ApiResponse<UserDto>.Success(_mapper.Map<UserDto>(user), "Lấy thông tin người dùng thành công");
     }
 
     public async Task<ApiResponse<UserDto>> CreateStaffAsync(CreateStaffRequest request, CancellationToken cancellationToken = default)
@@ -82,24 +86,14 @@ public class UserService : IUserService
             return ApiResponse<UserDto>.Fail("Không tìm thấy vai trò Staff trong hệ thống", 500);
         }
 
-        var user = new User
-        {
-            Id = Guid.NewGuid(),
-            RoleId = staffRole.Id,
-            Role = staffRole,
-            Email = normalizedEmail,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password.Trim()),
-            FullName = request.FullName.Trim(),
-            PhoneNumber = request.PhoneNumber?.Trim(),
-            Address = request.Address?.Trim(),
-            AvatarUrl = request.AvatarUrl?.Trim(),
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+        var user = _mapper.Map<User>(request);
+        user.Id = Guid.NewGuid();
+        user.RoleId = staffRole.Id;
+        user.Role = staffRole;
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password.Trim());
 
         var created = await _userRepository.AddAsync(user, cancellationToken);
-        return ApiResponse<UserDto>.Success(MapToDto(created), "Tạo tài khoản nhân viên thành công", 201);
+        return ApiResponse<UserDto>.Success(_mapper.Map<UserDto>(created), "Tạo tài khoản nhân viên thành công", 201);
     }
 
     public async Task<ApiResponse<UserDto>> UpdateStatusAsync(Guid id, UpdateUserStatusRequest request, CancellationToken cancellationToken = default)
@@ -120,7 +114,7 @@ public class UserService : IUserService
         await _userRepository.UpdateAsync(user, cancellationToken);
 
         var statusMessage = request.IsActive ? "Mở khóa tài khoản thành công" : "Khóa tài khoản thành công";
-        return ApiResponse<UserDto>.Success(MapToDto(user), statusMessage);
+        return ApiResponse<UserDto>.Success(_mapper.Map<UserDto>(user), statusMessage);
     }
 
     public async Task<ApiResponse<UserDto>> UpdateUserAsync(Guid id, UpdateUserRequest request, CancellationToken cancellationToken = default)
@@ -131,23 +125,10 @@ public class UserService : IUserService
             return ApiResponse<UserDto>.Fail("Không tìm thấy người dùng", 404);
         }
 
-        user.FullName = request.FullName.Trim();
-        if (!string.IsNullOrWhiteSpace(request.PhoneNumber))
-        {
-            user.PhoneNumber = request.PhoneNumber.Trim();
-        }
-        if (request.Address != null)
-        {
-            user.Address = request.Address.Trim();
-        }
-        if (!string.IsNullOrWhiteSpace(request.AvatarUrl))
-        {
-            user.AvatarUrl = request.AvatarUrl.Trim();
-        }
-        user.UpdatedAt = DateTime.UtcNow;
+        _mapper.Map(request, user);
 
         await _userRepository.UpdateAsync(user, cancellationToken);
-        return ApiResponse<UserDto>.Success(MapToDto(user), "Cập nhật thông tin người dùng thành công");
+        return ApiResponse<UserDto>.Success(_mapper.Map<UserDto>(user), "Cập nhật thông tin người dùng thành công");
     }
 
     public async Task<ApiResponse<bool>> DeleteUserAsync(Guid id, CancellationToken cancellationToken = default)
@@ -168,31 +149,8 @@ public class UserService : IUserService
     public async Task<ApiResponse<IEnumerable<RoleDto>>> GetRolesAsync(CancellationToken cancellationToken = default)
     {
         var roles = await _roleRepository.GetAllAsync(cancellationToken);
-        var dtos = roles.Select(r => new RoleDto
-        {
-            Id = r.Id,
-            Name = r.Name,
-            Description = r.Description
-        });
+        var dtos = _mapper.Map<IEnumerable<RoleDto>>(roles);
 
         return ApiResponse<IEnumerable<RoleDto>>.Success(dtos, "Lấy danh sách vai trò thành công");
-    }
-
-    private static UserDto MapToDto(User user)
-    {
-        return new UserDto
-        {
-            Id = user.Id,
-            RoleId = user.RoleId,
-            RoleName = user.Role?.Name ?? string.Empty,
-            Email = user.Email,
-            FullName = user.FullName,
-            PhoneNumber = user.PhoneNumber,
-            AvatarUrl = user.AvatarUrl,
-            Address = user.Address,
-            IsActive = user.IsActive,
-            CreatedAt = user.CreatedAt,
-            UpdatedAt = user.UpdatedAt
-        };
     }
 }
