@@ -1,0 +1,183 @@
+{
+  "ReverseProxy": {
+    "Routes": {
+      "auth-route": {
+        "ClusterId": "auth-cluster",
+        "CorsPolicy": "GatewayCorsPolicy",
+        "Match": {
+          "Path": "/api/auth/{**catch-all}"
+        }
+      },
+      "users-route": {
+        "ClusterId": "auth-cluster",
+        "CorsPolicy": "GatewayCorsPolicy",
+        "Match": {
+          "Path": "/api/users/{**catch-all}"
+        }
+      },
+      "product-route": {
+        "ClusterId": "product-cluster",
+        "CorsPolicy": "GatewayCorsPolicy",
+        "Match": {
+          "Path": "/api/products/{**catch-all}"
+        }
+      },
+      "category-route": {
+        "ClusterId": "product-cluster",
+        "CorsPolicy": "GatewayCorsPolicy",
+        "Match": {
+          "Path": "/api/categories/{**catch-all}"
+        }
+      },
+      "order-route": {
+        "ClusterId": "order-cluster",
+        "CorsPolicy": "GatewayCorsPolicy",
+        "Match": {
+          "Path": "/api/orders/{**catch-all}"
+        }
+      },
+      "payment-route": {
+        "ClusterId": "order-cluster",
+        "CorsPolicy": "GatewayCorsPolicy",
+        "Match": {
+          "Path": "/api/payments/{**catch-all}"
+        }
+      },
+      "voucher-route": {
+        "ClusterId": "engagement-cluster",
+        "CorsPolicy": "GatewayCorsPolicy",
+        "Match": {
+          "Path": "/api/vouchers/{**catch-all}"
+        }
+      },
+      "loyalty-route": {
+        "ClusterId": "engagement-cluster",
+        "CorsPolicy": "GatewayCorsPolicy",
+        "Match": {
+          "Path": "/api/loyalty/{**catch-all}"
+        }
+      },
+      "notification-route": {
+        "ClusterId": "notification-cluster",
+        "CorsPolicy": "GatewayCorsPolicy",
+        "Match": {
+          "Path": "/api/notifications/{**catch-all}"
+        }
+      },
+      "notification-hub-route": {
+        "ClusterId": "notification-cluster",
+        "CorsPolicy": "GatewayCorsPolicy",
+        "Match": {
+          "Path": "/hubs/notification/{**catch-all}"
+        }
+      },
+      "swagger-auth-route": {
+        "ClusterId": "auth-cluster",
+        "CorsPolicy": "GatewayCorsPolicy",
+        "Match": {
+          "Path": "/swagger-docs/auth/{**catch-all}"
+        },
+        "Transforms": [
+          { "PathRemovePrefix": "/swagger-docs/auth" },
+          { "PathPrefix": "/swagger" }
+        ]
+      },
+      "swagger-product-route": {
+        "ClusterId": "product-cluster",
+        "CorsPolicy": "GatewayCorsPolicy",
+        "Match": {
+          "Path": "/swagger-docs/product/{**catch-all}"
+        },
+        "Transforms": [
+          { "PathRemovePrefix": "/swagger-docs/product" },
+          { "PathPrefix": "/swagger" }
+        ]
+      },
+      "swagger-order-route": {
+        "ClusterId": "order-cluster",
+        "CorsPolicy": "GatewayCorsPolicy",
+        "Match": {
+          "Path": "/swagger-docs/order/{**catch-all}"
+        },
+        "Transforms": [
+          { "PathRemovePrefix": "/swagger-docs/order" },
+          { "PathPrefix": "/swagger" }
+        ]
+      },
+      "swagger-engagement-route": {
+        "ClusterId": "engagement-cluster",
+        "CorsPolicy": "GatewayCorsPolicy",
+        "Match": {
+          "Path": "/swagger-docs/engagement/{**catch-all}"
+        },
+        "Transforms": [
+          { "PathRemovePrefix": "/swagger-docs/engagement" },
+          { "PathPrefix": "/swagger" }
+        ]
+      },
+      "swagger-notification-route": {
+        "ClusterId": "notification-cluster",
+        "CorsPolicy": "GatewayCorsPolicy",
+        "Match": {
+          "Path": "/swagger-docs/notification/{**catch-all}"
+        },
+        "Transforms": [
+          { "PathRemovePrefix": "/swagger-docs/notification" },
+          { "PathPrefix": "/swagger" }
+        ]
+      }
+    },
+    "Clusters": {
+      "auth-cluster": {
+        "HttpRequest": {
+          "Timeout": "00:00:30"
+        },
+        "Destinations": {
+          "destination1": {
+            "Address": "http://localhost:5001"
+          }
+        }
+      },
+      "product-cluster": {
+        "HttpRequest": {
+          "Timeout": "00:00:30"
+        },
+        "Destinations": {
+          "destination1": {
+            "Address": "http://localhost:5002"
+          }
+        }
+      },
+      "order-cluster": {
+        "HttpRequest": {
+          "Timeout": "00:00:30"
+        },
+        "Destinations": {
+          "destination1": {
+            "Address": "http://localhost:5003"
+          }
+        }
+      },
+      "engagement-cluster": {
+        "HttpRequest": {
+          "Timeout": "00:00:30"
+        },
+        "Destinations": {
+          "destination1": {
+            "Address": "http://localhost:5004"
+          }
+        }
+      },
+      "notification-cluster": {
+        "HttpRequest": {
+          "Timeout": "00:00:30"
+        },
+        "Destinations": {
+          "destination1": {
+            "Address": "http://localhost:5005"
+          }
+        }
+      }
+    }
+  }
+}

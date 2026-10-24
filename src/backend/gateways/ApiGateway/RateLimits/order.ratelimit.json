@@ -1,0 +1,34 @@
+{
+  "RateLimiting": {
+    "Order": [
+      {
+        "Path": "/api/payments/vnpay-create",
+        "Method": "POST",
+        "PermitLimit": 15,
+        "WindowSeconds": 60,
+        "QueueLimit": 0
+      },
+      {
+        "Path": "/api/payments/cash",
+        "Method": "POST",
+        "PermitLimit": 20,
+        "WindowSeconds": 60,
+        "QueueLimit": 0
+      },
+      {
+        "Path": "/api/orders",
+        "Method": "POST",
+        "PermitLimit": 30,
+        "WindowSeconds": 60,
+        "QueueLimit": 0
+      },
+      {
+        "Path": "/api/orders",
+        "Method": "GET",
+        "PermitLimit": 60,
+        "WindowSeconds": 60,
+        "QueueLimit": 0
+      }
+    ]
+  }
+}
