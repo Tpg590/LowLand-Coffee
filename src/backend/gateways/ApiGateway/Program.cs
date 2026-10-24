@@ -19,6 +19,9 @@ if (Directory.Exists(rateLimitsPath))
     }
 }
 
+// Nạp lại Environment Variables để biến môi trường từ Docker/OS có độ ưu tiên cao nhất
+builder.Configuration.AddEnvironmentVariables();
+
 // 1. Đăng ký YARP Reverse Proxy nạp cấu hình từ yarp.json
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
