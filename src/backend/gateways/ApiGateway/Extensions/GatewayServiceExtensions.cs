@@ -92,6 +92,14 @@ public static class GatewayServiceExtensions
                 var method = httpContext.Request.Method.ToUpperInvariant();
                 var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous";
 
+                // Bỏ qua giới hạn tốc độ cho tài nguyên tĩnh của Frontend (CSS, JS, Fonts, Images)
+                if (path.EndsWith(".css") || path.EndsWith(".js") || path.EndsWith(".png") ||
+                    path.EndsWith(".jpg") || path.EndsWith(".jpeg") || path.EndsWith(".svg") ||
+                    path.EndsWith(".ico") || path.EndsWith(".woff") || path.EndsWith(".woff2"))
+                {
+                    return RateLimitPartition.GetNoLimiter("static_assets");
+                }
+
                 // Khớp rule theo Path và HTTP Method
                 var matchedRule = endpointRules.FirstOrDefault(r =>
                 {
