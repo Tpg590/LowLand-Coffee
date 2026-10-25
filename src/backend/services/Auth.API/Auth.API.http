@@ -164,3 +164,32 @@ Content-Type: application/json
 DELETE {{Auth.API_HostAddress}}/api/users/cccccccc-cccc-cccc-cccc-cccccccccccc
 Authorization: Bearer {{adminToken}}
 Accept: application/json
+
+### =========================================================================
+### 15. TẢI LÊN VÀ CẬP NHẬT ẢNH ĐẠI DIỆN (Upload & Update Avatar Profile)
+### =========================================================================
+POST {{Auth.API_HostAddress}}/api/auth/profile/avatar
+Authorization: Bearer {{customerToken}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="avatar.png"
+Content-Type: image/png
+
+< ./docs/sample-avatar.png
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### =========================================================================
+### 16. TẢI LÊN ẢNH ĐỘC LẬP LÊN CLOUDINARY (Upload Image Standalone)
+### =========================================================================
+POST {{Auth.API_HostAddress}}/api/auth/upload-image
+Authorization: Bearer {{customerToken}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="photo.jpg"
+Content-Type: image/jpeg
+
+< ./docs/sample-avatar.png
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
