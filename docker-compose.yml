@@ -7,15 +7,13 @@ services:
     container_name: lowland-sqlserver
     environment:
       - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=${DB_PASSWORD:-YourPassword123!}
-      - MSSQL_PID=${MSSQL_PID:-Developer}
-    ports:
-      - "${DB_PORT:-1433}:1433"
+      - "MSSQL_SA_PASSWORD=${DB_PASSWORD:?DB_PASSWORD must be defined in .env}"
+      - "MSSQL_PID=${MSSQL_PID:?MSSQL_PID must be defined in .env}"
     volumes:
       - sqlserver-data:/var/opt/mssql
       - ./database:/database
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U ${DB_USER:-sa} -P '${DB_PASSWORD:-YourPassword123!}' -C -Q 'SELECT 1' || exit 1"]
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U ${DB_USER:?DB_USER must be defined in .env} -P '${DB_PASSWORD:?DB_PASSWORD must be defined in .env}' -C -Q 'SELECT 1' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -38,9 +36,9 @@ services:
       - |
         echo '---------------------------------------------------------'
         echo '>> [1/2] Creating 5 Databases & Tables from init scripts...'
-        /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U ${DB_USER:-sa} -P '${DB_PASSWORD:-YourPassword123!}' -C -i /database/init_all_databases.sql
+        /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U ${DB_USER:?DB_USER must be defined in .env} -P '${DB_PASSWORD:?DB_PASSWORD must be defined in .env}' -C -i /database/init_all_databases.sql
         echo '>> [2/2] Seeding initial mock data into 5 Databases...'
-        /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U ${DB_USER:-sa} -P '${DB_PASSWORD:-YourPassword123!}' -C -i /database/seed_data.sql
+        /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U ${DB_USER:?DB_USER must be defined in .env} -P '${DB_PASSWORD:?DB_PASSWORD must be defined in .env}' -C -i /database/seed_data.sql
         echo '>> Database initialization and data seeding COMPLETED!'
         echo '---------------------------------------------------------'
     volumes:
@@ -49,7 +47,8 @@ services:
       - lowland-network
 
   # =========================================================================
-  # 3. Backend Microservices (.NET 8 Web API - 4 Layers Standard)
+  # 3. Backend Microservices (.NET 8 Web API - Cô lập hoàn toàn trong mạng nội bộ)
+  #    Tất cả các request bắt buộc phải đi qua API Gateway (Port 8080).
   # =========================================================================
   auth-api:
     build:
@@ -57,15 +56,13 @@ services:
       dockerfile: src/backend/services/Auth.API/Dockerfile
     container_name: lowland-auth-api
     environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
-      - ASPNETCORE_HTTP_PORTS=8080
-      - ConnectionStrings__AuthConnection=Server=${DB_SERVER:-sqlserver},1433;Database=Coffee_AuthDB;User Id=${DB_USER:-sa};Password=${DB_PASSWORD:-YourPassword123!};TrustServerCertificate=True;
-      - JwtSettings__SecretKey=${JWT_SECRET_KEY:-LowLandCoffee_Super_Secret_Key_For_PRN232_Assignment_2026_Key}
-      - JwtSettings__Issuer=${JWT_ISSUER:-LowLandCoffee.Auth}
-      - JwtSettings__Audience=${JWT_AUDIENCE:-LowLandCoffee.Clients}
-      - JwtSettings__ExpiryInHours=${JWT_EXPIRY_HOURS:-24}
-    ports:
-      - "${AUTH_HOST_PORT:-5001}:8080"
+      - "ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?ASPNETCORE_ENVIRONMENT must be defined in .env}"
+      - "ASPNETCORE_HTTP_PORTS=8080"
+      - "ConnectionStrings__AuthConnection=Server=${DB_SERVER:?DB_SERVER must be defined in .env},1433;Database=Coffee_AuthDB;User Id=${DB_USER:?DB_USER must be defined in .env};Password=${DB_PASSWORD:?DB_PASSWORD must be defined in .env};TrustServerCertificate=True;"
+      - "JwtSettings__SecretKey=${JWT_SECRET_KEY:?JWT_SECRET_KEY must be defined in .env}"
+      - "JwtSettings__Issuer=${JWT_ISSUER:?JWT_ISSUER must be defined in .env}"
+      - "JwtSettings__Audience=${JWT_AUDIENCE:?JWT_AUDIENCE must be defined in .env}"
+      - "JwtSettings__ExpiryInHours=${JWT_EXPIRY_HOURS:?JWT_EXPIRY_HOURS must be defined in .env}"
     depends_on:
       db-init:
         condition: service_completed_successfully
@@ -78,15 +75,13 @@ services:
       dockerfile: src/backend/services/Product.API/Dockerfile
     container_name: lowland-product-api
     environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
-      - ASPNETCORE_HTTP_PORTS=8080
-      - ConnectionStrings__ProductConnection=Server=${DB_SERVER:-sqlserver},1433;Database=Coffee_ProductDB;User Id=${DB_USER:-sa};Password=${DB_PASSWORD:-YourPassword123!};TrustServerCertificate=True;
-      - JwtSettings__SecretKey=${JWT_SECRET_KEY:-LowLandCoffee_Super_Secret_Key_For_PRN232_Assignment_2026_Key}
-      - JwtSettings__Issuer=${JWT_ISSUER:-LowLandCoffee.Auth}
-      - JwtSettings__Audience=${JWT_AUDIENCE:-LowLandCoffee.Clients}
-      - JwtSettings__ExpiryInHours=${JWT_EXPIRY_HOURS:-24}
-    ports:
-      - "${PRODUCT_HOST_PORT:-5002}:8080"
+      - "ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?ASPNETCORE_ENVIRONMENT must be defined in .env}"
+      - "ASPNETCORE_HTTP_PORTS=8080"
+      - "ConnectionStrings__ProductConnection=Server=${DB_SERVER:?DB_SERVER must be defined in .env},1433;Database=Coffee_ProductDB;User Id=${DB_USER:?DB_USER must be defined in .env};Password=${DB_PASSWORD:?DB_PASSWORD must be defined in .env};TrustServerCertificate=True;"
+      - "JwtSettings__SecretKey=${JWT_SECRET_KEY:?JWT_SECRET_KEY must be defined in .env}"
+      - "JwtSettings__Issuer=${JWT_ISSUER:?JWT_ISSUER must be defined in .env}"
+      - "JwtSettings__Audience=${JWT_AUDIENCE:?JWT_AUDIENCE must be defined in .env}"
+      - "JwtSettings__ExpiryInHours=${JWT_EXPIRY_HOURS:?JWT_EXPIRY_HOURS must be defined in .env}"
     depends_on:
       db-init:
         condition: service_completed_successfully
@@ -99,20 +94,18 @@ services:
       dockerfile: src/backend/services/Order.API/Dockerfile
     container_name: lowland-order-api
     environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
-      - ASPNETCORE_HTTP_PORTS=8080
-      - ConnectionStrings__OrderConnection=Server=${DB_SERVER:-sqlserver},1433;Database=Coffee_OrderDB;User Id=${DB_USER:-sa};Password=${DB_PASSWORD:-YourPassword123!};TrustServerCertificate=True;
-      - JwtSettings__SecretKey=${JWT_SECRET_KEY:-LowLandCoffee_Super_Secret_Key_For_PRN232_Assignment_2026_Key}
-      - JwtSettings__Issuer=${JWT_ISSUER:-LowLandCoffee.Auth}
-      - JwtSettings__Audience=${JWT_AUDIENCE:-LowLandCoffee.Clients}
-      - JwtSettings__ExpiryInHours=${JWT_EXPIRY_HOURS:-24}
-      - VnPay__TmnCode=${VNPAY_TMN_CODE:-}
-      - VnPay__HashSecret=${VNPAY_HASH_SECRET:-}
-      - VnPay__BaseUrl=${VNPAY_BASE_URL:-https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
-      - VnPay__ReturnUrl=${VNPAY_RETURN_URL:-http://localhost:5000/api/payments/vnpay-return}
-      - Services__ProductApiUrl=${PRODUCT_API_URL:-http://product-api:8080}
-    ports:
-      - "${ORDER_HOST_PORT:-5003}:8080"
+      - "ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?ASPNETCORE_ENVIRONMENT must be defined in .env}"
+      - "ASPNETCORE_HTTP_PORTS=8080"
+      - "ConnectionStrings__OrderConnection=Server=${DB_SERVER:?DB_SERVER must be defined in .env},1433;Database=Coffee_OrderDB;User Id=${DB_USER:?DB_USER must be defined in .env};Password=${DB_PASSWORD:?DB_PASSWORD must be defined in .env};TrustServerCertificate=True;"
+      - "JwtSettings__SecretKey=${JWT_SECRET_KEY:?JWT_SECRET_KEY must be defined in .env}"
+      - "JwtSettings__Issuer=${JWT_ISSUER:?JWT_ISSUER must be defined in .env}"
+      - "JwtSettings__Audience=${JWT_AUDIENCE:?JWT_AUDIENCE must be defined in .env}"
+      - "JwtSettings__ExpiryInHours=${JWT_EXPIRY_HOURS:?JWT_EXPIRY_HOURS must be defined in .env}"
+      - "VnPay__TmnCode=${VNPAY_TMN_CODE:?VNPAY_TMN_CODE must be defined in .env}"
+      - "VnPay__HashSecret=${VNPAY_HASH_SECRET:?VNPAY_HASH_SECRET must be defined in .env}"
+      - "VnPay__BaseUrl=${VNPAY_BASE_URL:?VNPAY_BASE_URL must be defined in .env}"
+      - "VnPay__ReturnUrl=${VNPAY_RETURN_URL:?VNPAY_RETURN_URL must be defined in .env}"
+      - "Services__ProductApiUrl=http://product-api:8080"
     depends_on:
       db-init:
         condition: service_completed_successfully
@@ -125,15 +118,13 @@ services:
       dockerfile: src/backend/services/Engagement.API/Dockerfile
     container_name: lowland-engagement-api
     environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
-      - ASPNETCORE_HTTP_PORTS=8080
-      - ConnectionStrings__EngagementConnection=Server=${DB_SERVER:-sqlserver},1433;Database=Coffee_EngagementDB;User Id=${DB_USER:-sa};Password=${DB_PASSWORD:-YourPassword123!};TrustServerCertificate=True;
-      - JwtSettings__SecretKey=${JWT_SECRET_KEY:-LowLandCoffee_Super_Secret_Key_For_PRN232_Assignment_2026_Key}
-      - JwtSettings__Issuer=${JWT_ISSUER:-LowLandCoffee.Auth}
-      - JwtSettings__Audience=${JWT_AUDIENCE:-LowLandCoffee.Clients}
-      - JwtSettings__ExpiryInHours=${JWT_EXPIRY_HOURS:-24}
-    ports:
-      - "${ENGAGEMENT_HOST_PORT:-5004}:8080"
+      - "ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?ASPNETCORE_ENVIRONMENT must be defined in .env}"
+      - "ASPNETCORE_HTTP_PORTS=8080"
+      - "ConnectionStrings__EngagementConnection=Server=${DB_SERVER:?DB_SERVER must be defined in .env},1433;Database=Coffee_EngagementDB;User Id=${DB_USER:?DB_USER must be defined in .env};Password=${DB_PASSWORD:?DB_PASSWORD must be defined in .env};TrustServerCertificate=True;"
+      - "JwtSettings__SecretKey=${JWT_SECRET_KEY:?JWT_SECRET_KEY must be defined in .env}"
+      - "JwtSettings__Issuer=${JWT_ISSUER:?JWT_ISSUER must be defined in .env}"
+      - "JwtSettings__Audience=${JWT_AUDIENCE:?JWT_AUDIENCE must be defined in .env}"
+      - "JwtSettings__ExpiryInHours=${JWT_EXPIRY_HOURS:?JWT_EXPIRY_HOURS must be defined in .env}"
     depends_on:
       db-init:
         condition: service_completed_successfully
@@ -146,15 +137,13 @@ services:
       dockerfile: src/backend/services/Notification.API/Dockerfile
     container_name: lowland-notification-api
     environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
-      - ASPNETCORE_HTTP_PORTS=8080
-      - ConnectionStrings__NotificationConnection=Server=${DB_SERVER:-sqlserver},1433;Database=Coffee_NotificationDB;User Id=${DB_USER:-sa};Password=${DB_PASSWORD:-YourPassword123!};TrustServerCertificate=True;
-      - JwtSettings__SecretKey=${JWT_SECRET_KEY:-LowLandCoffee_Super_Secret_Key_For_PRN232_Assignment_2026_Key}
-      - JwtSettings__Issuer=${JWT_ISSUER:-LowLandCoffee.Auth}
-      - JwtSettings__Audience=${JWT_AUDIENCE:-LowLandCoffee.Clients}
-      - JwtSettings__ExpiryInHours=${JWT_EXPIRY_HOURS:-24}
-    ports:
-      - "${NOTIFICATION_HOST_PORT:-5005}:8080"
+      - "ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?ASPNETCORE_ENVIRONMENT must be defined in .env}"
+      - "ASPNETCORE_HTTP_PORTS=8080"
+      - "ConnectionStrings__NotificationConnection=Server=${DB_SERVER:?DB_SERVER must be defined in .env},1433;Database=Coffee_NotificationDB;User Id=${DB_USER:?DB_USER must be defined in .env};Password=${DB_PASSWORD:?DB_PASSWORD must be defined in .env};TrustServerCertificate=True;"
+      - "JwtSettings__SecretKey=${JWT_SECRET_KEY:?JWT_SECRET_KEY must be defined in .env}"
+      - "JwtSettings__Issuer=${JWT_ISSUER:?JWT_ISSUER must be defined in .env}"
+      - "JwtSettings__Audience=${JWT_AUDIENCE:?JWT_AUDIENCE must be defined in .env}"
+      - "JwtSettings__ExpiryInHours=${JWT_EXPIRY_HOURS:?JWT_EXPIRY_HOURS must be defined in .env}"
     depends_on:
       db-init:
         condition: service_completed_successfully
@@ -163,6 +152,7 @@ services:
 
   # =========================================================================
   # 4. API Gateway: YARP (Yet Another Reverse Proxy)
+  #    Điểm tiếp nhận duy nhất (Single Entry Point) cho toàn bộ API backend
   # =========================================================================
   api-gateway:
     build:
@@ -170,18 +160,18 @@ services:
       dockerfile: src/backend/gateways/ApiGateway/Dockerfile
     container_name: lowland-api-gateway
     environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
-      - ASPNETCORE_HTTP_PORTS=8080
-      - JwtSettings__SecretKey=${JWT_SECRET_KEY:-LowLandCoffee_Super_Secret_Key_For_PRN232_Assignment_2026_Key}
-      - JwtSettings__Issuer=${JWT_ISSUER:-LowLandCoffee.Auth}
-      - JwtSettings__Audience=${JWT_AUDIENCE:-LowLandCoffee.Clients}
-      - ReverseProxy__Clusters__auth-cluster__Destinations__destination1__Address=http://auth-api:8080
-      - ReverseProxy__Clusters__product-cluster__Destinations__destination1__Address=http://product-api:8080
-      - ReverseProxy__Clusters__order-cluster__Destinations__destination1__Address=http://order-api:8080
-      - ReverseProxy__Clusters__engagement-cluster__Destinations__destination1__Address=http://engagement-api:8080
-      - ReverseProxy__Clusters__notification-cluster__Destinations__destination1__Address=http://notification-api:8080
+      - "ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?ASPNETCORE_ENVIRONMENT must be defined in .env}"
+      - "ASPNETCORE_HTTP_PORTS=8080"
+      - "JwtSettings__SecretKey=${JWT_SECRET_KEY:?JWT_SECRET_KEY must be defined in .env}"
+      - "JwtSettings__Issuer=${JWT_ISSUER:?JWT_ISSUER must be defined in .env}"
+      - "JwtSettings__Audience=${JWT_AUDIENCE:?JWT_AUDIENCE must be defined in .env}"
+      - "ReverseProxy__Clusters__auth-cluster__Destinations__destination1__Address=http://auth-api:8080"
+      - "ReverseProxy__Clusters__product-cluster__Destinations__destination1__Address=http://product-api:8080"
+      - "ReverseProxy__Clusters__order-cluster__Destinations__destination1__Address=http://order-api:8080"
+      - "ReverseProxy__Clusters__engagement-cluster__Destinations__destination1__Address=http://engagement-api:8080"
+      - "ReverseProxy__Clusters__notification-cluster__Destinations__destination1__Address=http://notification-api:8080"
     ports:
-      - "${GATEWAY_HOST_PORT:-8080}:8080"
+      - "${GATEWAY_HOST_PORT:?GATEWAY_HOST_PORT must be defined in .env}:8080"
     depends_on:
       - auth-api
       - product-api
@@ -193,6 +183,7 @@ services:
 
   # =========================================================================
   # 5. Frontend: ASP.NET Core Razor Pages Web Application
+  #    Giao diện người dùng Web cho khách hàng & quản trị viên
   # =========================================================================
   web-frontend:
     build:
@@ -200,11 +191,11 @@ services:
       dockerfile: src/frontend/CoffeeShop.WebRazorPages/Dockerfile
     container_name: lowland-web-frontend
     environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
-      - ASPNETCORE_HTTP_PORTS=8080
-      - ApiGateway__BaseUrl=http://api-gateway:8080
+      - "ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?ASPNETCORE_ENVIRONMENT must be defined in .env}"
+      - "ASPNETCORE_HTTP_PORTS=8080"
+      - "ApiGateway__BaseUrl=http://api-gateway:8080"
     ports:
-      - "${WEB_HOST_PORT:-5000}:8080"
+      - "${WEB_HOST_PORT:?WEB_HOST_PORT must be defined in .env}:8080"
     depends_on:
       - api-gateway
     networks:

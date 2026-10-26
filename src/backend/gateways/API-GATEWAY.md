@@ -73,7 +73,7 @@ src/backend/gateways/ApiGateway/
 
 ## 🛡️ Cấu Hình Địa Chỉ Cụm Dịch Vụ (Clusters)
 
-### Khi chạy Local Development (`appsettings.json`):
+### Khi chạy Local Development (`yarp.json`):
 - `auth-cluster` ➔ `http://localhost:5001`
 - `product-cluster` ➔ `http://localhost:5002`
 - `order-cluster` ➔ `http://localhost:5003`
@@ -94,6 +94,6 @@ ReverseProxy__Clusters__notification-cluster__Destinations__destination1__Addres
 
 ## 🔍 Các Endpoints Tiện Ích Cung Cấp Bởi Gateway
 
-- **`GET /`**: Trả về trạng thái chẩn đoán hệ thống (Uptime, Server time, danh sách Routes, Clusters đang trỏ tới, các tính năng kích hoạt).
+- **`GET /`**: Trả về trạng thái chẩn đoán hệ thống (Uptime, Server time, danh sách Routes & Clusters đang kết nối).
 - **`GET /health`**: Endpoint Health Check chuẩn ASP.NET Core trả về `200 Healthy`.
 - **`GET /swagger`**: Cổng Swagger UI hợp nhất hiển thị tài liệu OpenAPI của toàn bộ 5 Microservices.

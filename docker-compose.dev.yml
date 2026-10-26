@@ -1,0 +1,79 @@
+# =============================================================================
+# LowLand Coffee - Development Infrastructure Compose (Database Only)
+# =============================================================================
+# Mục đích: Phục vụ lập trình viên chạy code .NET trực tiếp trên máy Host (Local IDE)
+#           để tận dụng Hot Reload, Debug breakpoints và tốc độ biên dịch nhanh.
+#
+# Lệnh khởi chạy:
+#   docker compose -f docker-compose.dev.yml up -d
+#
+# Lệnh dừng:
+#   docker compose -f docker-compose.dev.yml down
+#
+# Lệnh kiểm tra log khởi tạo CSDL:
+#   docker logs -f lowland-db-init
+# =============================================================================
+
+services:
+  # =========================================================================
+  # 1. Database: Microsoft SQL Server 2022 (5 Databases Isolation)
+  # =========================================================================
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: lowland-sqlserver
+    restart: unless-stopped
+    environment:
+      - ACCEPT_EULA=Y
+      - "MSSQL_SA_PASSWORD=${DB_PASSWORD:?DB_PASSWORD must be defined in .env}"
+      - "MSSQL_PID=${MSSQL_PID:?MSSQL_PID must be defined in .env}"
+    ports:
+      - "${DB_PORT:?DB_PORT must be defined in .env}:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+      - ./database:/database
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U ${DB_USER:?DB_USER must be defined in .env} -P '${DB_PASSWORD:?DB_PASSWORD must be defined in .env}' -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - lowland-network
+
+  # =========================================================================
+  # 2. Database Auto-Init & Seeding (Tự động nạp schema & data mẫu cho 5 DB)
+  # =========================================================================
+  db-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: lowland-db-init
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        echo '---------------------------------------------------------'
+        echo '>> [1/2] Creating 5 Databases & Tables from init scripts...'
+        /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U ${DB_USER:?DB_USER must be defined in .env} -P '${DB_PASSWORD:?DB_PASSWORD must be defined in .env}' -C -i /database/init_all_databases.sql
+        echo '>> [2/2] Seeding initial mock data into 5 Databases...'
+        /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U ${DB_USER:?DB_USER must be defined in .env} -P '${DB_PASSWORD:?DB_PASSWORD must be defined in .env}' -C -i /database/seed_data.sql
+        echo '>> Database initialization and data seeding COMPLETED!'
+        echo '---------------------------------------------------------'
+    volumes:
+      - ./database:/database
+    networks:
+      - lowland-network
+
+# =========================================================================
+# Networks & Volumes
+# =========================================================================
+networks:
+  lowland-network:
+    name: lowland-network
+    driver: bridge
+
+volumes:
+  sqlserver-data:
+    name: lowland-sqlserver-data
+    driver: local
