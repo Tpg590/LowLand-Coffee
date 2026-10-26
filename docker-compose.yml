@@ -63,6 +63,9 @@ services:
       - "JwtSettings__Issuer=${JWT_ISSUER:?JWT_ISSUER must be defined in .env}"
       - "JwtSettings__Audience=${JWT_AUDIENCE:?JWT_AUDIENCE must be defined in .env}"
       - "JwtSettings__ExpiryInHours=${JWT_EXPIRY_HOURS:?JWT_EXPIRY_HOURS must be defined in .env}"
+      - "CloudinarySettings__CloudName=${CLOUDINARY_CLOUD_NAME:?CLOUDINARY_CLOUD_NAME must be defined in .env}"
+      - "CloudinarySettings__ApiKey=${CLOUDINARY_API_KEY:?CLOUDINARY_API_KEY must be defined in .env}"
+      - "CloudinarySettings__ApiSecret=${CLOUDINARY_API_SECRET:?CLOUDINARY_API_SECRET must be defined in .env}"
     depends_on:
       db-init:
         condition: service_completed_successfully
@@ -82,6 +85,9 @@ services:
       - "JwtSettings__Issuer=${JWT_ISSUER:?JWT_ISSUER must be defined in .env}"
       - "JwtSettings__Audience=${JWT_AUDIENCE:?JWT_AUDIENCE must be defined in .env}"
       - "JwtSettings__ExpiryInHours=${JWT_EXPIRY_HOURS:?JWT_EXPIRY_HOURS must be defined in .env}"
+      - "CloudinarySettings__CloudName=${CLOUDINARY_CLOUD_NAME:?CLOUDINARY_CLOUD_NAME must be defined in .env}"
+      - "CloudinarySettings__ApiKey=${CLOUDINARY_API_KEY:?CLOUDINARY_API_KEY must be defined in .env}"
+      - "CloudinarySettings__ApiSecret=${CLOUDINARY_API_SECRET:?CLOUDINARY_API_SECRET must be defined in .env}"
     depends_on:
       db-init:
         condition: service_completed_successfully

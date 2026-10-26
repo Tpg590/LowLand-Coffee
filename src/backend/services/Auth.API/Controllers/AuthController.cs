@@ -11,10 +11,12 @@ namespace Auth.API.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly ICloudinaryService _cloudinaryService;
 
-    public AuthController(IAuthService authService)
+    public AuthController(IAuthService authService, ICloudinaryService cloudinaryService)
     {
         _authService = authService;
+        _cloudinaryService = cloudinaryService;
     }
 
     /// <summary>
@@ -183,6 +185,53 @@ public class AuthController : ControllerBase
         }
 
         var result = await _authService.ChangePasswordAsync(userId.Value, request, cancellationToken);
+        return StatusCode(result.StatusCode, result);
+    }
+
+    /// <summary>
+    /// Chức năng: Tải lên và tự động cập nhật ảnh đại diện (Avatar) cho tài khoản hiện tại
+    /// </summary>
+    [HttpPost("profile/avatar")]
+    [Authorize]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(typeof(ApiResponse<UserProfileDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<UserProfileDto>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<UserProfileDto>), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiResponse<UserProfileDto>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UploadAvatar([FromForm] UploadImageRequest request, CancellationToken cancellationToken)
+    {
+        var userId = GetCurrentUserId();
+        if (!userId.HasValue)
+        {
+            return Unauthorized(ApiResponse<UserProfileDto>.Fail("Không xác định được danh tính người dùng", 401));
+        }
+
+        if (request == null || request.File == null)
+        {
+            return BadRequest(ApiResponse<UserProfileDto>.Fail("Vui lòng chọn tệp hình ảnh để tải lên", 400));
+        }
+
+        var result = await _authService.UploadAvatarAsync(userId.Value, request.File, cancellationToken);
+        return StatusCode(result.StatusCode, result);
+    }
+
+    /// <summary>
+    /// Chức năng: Tải hình ảnh độc lập lên Cloudinary (trả về Url và PublicId)
+    /// </summary>
+    [HttpPost("upload-image")]
+    [Authorize]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(typeof(ApiResponse<ImageUploadResultDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<ImageUploadResultDto>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<ImageUploadResultDto>), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> UploadImage([FromForm] UploadImageRequest request, CancellationToken cancellationToken)
+    {
+        if (request == null || request.File == null)
+        {
+            return BadRequest(ApiResponse<ImageUploadResultDto>.Fail("Vui lòng chọn tệp hình ảnh để tải lên", 400));
+        }
+
+        var result = await _cloudinaryService.UploadImageAsync(request.File, "lowland-coffee/avatars", cancellationToken);
         return StatusCode(result.StatusCode, result);
     }
 

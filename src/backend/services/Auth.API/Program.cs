@@ -32,6 +32,10 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
+// Add Cloudinary Service
+builder.Services.Configure<Auth.API.Settings.CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+
 // Add Controllers
 builder.Services.AddControllers();
 

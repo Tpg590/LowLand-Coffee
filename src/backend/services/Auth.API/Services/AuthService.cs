@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Auth.API.DTOs;
 using Auth.API.Entities;
 using Auth.API.Repositories.Interfaces;
@@ -15,6 +16,7 @@ public class AuthService : IAuthService
     private readonly IEmailService _emailService;
     private readonly ITokenStore _tokenStore;
     private readonly IMapper _mapper;
+    private readonly ICloudinaryService _cloudinaryService;
 
     public AuthService(
         IUserRepository userRepository,
@@ -22,7 +24,8 @@ public class AuthService : IAuthService
         ITokenService tokenService,
         IEmailService emailService,
         ITokenStore tokenStore,
-        IMapper mapper)
+        IMapper mapper,
+        ICloudinaryService cloudinaryService)
     {
         _userRepository = userRepository;
         _roleRepository = roleRepository;
@@ -30,6 +33,7 @@ public class AuthService : IAuthService
         _emailService = emailService;
         _tokenStore = tokenStore;
         _mapper = mapper;
+        _cloudinaryService = cloudinaryService;
     }
 
     public async Task<ApiResponse<AuthResponse>> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
@@ -237,6 +241,28 @@ public class AuthService : IAuthService
         await _userRepository.UpdateAsync(user, cancellationToken);
 
         return ApiResponse<UserProfileDto>.Success(_mapper.Map<UserProfileDto>(user), "Cập nhật thông tin hồ sơ thành công");
+    }
+
+    public async Task<ApiResponse<UserProfileDto>> UploadAvatarAsync(Guid userId, IFormFile file, CancellationToken cancellationToken = default)
+    {
+        var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+        if (user == null)
+        {
+            return ApiResponse<UserProfileDto>.Fail("Không tìm thấy thông tin người dùng", 404);
+        }
+
+        var uploadResult = await _cloudinaryService.UploadImageAsync(file, "lowland-coffee/avatars", cancellationToken);
+        if (!uploadResult.IsSuccess || uploadResult.Data == null)
+        {
+            return ApiResponse<UserProfileDto>.Fail(uploadResult.Message, uploadResult.StatusCode, uploadResult.Errors);
+        }
+
+        user.AvatarUrl = uploadResult.Data.Url;
+        user.UpdatedAt = DateTime.UtcNow;
+
+        await _userRepository.UpdateAsync(user, cancellationToken);
+
+        return ApiResponse<UserProfileDto>.Success(_mapper.Map<UserProfileDto>(user), "Cập nhật ảnh đại diện thành công");
     }
 
     public async Task<ApiResponse<bool>> ChangePasswordAsync(Guid userId, ChangePasswordRequest request, CancellationToken cancellationToken = default)
