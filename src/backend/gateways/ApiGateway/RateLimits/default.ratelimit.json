@@ -1,0 +1,9 @@
+{
+  "RateLimiting": {
+    "Default": {
+      "PermitLimit": 100,
+      "WindowSeconds": 60,
+      "QueueLimit": 0
+    }
+  }
+}

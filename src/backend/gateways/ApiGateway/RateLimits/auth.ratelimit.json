@@ -1,0 +1,55 @@
+{
+  "RateLimiting": {
+    "Auth": [
+      {
+        "Path": "/api/auth/login",
+        "Method": "POST",
+        "PermitLimit": 5,
+        "WindowSeconds": 60,
+        "QueueLimit": 0
+      },
+      {
+        "Path": "/api/auth/register",
+        "Method": "POST",
+        "PermitLimit": 10,
+        "WindowSeconds": 60,
+        "QueueLimit": 0
+      },
+      {
+        "Path": "/api/auth/forgot-password",
+        "Method": "POST",
+        "PermitLimit": 3,
+        "WindowSeconds": 60,
+        "QueueLimit": 0
+      },
+      {
+        "Path": "/api/auth/verify-otp",
+        "Method": "POST",
+        "PermitLimit": 5,
+        "WindowSeconds": 60,
+        "QueueLimit": 0
+      },
+      {
+        "Path": "/api/auth/reset-password",
+        "Method": "POST",
+        "PermitLimit": 5,
+        "WindowSeconds": 60,
+        "QueueLimit": 0
+      },
+      {
+        "Path": "/api/auth/refresh-token",
+        "Method": "POST",
+        "PermitLimit": 20,
+        "WindowSeconds": 60,
+        "QueueLimit": 0
+      },
+      {
+        "Path": "/api/users",
+        "Method": "*",
+        "PermitLimit": 30,
+        "WindowSeconds": 60,
+        "QueueLimit": 0
+      }
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "RateLimiting": {
+    "Notification": [
+      {
+        "Path": "/api/notifications/broadcast",
+        "Method": "POST",
+        "PermitLimit": 10,
+        "WindowSeconds": 60,
+        "QueueLimit": 0
+      },
+      {
+        "Path": "/api/notifications/order-event",
+        "Method": "POST",
+        "PermitLimit": 60,
+        "WindowSeconds": 60,
+        "QueueLimit": 0
+      },
+      {
+        "Path": "/api/notifications",
+        "Method": "GET",
+        "PermitLimit": 60,
+        "WindowSeconds": 60,
+        "QueueLimit": 0
+      }
+    ]
+  }
+}
