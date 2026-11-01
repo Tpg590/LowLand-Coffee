@@ -799,7 +799,7 @@ function renderNotifications() {
                     throw new Error(`Xóa thông báo thất bại (${response.status}).`);
                 }
 
-                // Xóa khỏi danh sách trên giao diện
+               
                 notifications = notifications.filter(
                     item => String(getField(item, "id", "Id")) !== String(id)
                 );
@@ -902,7 +902,7 @@ function renderNotifications() {
 
                 const result = await response.json();
 
-                // Hỗ trợ cả response object trực tiếp và response.data.
+              
                 const item = result.data ?? result.Data ?? result;
 
                 currentDetailNotificationId =
@@ -911,7 +911,7 @@ function renderNotifications() {
                 detailTitle.textContent =
                     item.title ?? item.Title ?? "Thông báo";
 
-                // API hiện tại trả message = notification.Type.
+              
                 detailMessage.textContent =
                     item.message ?? item.Message ?? "";
 
@@ -964,7 +964,7 @@ function renderNotifications() {
 
             const id = currentDetailNotificationId;
 
-            // Tái sử dụng hàm đánh dấu đã đọc đang có.
+            
             const item = notifications.find(
                 x => String(getField(x, "id", "Id")) === String(id)
             );
@@ -975,7 +975,7 @@ function renderNotifications() {
                 await markAsRead(id);
             }
 
-            // Chỉ ẩn nút nếu trạng thái đã đọc được cập nhật thành công.
+           
             const updatedItem = notifications.find(
                 x => String(getField(x, "id", "Id")) === String(id)
             );
@@ -1023,11 +1023,11 @@ function renderNotifications() {
                     .withAutomaticReconnect()
                     .build();
 
-                // Event phải trùng tên server đang gửi.
+
                 connection.on("ReceiveNotification", async notification => {
                     console.log("Nhận thông báo SignalR:", notification);
 
-                    // Tải lại inbox để đồng bộ IsRead và số lượng chưa đọc từ DB.
+                   
                     await loadNotifications();
 
                     if (typeof showToast === "function") {

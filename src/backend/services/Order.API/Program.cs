@@ -48,7 +48,10 @@ builder.Services.AddCors(options =>
               .AllowCredentials();
     });
 });
-
+builder.Services.AddHttpClient("NotificationAPI", client =>
+{
+    client.BaseAddress = new Uri("http://localhost:5005/");
+});
 // 5. Cấu hình Rate Limiting (Global Policy & Strict Policy cho các endpoint nhạy cảm)
 builder.Services.AddRateLimiter(rateLimiterOptions =>
 {

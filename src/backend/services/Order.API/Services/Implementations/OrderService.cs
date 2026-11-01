@@ -14,19 +14,22 @@ public class OrderService : IOrderService
     private readonly IVnPayService _vnPayService;
     private readonly IMapper _mapper;
     private readonly ILogger<OrderService> _logger;
-
+    private readonly HttpClient _notificationHttpClient;
     public OrderService(
         OrderDbContext dbContext,
         IProductPricingService pricingService,
         IVnPayService vnPayService,
         IMapper mapper,
-        ILogger<OrderService> logger)
+        ILogger<OrderService> logger,
+        IHttpClientFactory httpClientFactory)
     {
         _dbContext = dbContext;
         _pricingService = pricingService;
         _vnPayService = vnPayService;
         _mapper = mapper;
         _logger = logger;
+        _notificationHttpClient =
+      httpClientFactory.CreateClient("NotificationAPI");
     }
 
     public async Task<ApiResponse<OrderDetailDto>> CreateOrderAsync(
@@ -319,6 +322,33 @@ public class OrderService : IOrderService
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            var notificationRequest = new SendOrderNotificationRequest
+            {
+                UserId = order.UserId,
+                OrderId = order.Id,
+                OrderStatus = nextStatus
+            };
+
+            var response = await _notificationHttpClient.PostAsJsonAsync(
+                "api/notifications/order",
+                notificationRequest,
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning(
+                    "Notification API failed: {StatusCode}",
+                    response.StatusCode);
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex,
+                "Cannot connect to Notification Service");
+        }
 
         _logger.LogInformation("Cập nhật trạng thái đơn {OrderCode} -> {Status} bởi {UserId} ({Role})",
             order.OrderCode, nextStatus, currentUserId, currentUserRole);
