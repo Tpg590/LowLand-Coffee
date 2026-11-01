@@ -1,4 +1,4 @@
-@page
+﻿@page
 @model CoffeeShop.WebRazorPages.Pages.Staff.OrdersModel
 @{
     Layout = "_StaffLayout";
@@ -1142,6 +1142,142 @@
                 loadPosOrdersList();
             }, 10000);
         });
+
+        // ===================== STAFF ORDERS FILTER & SEARCH =====================
+        function setStaffOrdersStatusFilter(status, btnEl) {
+            staffOrdersStatusFilter = status;
+            document.querySelectorAll('#staff-orders-filter-pills .staff-filter-btn').forEach(b => {
+                b.classList.remove('active', 'bg-gray-900', 'text-white');
+                b.classList.add('bg-white', 'text-gray-700');
+            });
+            if (btnEl) {
+                btnEl.classList.remove('bg-white', 'text-gray-700');
+                btnEl.classList.add('active', 'bg-gray-900', 'text-white');
+            }
+            loadPosOrdersList();
+        }
+
+        function onStaffOrdersSearch(query) {
+            staffOrdersSearchQuery = query ? query.trim() : '';
+            loadPosOrdersList();
+        }
+
+        // ===================== STAFF CANCEL ORDER =====================
+        function openStaffCancelModal(orderId, orderCode) {
+            staffPendingCancelOrderId = orderId;
+            document.getElementById('staff-cancel-order-code').innerText = orderCode || orderId;
+            document.getElementById('staff-cancel-reason-select').value = 'Háº¿t nguyÃªn liá»‡u pha cháº¿';
+            document.getElementById('staff-custom-reason-box').classList.add('hidden');
+            document.getElementById('staff-cancel-custom-reason').value = '';
+            document.getElementById('modal-staff-cancel').classList.remove('hidden');
+            document.getElementById('modal-staff-cancel').classList.add('flex');
+        }
+
+        function openStaffCancelModalFromDetail() {
+            if (!staffCurrentDetailOrder) return;
+            const oid = staffCurrentDetailOrder.id;
+            const ocode = staffCurrentDetailOrder.orderCode ? `#${staffCurrentDetailOrder.orderCode}` : `#${oid}`;
+            closeOrderDetailModal();
+            openStaffCancelModal(oid, ocode);
+        }
+
+        function closeStaffCancelModal() {
+            document.getElementById('modal-staff-cancel').classList.add('hidden');
+            document.getElementById('modal-staff-cancel').classList.remove('flex');
+            staffPendingCancelOrderId = null;
+        }
+
+        function toggleStaffCustomReason(val) {
+            const box = document.getElementById('staff-custom-reason-box');
+            if (val === 'OTHER') {
+                box.classList.remove('hidden');
+            } else {
+                box.classList.add('hidden');
+            }
+        }
+
+        async function submitStaffCancelOrder() {
+            if (!staffPendingCancelOrderId) return;
+            const token = localStorage.getItem('auth_token');
+            const selectVal = document.getElementById('staff-cancel-reason-select').value;
+            let reason = selectVal;
+            if (selectVal === 'OTHER') {
+                const custom = document.getElementById('staff-cancel-custom-reason').value.trim();
+                reason = custom || 'NhÃ¢n viÃªn há»§y Ä‘Æ¡n táº¡i quÃ¡n';
+            }
+
+            const btn = document.getElementById('btn-staff-submit-cancel');
+            btn.disabled = true;
+            btn.innerHTML = `<span class="animate-spin inline-block mr-1">âŒ›</span> Äang há»§y...`;
+
+            try {
+                const res = await fetch(`http://localhost:5003/api/orders/${staffPendingCancelOrderId}/cancel`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ reason: reason })
+                });
+
+                const data = await res.json().catch(() => null);
+
+                if (res.ok) {
+                    closeStaffCancelModal();
+                    showToast('ÄÃ£ há»§y Ä‘Æ¡n', `ÄÆ¡n hÃ ng Ä‘Ã£ Ä‘Æ°á»£c há»§y thÃ nh cÃ´ng vá»›i lÃ½ do: "${reason}"`, 'warning');
+                    await loadPosOrdersList();
+                } else {
+                    const msg = data?.message || (data?.errors && data.errors[0]) || 'KhÃ´ng thá»ƒ há»§y Ä‘Æ¡n hÃ ng.';
+                    showToast('Lá»—i há»§y Ä‘Æ¡n', msg, 'danger');
+                }
+            } catch (e) {
+                console.error('Lá»—i khi há»§y Ä‘Æ¡n:', e);
+                showToast('Lá»—i káº¿t ná»‘i', 'KhÃ´ng thá»ƒ káº¿t ná»‘i Ä‘áº¿n mÃ¡y chá»§ Order.API', 'danger');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `XÃ¡c nháº­n há»§y`;
+            }
+        }
+
+        // ===================== POS INVOICE RECEIPT MODAL =====================
+        function openPosReceiptModal(order, cart, total, method, type, customer) {
+            const modal = document.getElementById('modal-pos-invoice');
+            if (!modal) return;
+
+            document.getElementById('receipt-date').innerText = new Date().toLocaleString('vi-VN');
+            document.getElementById('receipt-code').innerText = `#${order?.orderCode || 'ORD-POS'}`;
+            document.getElementById('receipt-staff').innerText = document.getElementById('pos-staff-badge')?.innerText || 'Thu NgÃ¢n 01';
+            document.getElementById('receipt-customer').innerText = customer ? customer.name : (order?.customerName || 'KhÃ¡ch vÃ£ng lai');
+            document.getElementById('receipt-type').innerText = type === 'DINE_IN' ? 'Uá»‘ng táº¡i quÃ¡n' : 'Mang vá»';
+            document.getElementById('receipt-payment').innerText = method === 'VNPAY' ? 'VNPay QR' : 'Tiá»n máº·t';
+
+            const itemsBox = document.getElementById('receipt-items');
+            if (itemsBox) {
+                itemsBox.innerHTML = (cart || []).map(i => `
+                    <div class="flex justify-between">
+                        <span class="truncate max-w-[180px]">${i.qty}x ${i.name} (${i.size || 'M'})</span>
+                        <span class="font-bold">${(i.price * i.qty).toLocaleString('vi-VN')} Ä‘</span>
+                    </div>
+                `).join('');
+            }
+
+            document.getElementById('receipt-total').innerText = `${total.toLocaleString('vi-VN')} Ä‘`;
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closePosReceiptModal() {
+            const modal = document.getElementById('modal-pos-invoice');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function printPosReceipt() {
+            window.print();
+        }
 
         async function confirmCashPayment(orderId) {
             const token = localStorage.getItem('auth_token');

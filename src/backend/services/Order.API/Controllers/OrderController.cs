@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -120,7 +120,7 @@ public class OrderController : ControllerBase
     /// Chức năng 2A: Xem danh sách đơn cá nhân của Customer (có phân trang)
     /// </summary>
     [HttpGet("my-orders")]
-    [Authorize(Roles = "Customer")]
+    [Authorize(Roles = "Customer,Staff,Admin")]
     [ProducesResponseType(typeof(ApiResponse<PagedResult<OrderDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMyOrders([FromQuery] OrderFilterRequest filter, CancellationToken cancellationToken)
     {

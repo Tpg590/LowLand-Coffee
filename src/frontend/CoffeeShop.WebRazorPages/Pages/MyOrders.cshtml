@@ -72,7 +72,7 @@
             <button onclick="setFilterStatus('PROCESSING')" id="tab-PROCESSING" class="filter-tab px-4 py-2 rounded-full text-sm font-bold transition whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200">
                 Đang chuẩn bị
             </button>
-            <button onclick="setFilterStatus('DELIVERING')" id="tab-DELIVERING" class="filter-tab px-4 py-2 rounded-full text-sm font-bold transition whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200">
+            <button onclick="setFilterStatus('SHIPPING')" id="tab-SHIPPING" class="filter-tab px-4 py-2 rounded-full text-sm font-bold transition whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200">
                 Đang giao hàng
             </button>
             <button onclick="setFilterStatus('COMPLETED')" id="tab-COMPLETED" class="filter-tab px-4 py-2 rounded-full text-sm font-bold transition whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200">
@@ -110,7 +110,7 @@
 </div>
 
 <!-- ========================================================================= -->
-<!-- MODAL: CHI TIẾT ĐƠN HÀNG -->
+<!-- MODAL 1: CHI TIẾT ĐƠN HÀNG (CUSTOMER DETAIL MODAL) -->
 <!-- ========================================================================= -->
 <div id="order-detail-modal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
@@ -129,7 +129,7 @@
         </div>
 
         <!-- Modal Body (Scrollable) -->
-        <div class="p-6 overflow-y-auto space-y-6 flex-1">
+        <div class="p-6 overflow-y-auto space-y-5 flex-1">
             <!-- Status & Summary Banner -->
             <div class="flex items-center justify-between p-4 rounded-2xl bg-amber-50/60 border border-amber-200/60">
                 <div class="flex items-center gap-3">
@@ -145,6 +145,15 @@
                     <div class="text-xs font-semibold text-gray-500">Phương thức</div>
                     <div id="modal-payment-method" class="text-sm font-black text-gray-800">Tiền mặt</div>
                 </div>
+            </div>
+
+            <!-- Cancel Reason Alert if Cancelled -->
+            <div id="modal-cancel-reason-box" class="hidden p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-900">
+                <div class="flex items-center gap-2 font-black text-sm text-rose-700">
+                    <i class="fi fi-rr-cross-circle"></i>
+                    <span>Đơn hàng đã bị hủy</span>
+                </div>
+                <p id="modal-cancel-reason-text" class="mt-1 text-rose-800 font-medium"></p>
             </div>
 
             <!-- Items List -->
@@ -181,10 +190,76 @@
             </div>
         </div>
 
-        <!-- Modal Footer -->
-        <div class="px-6 py-3.5 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-2">
-            <button onclick="closeOrderDetailModal()" class="px-5 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-100 text-gray-700 font-bold text-sm transition">
+        <!-- Modal Footer with Action Buttons -->
+        <div class="px-6 py-3.5 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+                <!-- Action: Customer Cancel Order when Pending -->
+                <button type="button" id="modal-btn-cancel" onclick="openCancelModalFromCurrentDetail()" class="hidden px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs flex items-center gap-1.5 transition">
+                    <i class="fi fi-rr-cross-circle"></i>
+                    <span>Hủy đơn này</span>
+                </button>
+
+                <!-- Action: Retry VNPay Payment when Unpaid -->
+                <button type="button" id="modal-btn-vnpay" onclick="retryVnPayPaymentFromCurrentDetail()" class="hidden px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition active:scale-95">
+                    <i class="fi fi-rr-credit-card"></i>
+                    <span>Thanh toán VNPay</span>
+                </button>
+            </div>
+
+            <button type="button" onclick="closeOrderDetailModal()" class="px-5 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-100 text-gray-700 font-bold text-sm transition">
                 Đóng
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL 2: XÁC NHẬN HỦY ĐƠN HÀNG (CUSTOMER CANCEL CONFIRMATION) -->
+<!-- ========================================================================= -->
+<div id="cancel-order-modal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+        <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+            <div class="flex items-center gap-2.5">
+                <span class="w-9 h-9 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-lg">
+                    <i class="fi fi-rr-triangle-warning"></i>
+                </span>
+                <h3 class="text-lg font-black text-gray-900">Xác nhận hủy đơn hàng</h3>
+            </div>
+            <button type="button" onclick="closeCancelModal()" class="text-gray-400 hover:text-gray-600">✕</button>
+        </div>
+
+        <div class="space-y-3">
+            <p class="text-sm text-gray-600 leading-relaxed">
+                Bạn có chắc chắn muốn hủy đơn hàng <span id="cancel-modal-order-code" class="font-bold text-gray-900">#ORD</span>?
+            </p>
+            <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 text-xs text-amber-900 flex items-start gap-2">
+                <i class="fi fi-rr-info text-amber-600 mt-0.5"></i>
+                <span>Lưu ý: Quý khách chỉ có thể tự hủy đơn khi quán chưa bắt đầu pha chế đồ uống.</span>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1.5">Lý do hủy đơn</label>
+                <select id="cancel-reason-select" onchange="toggleCustomReasonInput(this.value)" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-red-highland">
+                    <option value="Tôi muốn đổi món / đổi địa chỉ">Tôi muốn đổi món / đổi địa chỉ</option>
+                    <option value="Thời gian chờ đợi quá lâu">Thời gian chờ đợi quá lâu</option>
+                    <option value="Đặt nhầm số lượng">Đặt nhầm số lượng</option>
+                    <option value="Khách đổi ý, không muốn uống nữa">Khách đổi ý, không muốn uống nữa</option>
+                    <option value="OTHER">Lý do khác...</option>
+                </select>
+
+                <div id="custom-reason-container" class="hidden mt-2">
+                    <input type="text" id="cancel-custom-reason" placeholder="Nhập lý do của bạn..." class="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-2 text-sm text-gray-800 focus:ring-2 focus:ring-red-highland" />
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3 pt-2">
+            <button type="button" onclick="closeCancelModal()" class="flex-1 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm transition">
+                Quay lại
+            </button>
+            <button type="button" id="btn-confirm-cancel" onclick="submitCancelOrder()" class="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm shadow-md transition active:scale-95 flex items-center justify-center gap-2">
+                <i class="fi fi-rr-cross"></i>
+                <span>Xác nhận hủy</span>
             </button>
         </div>
     </div>
@@ -193,6 +268,8 @@
 <script>
     let allOrders = [];
     let currentFilter = '';
+    let currentViewingOrder = null;
+    let pendingCancelOrderId = null;
 
     document.addEventListener('DOMContentLoaded', () => {
         checkAuthAndLoadOrders();
@@ -241,7 +318,6 @@
             });
 
             if (res.status === 401) {
-                // Token hết hạn hoặc sai
                 document.getElementById('unauth-box').classList.remove('hidden');
                 document.getElementById('myorders-container').classList.add('hidden');
                 return;
@@ -304,7 +380,17 @@
 
         let filtered = allOrders;
         if (currentFilter) {
-            filtered = allOrders.filter(o => (o.status || '').toUpperCase() === currentFilter.toUpperCase());
+            filtered = allOrders.filter(o => {
+                const s = (o.status || '').toUpperCase();
+                const cf = currentFilter.toUpperCase();
+                if (cf === 'SHIPPING' || cf === 'DELIVERING') {
+                    return s === 'SHIPPING' || s === 'DELIVERING';
+                }
+                if (cf === 'PROCESSING' || cf === 'CONFIRMED') {
+                    return s === 'PROCESSING' || s === 'CONFIRMED';
+                }
+                return s === cf;
+            });
         }
 
         if (!filtered || filtered.length === 0) {
@@ -320,6 +406,10 @@
             const formattedDate = formatDate(order.createdAt);
             const totalFmt = (order.finalAmount || order.totalAmount || 0).toLocaleString('vi-VN');
             const totalItems = order.totalItems || 1;
+            const isPending = (order.status || '').toUpperCase() === 'PENDING';
+            const isUnpaidVnPay = (order.paymentMethod || '').toUpperCase().includes('VNPAY') &&
+                                  (order.paymentStatus || '').toUpperCase() === 'PENDING' &&
+                                  isPending;
 
             return `
                 <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm hover:shadow-md transition">
@@ -355,6 +445,7 @@
                                 <span>${formatPaymentText(order.paymentMethod, order.paymentStatus)}</span>
                             </div>
                             ${order.note ? `<div class="text-xs text-amber-800 bg-amber-50 rounded-lg px-2.5 py-1 inline-block mt-1 font-medium">Ghi chú: ${order.note}</div>` : ''}
+                            ${order.cancelReason ? `<div class="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-2.5 py-1 inline-block mt-1 font-semibold flex items-center gap-1"><i class="fi fi-rr-info"></i>Lý do hủy: ${order.cancelReason}</div>` : ''}
                         </div>
 
                         <div class="sm:text-right">
@@ -363,7 +454,21 @@
                         </div>
                     </div>
 
-                    <div class="pt-3 border-t border-gray-100 flex items-center justify-end gap-2">
+                    <div class="pt-3 border-t border-gray-100 flex items-center justify-end gap-2.5 flex-wrap">
+                        ${isUnpaidVnPay ? `
+                            <button onclick="retryVnPayPayment('${order.id}')" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition active:scale-95" title="Thanh toán lại VNPay">
+                                <i class="fi fi-rr-credit-card"></i>
+                                <span>Thanh toán VNPay</span>
+                            </button>
+                        ` : ''}
+
+                        ${isPending ? `
+                            <button onclick="openCancelModal('${order.id}', '${order.orderCode || ''}')" class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs flex items-center gap-1.5 transition active:scale-95" title="Hủy đơn hàng">
+                                <i class="fi fi-rr-cross-circle"></i>
+                                <span>Hủy đơn</span>
+                            </button>
+                        ` : ''}
+
                         <button onclick="viewOrderDetail('${order.id}')" class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs flex items-center gap-1.5 transition">
                             <i class="fi fi-rr-eye"></i>
                             <span>Xem chi tiết</span>
@@ -386,6 +491,7 @@
             const order = resJson.data || resJson;
 
             if (!order) return;
+            currentViewingOrder = order;
 
             document.getElementById('modal-order-code').innerText = `#${order.orderCode || order.id.substring(0, 8).toUpperCase()}`;
             document.getElementById('modal-order-date').innerText = `Thời gian đặt: ${formatDate(order.createdAt)}`;
@@ -400,6 +506,15 @@
             const paySt = (order.paymentStatus || '').toUpperCase();
             const payStatusText = (paySt === 'SUCCESS' || paySt === 'PAID') ? ' (Đã thanh toán)' : ' (Chờ thanh toán)';
             document.getElementById('modal-payment-method').innerText = `${payName}${payStatusText}`;
+
+            // Cancel Reason Box
+            const cancelBox = document.getElementById('modal-cancel-reason-box');
+            if ((order.status || '').toUpperCase() === 'CANCELLED' && order.cancelReason) {
+                cancelBox.classList.remove('hidden');
+                document.getElementById('modal-cancel-reason-text').innerText = `Lý do: ${order.cancelReason}`;
+            } else {
+                cancelBox.classList.add('hidden');
+            }
 
             const itemsContainer = document.getElementById('modal-items-list');
             if (order.items && order.items.length > 0) {
@@ -430,6 +545,27 @@
                 document.getElementById('modal-note-container').classList.add('hidden');
             }
 
+            // Buttons in detail modal
+            const isPending = (order.status || '').toUpperCase() === 'PENDING';
+            const isUnpaidVnPay = (order.paymentMethod || '').toUpperCase().includes('VNPAY') &&
+                                  (order.paymentStatus || '').toUpperCase() === 'PENDING' &&
+                                  isPending;
+
+            const btnCancel = document.getElementById('modal-btn-cancel');
+            const btnVnPay = document.getElementById('modal-btn-vnpay');
+
+            if (isPending) {
+                btnCancel.classList.remove('hidden');
+            } else {
+                btnCancel.classList.add('hidden');
+            }
+
+            if (isUnpaidVnPay) {
+                btnVnPay.classList.remove('hidden');
+            } else {
+                btnVnPay.classList.add('hidden');
+            }
+
             document.getElementById('order-detail-modal').classList.remove('hidden');
         } catch (e) {
             console.error(e);
@@ -439,6 +575,109 @@
 
     function closeOrderDetailModal() {
         document.getElementById('order-detail-modal').classList.add('hidden');
+        currentViewingOrder = null;
+    }
+
+    // Modal Cancel Handling
+    function openCancelModal(orderId, orderCode) {
+        pendingCancelOrderId = orderId;
+        document.getElementById('cancel-modal-order-code').innerText = `#${orderCode || orderId.substring(0, 8).toUpperCase()}`;
+        document.getElementById('cancel-reason-select').value = 'Tôi muốn đổi món / đổi địa chỉ';
+        document.getElementById('custom-reason-container').classList.add('hidden');
+        document.getElementById('cancel-custom-reason').value = '';
+        document.getElementById('cancel-order-modal').classList.remove('hidden');
+    }
+
+    function openCancelModalFromCurrentDetail() {
+        if (!currentViewingOrder) return;
+        closeOrderDetailModal();
+        openCancelModal(currentViewingOrder.id, currentViewingOrder.orderCode);
+    }
+
+    function closeCancelModal() {
+        document.getElementById('cancel-order-modal').classList.add('hidden');
+        pendingCancelOrderId = null;
+    }
+
+    function toggleCustomReasonInput(val) {
+        const container = document.getElementById('custom-reason-container');
+        if (val === 'OTHER') {
+            container.classList.remove('hidden');
+        } else {
+            container.classList.add('hidden');
+        }
+    }
+
+    async function submitCancelOrder() {
+        if (!pendingCancelOrderId) return;
+        const token = localStorage.getItem('auth_token');
+        const selectVal = document.getElementById('cancel-reason-select').value;
+        let reason = selectVal;
+        if (selectVal === 'OTHER') {
+            const custom = document.getElementById('cancel-custom-reason').value.trim();
+            reason = custom || 'Khách hàng yêu cầu hủy đơn';
+        }
+
+        const btn = document.getElementById('btn-confirm-cancel');
+        btn.disabled = true;
+        btn.innerHTML = `<span class="animate-spin inline-block mr-1">⌛</span> Đang xử lý...`;
+
+        try {
+            const res = await fetch(`http://localhost:5003/api/orders/${pendingCancelOrderId}/cancel`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ reason: reason })
+            });
+
+            const data = await res.json().catch(() => null);
+
+            if (res.ok) {
+                closeCancelModal();
+                alert('Đã hủy đơn hàng thành công!');
+                await fetchMyOrders();
+            } else {
+                const msg = data?.message || (data?.errors && data.errors[0]) || 'Không thể hủy đơn hàng.';
+                alert(`Lỗi: ${msg}`);
+            }
+        } catch (e) {
+            console.error('Lỗi khi hủy đơn:', e);
+            alert('Không thể kết nối đến máy chủ Order.API');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fi fi-rr-cross"></i><span>Xác nhận hủy</span>`;
+        }
+    }
+
+    // Retry VNPay Payment
+    async function retryVnPayPayment(orderId) {
+        const token = localStorage.getItem('auth_token');
+        try {
+            const res = await fetch(`http://localhost:5003/api/payments/${orderId}/vnpay-url`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const data = await res.json().catch(() => null);
+            const vnpayUrl = data?.data?.paymentUrl;
+            if (res.ok && vnpayUrl) {
+                window.location.href = vnpayUrl;
+            } else {
+                alert(data?.message || 'Không thể tạo liên kết thanh toán VNPay.');
+            }
+        } catch (e) {
+            console.error('Lỗi gọi VNPay:', e);
+            alert('Lỗi kết nối khi tạo link thanh toán VNPay.');
+        }
+    }
+
+    function retryVnPayPaymentFromCurrentDetail() {
+        if (!currentViewingOrder) return;
+        retryVnPayPayment(currentViewingOrder.id);
     }
 
     function getStatusBadge(status) {
@@ -449,6 +688,7 @@
             case 'CONFIRMED':
             case 'PROCESSING':
                 return { label: 'Đang chuẩn bị', class: 'bg-blue-100 text-blue-800', textClass: 'text-blue-800', icon: 'fi fi-rr-coffee' };
+            case 'SHIPPING':
             case 'DELIVERING':
                 return { label: 'Đang giao', class: 'bg-purple-100 text-purple-800', textClass: 'text-purple-800', icon: 'fi fi-rr-moped' };
             case 'COMPLETED':

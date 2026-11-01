@@ -329,7 +329,7 @@ public class OrderService : IOrderService
     public async Task<ApiResponse<OrderDetailDto>> CancelOrderAsync(
         Guid orderId, CancelOrderRequest request, Guid currentUserId, string currentUserRole, CancellationToken cancellationToken = default)
     {
-        var isStaff = string.Equals(currentUserRole, "Staff", StringComparison.OrdinalIgnoreCase);
+        var isStaffOrAdmin = string.Equals(currentUserRole, "Staff", StringComparison.OrdinalIgnoreCase) || string.Equals(currentUserRole, "Admin", StringComparison.OrdinalIgnoreCase);
 
         var order = await _dbContext.Orders
             .Include(o => o.OrderItems)
@@ -342,7 +342,7 @@ public class OrderService : IOrderService
         }
 
         // BOLA / IDOR Protection: Nếu là Customer, chỉ được hủy đơn của chính mình
-        if (!isStaff && order.UserId != currentUserId)
+        if (!isStaffOrAdmin && order.UserId != currentUserId)
         {
             _logger.LogWarning("BOLA/IDOR Violation: User {UserId} cố gắng hủy đơn {OrderId} của User {OwnerId}",
                 currentUserId, orderId, order.UserId);
@@ -361,7 +361,7 @@ public class OrderService : IOrderService
         }
 
         // Điều kiện đối với Khách hàng: Chỉ được hủy khi đơn còn ở trạng thái "Tiếp nhận" (PENDING)
-        if (!isStaff)
+        if (!isStaffOrAdmin)
         {
             if (order.Status != OrderStatus.PENDING)
             {
@@ -372,14 +372,14 @@ public class OrderService : IOrderService
         else
         {
             // Điều kiện đối với Staff: Bắt buộc phải có lý do hủy
-            if (string.IsNullOrWhiteSpace(request.Reason))
+            if (string.IsNullOrWhiteSpace(request?.Reason))
             {
                 return ApiResponse<OrderDetailDto>.Fail("Nhân viên (Staff) bắt buộc phải nhập lý do hủy đơn.", 400);
             }
         }
 
         order.Status = OrderStatus.CANCELLED;
-        order.CancelReason = request.Reason.Trim();
+        order.CancelReason = string.IsNullOrWhiteSpace(request?.Reason) ? "Kh\u00e1ch h\u00e0ng y\u00eau c\u1ea7u h\u1ee7y \u0111\u01a1n" : request.Reason.Trim();
         order.UpdatedAt = DateTime.UtcNow;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
