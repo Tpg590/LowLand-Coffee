@@ -26,7 +26,9 @@ public class ProductRepository : IProductRepository
         if (!string.IsNullOrWhiteSpace(filter.Keyword))
         {
             var keyword = filter.Keyword.Trim().ToLower();
-            query = query.Where(p => p.Name.ToLower().Contains(keyword) || (p.Description != null && p.Description.ToLower().Contains(keyword)));
+            query = query.Where(p => p.Name.ToLower().Contains(keyword)
+                                  || (p.Description != null && p.Description.ToLower().Contains(keyword))
+                                  || (p.Category != null && p.Category.Name.ToLower().Contains(keyword)));
         }
 
         if (filter.CategoryId.HasValue)
@@ -108,7 +110,30 @@ public class ProductRepository : IProductRepository
     public async Task UpdateAsync(Entities.Product product, CancellationToken cancellationToken = default)
     {
         product.UpdatedAt = DateTime.UtcNow;
-        _context.Products.Update(product);
+
+        var existingOptions = await _context.ProductOptions
+            .Where(o => o.ProductId == product.Id)
+            .ToListAsync(cancellationToken);
+
+        if (existingOptions.Count > 0)
+        {
+            _context.ProductOptions.RemoveRange(existingOptions);
+        }
+
+        if (product.Options != null && product.Options.Count > 0)
+        {
+            foreach (var opt in product.Options)
+            {
+                _context.Entry(opt).State = EntityState.Added;
+            }
+        }
+
+        if (_context.Entry(product).State == EntityState.Detached)
+        {
+            _context.Products.Attach(product);
+            _context.Entry(product).State = EntityState.Modified;
+        }
+
         await _context.SaveChangesAsync(cancellationToken);
     }
 

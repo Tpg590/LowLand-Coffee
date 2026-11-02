@@ -15,7 +15,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 
-    <!-- Tailwind CSS (Play CDN with Brand Configuration) -->
+    <!-- Quy tắc UI 3: Tailwind CSS đồng bộ màu red-highland & keyframes float từ tailwind.config.js -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -33,16 +33,34 @@
                     },
                     fontFamily: {
                         sans: ['"Be Vietnam Pro"', 'sans-serif'],
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+                            '50%': { transform: 'translateY(-14px) rotate(2deg)' },
+                        },
+                        'float-reverse': {
+                            '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+                            '50%': { transform: 'translateY(10px) rotate(-2deg)' },
+                        }
+                    },
+                    animation: {
+                        float: 'float 4s ease-in-out infinite',
+                        'float-slow': 'float 6s ease-in-out infinite',
+                        'float-reverse': 'float-reverse 5s ease-in-out infinite',
                     }
                 }
             }
         }
     </script>
 
-    <!-- Flowbite UI Component Library -->
+    <!-- Quy tắc UI 4: Flowbite UI Component Library -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
 
-    <!-- Flaticon UIcons (https://www.flaticon.com/uicons) -->
+    <!-- Quy tắc UI 5: Swiper.js Slider CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+
+    <!-- Quy tắc UI 2: Flaticon Web Icons (https://www.flaticon.com/free-icons/web) -->
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-bold-rounded/css/uicons-bold-rounded.css">
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css">
@@ -78,7 +96,6 @@
         <!-- SIDEBAR BÊN TRÁI DÀNH CHO NHÂN VIÊN (STAFF SIDEBAR) -->
         <!-- ========================================================================= -->
         <aside id="staff-sidebar" class="w-64 lg:w-72 bg-[#0F172A] text-slate-300 flex flex-col shrink-0 fixed inset-y-0 left-0 z-40 transition-transform -translate-x-full lg:translate-x-0 border-r border-slate-800 shadow-2xl">
-            <!-- Header Sidebar: Logo & Tiêu đề quầy POS -->
             <div class="h-20 flex items-center px-6 border-b border-slate-800/80 bg-[#0B1120]">
                 <div class="flex items-center gap-3.5">
                     <img src="~/images/logo.jpg" alt="LowLand Coffee" class="w-11 h-11 object-contain rounded-full bg-amber-50 border-2 border-red-500 shadow-md" />
@@ -91,38 +108,32 @@
                 </div>
             </div>
 
-            <!-- Danh sách Menu Điều hướng Staff -->
             <div class="flex-1 overflow-y-auto px-4 py-6 space-y-1.5">
                 <div class="px-3 pb-2 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
                     Nghiệp Vụ Quầy Bar
                 </div>
 
-                <!-- 1. Bán hàng tại quầy POS -->
                 <a href="/Staff/Orders" id="nav-staff-pos" class="flex items-center gap-3.5 px-4 py-3.5 rounded-2xl font-bold text-sm text-slate-300 hover:text-white hover:bg-slate-800/80 transition group">
                     <i class="fi fi-rr-shop text-lg text-slate-400 group-hover:text-amber-400 transition"></i>
                     <span>Bán hàng POS</span>
                 </a>
 
-                <!-- 2. Quản lý Đơn hàng (Xem tất cả đơn & chi tiết) -->
                 <a href="/Staff/Orders?view=orders" id="nav-staff-orders" class="flex items-center gap-3.5 px-4 py-3.5 rounded-2xl font-bold text-sm text-slate-300 hover:text-white hover:bg-slate-800/80 transition group">
                     <i class="fi fi-rr-clipboard-list text-lg text-slate-400 group-hover:text-amber-400 transition"></i>
                     <span>Đơn hàng</span>
                 </a>
 
-                <!-- 3. Quản lý Sản phẩm -->
                 <a href="/Staff/Products" id="nav-staff-products" class="flex items-center gap-3.5 px-4 py-3.5 rounded-2xl font-bold text-sm text-slate-300 hover:text-white hover:bg-slate-800/80 transition group">
                     <i class="fi fi-rr-box-alt text-lg text-slate-400 group-hover:text-amber-400 transition"></i>
                     <span>Sản phẩm</span>
                 </a>
 
-                <!-- 4. Phân loại / Danh mục -->
                 <a href="/Staff/Categories" id="nav-staff-categories" class="flex items-center gap-3.5 px-4 py-3.5 rounded-2xl font-bold text-sm text-slate-300 hover:text-white hover:bg-slate-800/80 transition group">
                     <i class="fi fi-rr-apps text-lg text-slate-400 group-hover:text-amber-400 transition"></i>
-                    <span>Phân loại</span>
+                    <span>Danh mục</span>
                 </a>
             </div>
 
-            <!-- Footer Sidebar: Thông tin nhân viên & Nút Đăng xuất -->
             <div class="p-4 border-t border-slate-800/80 bg-[#0B1120] space-y-3">
                 <div class="flex items-center gap-3 px-2 py-1.5 rounded-xl bg-slate-900/60 border border-slate-800">
                     <div class="w-9 h-9 rounded-xl bg-red-highland text-white flex items-center justify-center font-bold text-xs uppercase shadow-sm">
@@ -144,14 +155,12 @@
             </div>
         </aside>
 
-        <!-- Backdrop khi mở menu trên di động -->
         <div id="staff-backdrop" onclick="toggleStaffSidebar()" class="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm hidden lg:hidden"></div>
 
         <!-- ========================================================================= -->
         <!-- KHU VỰC NỘI DUNG CHÍNH (MAIN WORKSPACE BÊN PHẢI) -->
         <!-- ========================================================================= -->
         <div class="flex-1 flex flex-col min-w-0 lg:pl-64 lg:w-[calc(100%-16rem)]">
-            <!-- Header Top Bar -->
             <header class="h-14 bg-white border-b border-gray-200/80 sticky top-0 z-20 flex items-center justify-between px-4 sm:px-8 shadow-xs">
                 <div class="flex items-center gap-3">
                     <button type="button" onclick="toggleStaffSidebar()" class="lg:hidden p-2 rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-100 focus:outline-none" title="Mở danh mục">
@@ -159,7 +168,6 @@
                     </button>
                 </div>
 
-                <!-- Clock -->
                 <div class="flex items-center gap-4">
                     <div class="flex items-center gap-2 text-xs font-bold text-gray-500 bg-gray-50 px-3.5 py-2 rounded-xl border border-gray-200/80">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -168,23 +176,29 @@
                 </div>
             </header>
 
-            <!-- Main Page Content -->
             <main class="flex-1 p-4 sm:p-6 lg:p-8">
                 @RenderBody()
             </main>
+
+            <footer class="bg-white border-t border-gray-200 py-3.5 px-6 sm:px-8 text-xs text-gray-500 flex flex-col sm:flex-row items-center justify-between gap-2">
+                <div>Hệ thống Quầy Thu Ngân & Thực đơn LowLand Coffee &copy; 2026.</div>
+                <div class="flex items-center gap-1.5 text-slate-500 font-medium">
+                    <i class="fi fi-rr-coffee text-red-highland"></i> Khu vực Nhân viên (Staff)
+                </div>
+            </footer>
         </div>
     </div>
 
-    <!-- Toast Container -->
+    <!-- Quy tắc UI 1: Toast Container -->
     <div id="toast-container"></div>
 
     <!-- Scripts -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     <script>
-        // Đồng hồ thời gian thực cho ca trực
         function updateClock() {
             const now = new Date();
             const timeStr = now.toLocaleTimeString('vi-VN', { hour12: false });
@@ -197,7 +211,6 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // Cập nhật trạng thái active cho menu sidebar
         try {
             const currentPath = window.location.pathname.toLowerCase();
             const navPos = document.getElementById('nav-staff-pos');
@@ -227,7 +240,6 @@
             }
         } catch(e) {}
 
-        // Cập nhật tên nhân viên từ LocalStorage nếu có
         try {
             const userStr = localStorage.getItem('current_user');
             if (userStr) {
@@ -239,7 +251,6 @@
             }
         } catch (e) {}
 
-        // Đăng xuất nhân viên
         function logoutStaff() {
             localStorage.removeItem('current_user');
             localStorage.removeItem('auth_token');

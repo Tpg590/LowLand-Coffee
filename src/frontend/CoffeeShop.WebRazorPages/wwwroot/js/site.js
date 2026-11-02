@@ -1,9 +1,10 @@
 // =========================================================================
-// LowLand Coffee - Client Utilities & Toast Notification System
+// LowLand Coffee - Client Utilities & Flowbite Toast Notification System
+// Quy tắc UI 1 & 2: Thay thế hoàn toàn alert() bằng Toast và dùng Flaticon Icon
 // =========================================================================
 
 /**
- * Hiển thị Toast thông báo đẹp mắt thay thế hoàn toàn alert()
+ * Hiển thị Flowbite Toast thông báo đẹp mắt thay thế hoàn toàn alert()
  * @param {string} title Tiêu đề thông báo
  * @param {string} message Nội dung chi tiết
  * @param {'success'|'error'|'warning'|'info'} type Loại thông báo
@@ -17,46 +18,48 @@ function showToast(title, message = '', type = 'success', duration = 3500) {
         document.body.appendChild(container);
     }
 
-    // Cấu hình màu sắc & icon theo loại toast
+    // Cấu hình màu sắc & Flaticon Web Icons theo chuẩn Flowbite Toast
     const config = {
         success: {
             bg: 'bg-white border-l-4 border-emerald-500',
-            text: 'text-emerald-800',
             iconBg: 'bg-emerald-100 text-emerald-600',
-            icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>`
+            icon: '<i class="fi fi-rr-check text-base"></i>'
         },
         error: {
             bg: 'bg-white border-l-4 border-red-highland',
-            text: 'text-red-800',
             iconBg: 'bg-red-100 text-red-highland',
-            icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>`
+            icon: '<i class="fi fi-rr-cross-small text-lg"></i>'
         },
         warning: {
             bg: 'bg-white border-l-4 border-amber-500',
-            text: 'text-amber-800',
             iconBg: 'bg-amber-100 text-amber-600',
-            icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`
+            icon: '<i class="fi fi-rr-exclamation text-base"></i>'
         },
         info: {
             bg: 'bg-white border-l-4 border-blue-500',
-            text: 'text-blue-800',
             iconBg: 'bg-blue-100 text-blue-600',
-            icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`
+            icon: '<i class="fi fi-rr-info text-base"></i>'
         }
-    }[type] || config.info;
+    }[type] || {
+        bg: 'bg-white border-l-4 border-blue-500',
+        iconBg: 'bg-blue-100 text-blue-600',
+        icon: '<i class="fi fi-rr-info text-base"></i>'
+    };
 
     const toast = document.createElement('div');
-    toast.className = `toast-item flex items-start gap-3 p-4 rounded-xl shadow-xl border border-gray-100 ${config.bg} min-w-[320px] max-w-sm`;
+    toast.setAttribute('role', 'alert');
+    toast.className = `toast-item flex items-start w-full max-w-sm p-4 text-gray-700 rounded-2xl shadow-2xl border border-gray-100 ${config.bg} min-w-[320px] gap-3`;
     toast.innerHTML = `
-        <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${config.iconBg}">
+        <div class="inline-flex items-center justify-center flex-shrink-0 w-9 h-9 rounded-xl ${config.iconBg}">
             ${config.icon}
         </div>
-        <div class="flex-1 text-sm">
-            <h4 class="font-semibold text-gray-900 leading-tight">${title}</h4>
-            ${message ? `<p class="mt-1 text-gray-600 leading-snug">${message}</p>` : ''}
+        <div class="flex-1 text-sm font-normal">
+            <span class="mb-1 text-sm font-extrabold text-gray-900 block leading-tight">${title}</span>
+            ${message ? `<div class="text-xs font-medium text-gray-600 leading-snug mt-0.5">${message}</div>` : ''}
         </div>
-        <button type="button" class="flex-shrink-0 text-gray-400 hover:text-gray-600 p-1" onclick="this.closest('.toast-item').remove()">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        <button type="button" class="ms-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex items-center justify-center h-8 w-8 transition" aria-label="Close" onclick="this.closest('.toast-item').remove()">
+            <span class="sr-only">Đóng</span>
+            <i class="fi fi-rr-cross-small text-base"></i>
         </button>
     `;
 
@@ -77,7 +80,7 @@ function showToast(title, message = '', type = 'success', duration = 3500) {
 // Thay thế hoàn toàn alert, prompt mặc định của trình duyệt sang Toast thông báo đẹp mắt
 window.alert = function (msg) {
     if (typeof showToast === 'function') {
-        showToast('Thông báo', String(msg), 'info');
+        showToast('Thông báo hệ thống', String(msg), 'info');
     }
 };
 
@@ -103,7 +106,6 @@ function getCurrentUser() {
 function getUserCartKey() {
     const user = getCurrentUser();
     if (!user) return null;
-    // Phân lập giỏ hàng theo định danh ID hoặc Email hoặc SĐT của từng người dùng
     const userKey = user.id || user.email || user.phoneNumber || user.phone || 'customer';
     return 'LOWLAND_CART_' + userKey.toString().toLowerCase().trim().replace(/[^a-z0-9_-]/g, '_');
 }
@@ -113,7 +115,6 @@ function isUserLoggedIn() {
 }
 
 function getCart() {
-    // Chỉ người dùng đã đăng nhập mới nạp giỏ hàng của chính họ
     const cartKey = getUserCartKey();
     if (!cartKey) {
         return [];
@@ -163,7 +164,6 @@ function updateCartBadge() {
 }
 
 function addToCart(item) {
-    // Bắt buộc phải đăng nhập mới được thêm vào giỏ hàng
     if (!isUserLoggedIn()) {
         showToast('Yêu cầu đăng nhập', 'Vui lòng đăng nhập tài khoản thành viên để thêm món vào giỏ hàng!', 'warning', 3500);
         setTimeout(() => {
@@ -187,7 +187,7 @@ function addToCart(item) {
         });
     }
     saveCart(cart);
-    showToast('Thêm vào giỏ thành công', `Đã thêm món "${item.name}" vào giỏ hàng`, 'success');
+    showToast('Thêm vào giỏ thành công', `Đã thêm món "${item.name}" (${item.size || 'Size M'}) vào giỏ hàng`, 'success');
 }
 
 document.addEventListener('DOMContentLoaded', () => {

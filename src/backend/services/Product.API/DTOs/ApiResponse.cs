@@ -1,8 +1,14 @@
+using System.Text.Json.Serialization;
+
 namespace Product.API.DTOs;
 
 public class ApiResponse<T>
 {
     public bool IsSuccess { get; set; }
+
+    [JsonPropertyName("success")]
+    public bool SuccessFlag => IsSuccess;
+
     public int StatusCode { get; set; }
     public string Message { get; set; } = string.Empty;
     public T? Data { get; set; }

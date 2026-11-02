@@ -1,12 +1,12 @@
-﻿@page
+@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Trang chủ - LowLand Coffee";
+    ViewData["Title"] = "Trang chủ & Thực đơn - LowLand Coffee";
 }
 
 <div class="space-y-16 pb-16">
     <!-- ========================================================================= -->
-    <!-- 1. Hero Banner Slider (Swiper.js with Floating Cup Animation) -->
+    <!-- Quy tắc UI 5 & 6: Hero Banner Slider (Swiper.js) + CSS Animation ly nước bay bồng bềnh (animate-float / animate-floating-cup) -->
     <!-- ========================================================================= -->
     <section class="relative overflow-hidden bg-gradient-to-b from-red-highland via-[#B32028] to-[#96171E] text-white">
         <!-- Background Decorative Circles -->
@@ -18,10 +18,9 @@
                 <!-- Slide 1: MUA 1 TẶNG 1 LOW-LÊN LÊN DEAL -->
                 <div class="swiper-slide">
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[460px]">
-                        <!-- Left Content -->
                         <div class="lg:col-span-7 space-y-6 z-10">
                             <div class="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-amber-300 text-red-950 font-black text-sm uppercase tracking-wider shadow-lg">
-                                <span class="animate-bounce">🔥</span>
+                                <i class="fi fi-sr-flame text-red-highland text-base"></i>
                                 <span>Ưu đãi đặc biệt</span>
                             </div>
                             <div class="space-y-3">
@@ -40,27 +39,27 @@
                                     <span>Đặt ngay kẻo lỡ</span>
                                     <i class="fi fi-rr-arrow-right text-base"></i>
                                 </a>
-                                <a href="#menu" class="px-8 py-4 rounded-full bg-red-800/80 hover:bg-red-800 text-white font-extrabold text-base border border-white/30 transition shadow-md hover:-translate-y-0.5">
-                                    Khám phá thực đơn
+                                <a href="#menu" class="px-8 py-4 rounded-full bg-red-800/80 hover:bg-red-800 text-white font-extrabold text-base border border-white/30 transition shadow-md hover:-translate-y-0.5 flex items-center gap-2">
+                                    <i class="fi fi-rr-mug-hot-alt"></i>
+                                    <span>Khám phá thực đơn</span>
                                 </a>
                             </div>
                         </div>
 
-                        <!-- Right Graphic: Animated Floating Coffee Cups -->
+                        <!-- Right Graphic: Animated Floating Coffee Cups (Quy tắc UI 6: Keyframes float) -->
                         <div class="lg:col-span-5 relative flex items-center justify-center">
-                            <!-- Background Glow Pill -->
                             <div class="w-72 h-72 sm:w-80 sm:h-80 rounded-full bg-amber-300/20 absolute blur-2xl animate-pulse-glow"></div>
 
                             <!-- Big Main Cup (Animated Floating) -->
-                            <div class="relative z-10 animate-floating-cup filter drop-shadow-[0_20px_25px_rgba(0,0,0,0.45)]">
+                            <div class="relative z-10 animate-float animate-floating-cup filter drop-shadow-[0_20px_25px_rgba(0,0,0,0.45)]">
                                 <div class="w-64 h-80 sm:w-72 sm:h-96 rounded-3xl bg-gradient-to-tr from-amber-950 via-amber-900 to-amber-800 p-3 border-4 border-white/30 shadow-2xl flex flex-col justify-between overflow-hidden relative group">
-                                    <!-- Coffee foam & ice top -->
                                     <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-200/30 via-transparent to-black/60"></div>
                                     <div class="relative z-10 flex justify-between items-center text-xs text-amber-200 font-bold">
-                                        <span class="bg-red-600/90 text-white px-2.5 py-1 rounded-full uppercase text-[10px]">Phin Đậm Đà</span>
+                                        <span class="bg-red-highland text-white px-2.5 py-1 rounded-full uppercase text-[10px] flex items-center gap-1">
+                                            <i class="fi fi-rr-coffee"></i> Phin Đậm Đà
+                                        </span>
                                         <span>Size L • 55k</span>
                                     </div>
-                                    <!-- Center LowLand Logo on Cup -->
                                     <div class="relative z-10 my-auto text-center space-y-2">
                                         <img src="~/images/logo.jpg" alt="LowLand Coffee" class="w-16 h-16 mx-auto rounded-full object-contain bg-amber-50 shadow-lg border-2 border-amber-200" />
                                         <h4 class="text-xl font-black text-white uppercase tracking-wider">Phin Sữa Đá</h4>
@@ -73,14 +72,16 @@
                             </div>
 
                             <!-- Small Accent Cup (Opposite Floating) -->
-                            <div class="absolute -right-4 -bottom-6 z-20 animate-floating-cup-reverse hidden sm:block">
+                            <div class="absolute -right-4 -bottom-6 z-20 animate-float-reverse animate-floating-cup-reverse hidden sm:block">
                                 <div class="w-36 h-48 rounded-2xl bg-gradient-to-br from-emerald-800 to-emerald-950 p-2.5 border-2 border-white/40 shadow-xl flex flex-col justify-between overflow-hidden">
                                     <span class="text-[9px] font-bold text-emerald-200 bg-emerald-900/80 px-2 py-0.5 rounded-full text-center">Freeze Matcha</span>
                                     <div class="text-center">
-                                        <div class="w-10 h-10 mx-auto rounded-full bg-red-highland flex items-center justify-center text-[7px] text-white font-extrabold mb-1">HL</div>
+                                        <div class="w-10 h-10 mx-auto rounded-full bg-red-highland flex items-center justify-center text-white font-extrabold mb-1">
+                                            <i class="fi fi-rr-glass text-sm"></i>
+                                        </div>
                                         <p class="text-[10px] font-black text-white">Thạch giòn</p>
                                     </div>
-                                    <span class="text-[10px] text-center font-bold text-amber-300">55.000đ</span>
+                                    <span class="text-[10px] text-center font-bold text-amber-300">49.000đ</span>
                                 </div>
                             </div>
                         </div>
@@ -92,7 +93,7 @@
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[460px]">
                         <div class="lg:col-span-7 space-y-6 z-10">
                             <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-400 text-emerald-950 font-extrabold text-xs uppercase tracking-wider shadow-md">
-                                <span>🍃</span>
+                                <i class="fi fi-sr-leaf text-sm"></i>
                                 <span>Best Seller Mùa Hè</span>
                             </div>
                             <div class="space-y-2">
@@ -107,20 +108,25 @@
                                 Sự kết hợp hoàn mỹ giữa vị chát thanh dịu nhẹ của trà Ô long cao nguyên và hạt sen thơm bùi ngậy, mang lại cảm giác sảng khoái tuyệt hảo mỗi ngày.
                             </p>
                             <div class="flex items-center gap-4 pt-2">
-                                <a asp-page="/Order" class="px-8 py-3.5 rounded-full bg-white text-red-highland hover:bg-amber-100 font-extrabold text-sm uppercase tracking-wider shadow-xl transition-all">
-                                    Thưởng thức ngay
+                                <a href="#menu" class="px-8 py-3.5 rounded-full bg-white text-red-highland hover:bg-amber-100 font-extrabold text-sm uppercase tracking-wider shadow-xl transition-all flex items-center gap-2">
+                                    <i class="fi fi-rr-shopping-bag"></i>
+                                    <span>Thưởng thức ngay</span>
                                 </a>
                             </div>
                         </div>
                         <div class="lg:col-span-5 flex items-center justify-center">
-                            <div class="animate-floating-cup">
+                            <div class="animate-float animate-floating-cup">
                                 <div class="w-64 h-84 sm:w-72 sm:h-96 rounded-3xl bg-gradient-to-tr from-amber-700 via-amber-600 to-yellow-500 p-4 border-4 border-white/30 shadow-2xl flex flex-col justify-between">
-                                    <span class="text-xs font-bold text-white uppercase bg-red-700 px-3 py-1 rounded-full self-start">Trà Sen Vàng</span>
+                                    <span class="text-xs font-bold text-white uppercase bg-red-highland px-3 py-1 rounded-full self-start flex items-center gap-1">
+                                        <i class="fi fi-rr-leaf"></i> Trà Sen Vàng
+                                    </span>
                                     <div class="text-center my-auto space-y-2">
-                                        <div class="w-20 h-20 mx-auto rounded-full bg-white text-red-highland font-black flex items-center justify-center text-xl shadow-inner">HL</div>
+                                        <div class="w-20 h-20 mx-auto rounded-full bg-white text-red-highland font-black flex items-center justify-center text-2xl shadow-inner">
+                                            <i class="fi fi-rr-mug-tea"></i>
+                                        </div>
                                         <h4 class="text-2xl font-black text-white">Ô LONG SEN</h4>
                                     </div>
-                                    <div class="text-center text-xs text-white/90 font-bold bg-black/30 p-2 rounded-xl">Size L • 65.000đ</div>
+                                    <div class="text-center text-xs text-white/90 font-bold bg-black/30 p-2 rounded-xl">Size M • 45.000đ</div>
                                 </div>
                             </div>
                         </div>
@@ -134,83 +140,61 @@
     </section>
 
     <!-- ========================================================================= -->
-    <!-- 2. Section: Thực Đơn Được Yêu Thích Nhất (Menu Highlights) -->
+    <!-- 2. Section: Thực Đơn Được Yêu Thích Nhất (Flowbite Tabs & Flowbite Cards) -->
+    <!-- Chức năng 12 (View Category), 16 (View Product), 17 (View Detail), 18 (Search & Filter) -->
     <!-- ========================================================================= -->
-    <section id="menu" class="w-full px-4 sm:px-8 lg:px-12 my-6">
-        <!-- Section Header with Red Underline Divider -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b-2 border-gray-100 gap-4">
+    <section id="menu" class="w-full px-4 sm:px-8 lg:px-12 my-6 space-y-6">
+        <!-- Section Header & Search/Filter Controls -->
+        <div class="flex flex-col lg:flex-row lg:items-end justify-between pb-6 border-b-2 border-gray-100 gap-4">
             <div>
                 <h2 class="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-gray-900 leading-tight">
                     <span class="text-red-highland">Thực Đơn Được Yêu Thích</span> Nhất
                 </h2>
-                <p class="text-base sm:text-lg text-gray-600 mt-2 font-medium">Những món thức uống và bánh ngọt trứ danh đậm đà phong vị Việt Nam</p>
+                <p class="text-base sm:text-lg text-gray-600 mt-2 font-medium">Duyệt thực đơn, tìm kiếm theo từ khóa, lọc theo mức giá & danh mục và xem chi tiết Size / Topping</p>
             </div>
-            <div class="flex items-center gap-2">
-                <span class="text-sm sm:text-base text-gray-500 font-bold">Danh mục món ngon:</span>
+
+            <!-- Thanh Tìm kiếm & Lọc theo Giá (Chức năng 18: Search & Filter Product) -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+                <!-- Tìm kiếm theo từ khóa -->
+                <div class="relative w-full sm:w-72">
+                    <input type="text" id="menu-search-keyword" oninput="applyMenuFilters()" placeholder="Tìm kiếm món ăn, đồ uống..." class="w-full bg-white border-2 border-gray-200 rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-red-highland focus:border-red-highland placeholder-gray-400 shadow-xs transition" />
+                    <span class="absolute left-4 top-3.5 text-gray-400">
+                        <i class="fi fi-rr-search text-base"></i>
+                    </span>
+                </div>
+
+                <!-- Lọc theo khoảng giá -->
+                <select id="menu-filter-price" onchange="applyMenuFilters()" class="bg-white border-2 border-gray-200 rounded-2xl px-4 py-3 text-sm font-bold text-gray-800 focus:ring-2 focus:ring-red-highland focus:border-red-highland shadow-xs transition">
+                    <option value="ALL">Mọi mức giá</option>
+                    <option value="UNDER_30">Dưới 30.000đ</option>
+                    <option value="30_TO_45">Từ 30.000đ - 45.000đ</option>
+                    <option value="OVER_45">Trên 45.000đ</option>
+                </select>
+
+                <!-- Sắp xếp -->
+                <select id="menu-sort-by" onchange="applyMenuFilters()" class="bg-white border-2 border-gray-200 rounded-2xl px-4 py-3 text-sm font-bold text-gray-800 focus:ring-2 focus:ring-red-highland focus:border-red-highland shadow-xs transition">
+                    <option value="DEFAULT">Nổi bật nhất</option>
+                    <option value="PRICE_ASC">Giá thấp → cao</option>
+                    <option value="PRICE_DESC">Giá cao → thấp</option>
+                    <option value="NAME_ASC">Tên A → Z</option>
+                </select>
             </div>
         </div>
 
-        <!-- Flowbite Category Pills / Tabs (To, Rõ ràng, Dễ bấm) -->
-        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 my-8">
-            <!-- Tab 0: Tất cả (Red Highland Pill) -->
-            <button type="button" onclick="filterMenu('all', this)" class="menu-tab-btn active group flex items-center gap-3 p-3.5 sm:p-4 rounded-3xl bg-red-highland text-white shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 border-2 border-red-highland">
-                <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white/20 flex items-center justify-center group-hover:scale-110 transition flex-shrink-0">
-                    <i class="fi fi-rr-apps text-xl text-white"></i>
-                </div>
-                <div class="text-left">
-                    <h4 class="font-black text-base sm:text-lg leading-tight">Tất cả món</h4>
-                    <span class="text-[11px] sm:text-xs text-white/90 font-medium block mt-0.5">Trọn vẹn thực đơn</span>
-                </div>
-            </button>
-
-            <!-- Tab 1: Cà phê (Brown Pill) -->
-            <button type="button" onclick="filterMenu('coffee', this)" class="menu-tab-btn group flex items-center gap-3 p-3.5 sm:p-4 rounded-3xl bg-white text-gray-800 shadow-md hover:shadow-2xl transition-all transform hover:-translate-y-1 border-2 border-gray-200 hover:border-[#4F392E]">
-                <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-amber-50 text-[#4F392E] flex items-center justify-center group-hover:scale-110 transition flex-shrink-0">
-                    <i class="fi fi-rr-coffee text-xl text-[#4F392E]"></i>
-                </div>
-                <div class="text-left">
-                    <h4 class="font-black text-base sm:text-lg leading-tight">Cà phê</h4>
-                    <span class="text-[11px] sm:text-xs text-gray-500 font-medium block mt-0.5">Đậm đà quẹt lối</span>
-                </div>
-            </button>
-
-            <!-- Tab 2: Trà Việt (Red Pill) -->
-            <button type="button" onclick="filterMenu('tea', this)" class="menu-tab-btn group flex items-center gap-3 p-3.5 sm:p-4 rounded-3xl bg-white text-gray-800 shadow-md hover:shadow-2xl transition-all transform hover:-translate-y-1 border-2 border-gray-200 hover:border-red-highland">
-                <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-red-50 text-red-highland flex items-center justify-center group-hover:scale-110 transition flex-shrink-0">
-                    <i class="fi fi-rr-leaf text-xl text-red-highland"></i>
-                </div>
-                <div class="text-left">
-                    <h4 class="font-black text-base sm:text-lg leading-tight">Trà Việt</h4>
-                    <span class="text-[11px] sm:text-xs text-gray-500 font-medium block mt-0.5">Đậm đà quả đỏ</span>
-                </div>
-            </button>
-
-            <!-- Tab 3: Freeze (Green Pill) -->
-            <button type="button" onclick="filterMenu('freeze', this)" class="menu-tab-btn group flex items-center gap-3 p-3.5 sm:p-4 rounded-3xl bg-white text-gray-800 shadow-md hover:shadow-2xl transition-all transform hover:-translate-y-1 border-2 border-gray-200 hover:border-[#8FA876]">
-                <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-emerald-50 text-[#6B8E4E] flex items-center justify-center group-hover:scale-110 transition flex-shrink-0">
-                    <i class="fi fi-rr-glass text-xl text-[#6B8E4E]"></i>
-                </div>
-                <div class="text-left">
-                    <h4 class="font-black text-base sm:text-lg leading-tight">Freeze</h4>
-                    <span class="text-[11px] sm:text-xs text-gray-500 font-medium block mt-0.5">Mát lạnh đá xay</span>
-                </div>
-            </button>
-
-            <!-- Tab 4: Bánh ngọt (Orange Pill) -->
-            <button type="button" onclick="filterMenu('bakery', this)" class="menu-tab-btn group flex items-center gap-3 p-3.5 sm:p-4 rounded-3xl bg-white text-gray-800 shadow-md hover:shadow-2xl transition-all transform hover:-translate-y-1 border-2 border-gray-200 hover:border-[#F27A25]">
-                <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-amber-50 text-[#F27A25] flex items-center justify-center group-hover:scale-110 transition flex-shrink-0">
-                    <i class="fi fi-rr-cake-birthday text-xl text-[#F27A25]"></i>
-                </div>
-                <div class="text-left">
-                    <h4 class="font-black text-base sm:text-lg leading-tight">Bánh ngọt</h4>
-                    <span class="text-[11px] sm:text-xs text-gray-500 font-medium block mt-0.5">Ngon ngọt ngào</span>
-                </div>
-            </button>
+        <!-- Quy tắc UI 4: Flowbite Tabs Component (Chức năng 12: View Category - Nạp động từ Product.API) -->
+        <div class="border-b border-gray-200">
+            <ul id="menu-category-tabs" class="flex flex-wrap -mb-px text-sm font-bold text-center text-gray-500 gap-2 pb-3" role="tablist">
+                <li role="presentation">
+                    <button type="button" role="tab" onclick="selectMenuCategory('ALL')" class="menu-tab-btn active inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-red-highland text-white shadow-md transition-all border-2 border-red-highland" data-cat-id="ALL">
+                        <i class="fi fi-rr-apps text-base"></i>
+                        <span>Tất cả món</span>
+                    </button>
+                </li>
+            </ul>
         </div>
 
-        <!-- Product Cards Grid (Tự động nạp 100% từ Product.API Cổng 5002) -->
+        <!-- Quy tắc UI 4: Flowbite Product Cards Grid (Chức năng 16: View Product - Nạp qua API Gateway Cổng 8080) -->
         <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
-            <!-- Loading Skeletons -->
             <div class="col-span-full py-16 text-center">
                 <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-red-highland border-t-transparent"></div>
                 <p class="mt-4 text-base font-bold text-gray-500">Đang nạp thực đơn từ máy chủ LowLand Coffee...</p>
@@ -223,13 +207,11 @@
     <!-- ========================================================================= -->
     <section id="brand-story" class="w-full px-4 sm:px-8 lg:px-12">
         <div class="grid grid-cols-1 lg:grid-cols-12 rounded-3xl overflow-hidden shadow-xl border border-red-800/10">
-            <!-- Left Illustration Graphic -->
             <div class="lg:col-span-5 bg-[#FAE9AD] p-8 sm:p-12 flex flex-col justify-between relative overflow-hidden">
                 <div class="relative z-10 space-y-2">
                     <span class="text-xs uppercase tracking-widest font-black text-amber-900">Di sản cà phê</span>
                     <h3 class="text-2xl font-black text-amber-950">Gắn kết cộng đồng</h3>
                 </div>
-                <!-- Coffee Farmer Graphic / Illustration -->
                 <div class="my-6 relative z-10 flex items-center justify-center">
                     <div class="w-56 h-56 rounded-full bg-amber-200/60 border-4 border-amber-300/40 flex items-center justify-center p-4">
                         <img src="https://images.unsplash.com/photo-1610632380989-680fe40816c6?w=400&auto=format&fit=crop&q=80" alt="Hạt cà phê di sản" class="w-48 h-48 rounded-full object-cover shadow-lg" />
@@ -240,7 +222,6 @@
                 </div>
             </div>
 
-            <!-- Right Red Story Card -->
             <div class="lg:col-span-7 bg-red-highland text-white p-8 sm:p-12 flex flex-col justify-center space-y-6">
                 <div class="space-y-3">
                     <span class="text-xs uppercase font-bold tracking-widest text-amber-200">LowLand Story</span>
@@ -261,7 +242,7 @@
     </section>
 
     <!-- ========================================================================= -->
-    <!-- 4. Section: Tin tức và sự kiện -->
+    <!-- 4. Section: Tin tức và sự kiện (Flowbite Cards) -->
     <!-- ========================================================================= -->
     <section id="news" class="w-full px-4 sm:px-8 lg:px-12">
         <div class="flex items-center justify-between pb-6 border-b-2 border-gray-100 mb-8">
@@ -350,24 +331,22 @@
     <section class="w-full px-4 sm:px-8 lg:px-12">
         <div class="bg-gradient-to-r from-amber-50 via-white to-red-50 rounded-3xl p-8 sm:p-12 border border-amber-200/50 shadow-md">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                <!-- Gift Cards Artwork -->
                 <div class="lg:col-span-6 flex justify-center relative">
-                    <!-- Rotating Decorative Star / Sparkle -->
                     <div class="absolute -top-4 -left-4 text-emerald-600 animate-spin" style="animation-duration: 12s;">
-                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0l2.5 9.5L24 12l-9.5 2.5L12 24l-2.5-9.5L0 12l9.5-2.5z"/></svg>
+                        <i class="fi fi-sr-sparkles text-2xl"></i>
                     </div>
                     <div class="relative w-72 sm:w-80 h-48 sm:h-52">
-                        <!-- Card 1 -->
                         <div class="absolute top-0 left-0 w-64 h-40 rounded-2xl bg-gradient-to-br from-cyan-200 to-blue-400 p-4 shadow-xl transform -rotate-6 border border-white/60 flex flex-col justify-between">
                             <span class="text-[10px] font-extrabold uppercase text-blue-900">LowLand Gift Card</span>
                             <div class="text-center font-black text-blue-950 text-base">CHUNG ĐAM MÊ</div>
                             <span class="text-[9px] text-blue-900/70 font-semibold self-end">LL-2026-VIP</span>
                         </div>
-                        <!-- Card 2 (Front overlapping) -->
                         <div class="absolute bottom-0 right-0 w-64 h-40 rounded-2xl bg-gradient-to-br from-pink-200 via-rose-200 to-amber-200 p-4 shadow-2xl transform rotate-3 border-2 border-white flex flex-col justify-between">
                             <div class="flex justify-between items-center">
                                 <span class="text-[10px] font-extrabold uppercase text-red-900">E-Gift Voucher</span>
-                                <div class="w-6 h-6 rounded-full bg-red-highland flex items-center justify-center text-[7px] text-white font-black">LL</div>
+                                <div class="w-6 h-6 rounded-full bg-red-highland flex items-center justify-center text-[10px] text-white font-black">
+                                    <i class="fi fi-rr-gift"></i>
+                                </div>
                             </div>
                             <div class="text-center font-black text-red-950 text-lg tracking-wide">YÊU THƯƠNG</div>
                             <span class="text-[9px] text-red-900/70 font-semibold">Tặng bạn ly cà phê ngọt ngào</span>
@@ -375,17 +354,17 @@
                     </div>
                 </div>
 
-                <!-- Text & Action -->
                 <div class="lg:col-span-6 space-y-4">
                     <h3 class="text-2xl sm:text-3xl font-black text-gray-900 leading-tight">
                         Trao <span class="text-red-highland">Gift cards</span><br />nhận yêu thương
                     </h3>
                     <p class="text-sm text-gray-600 leading-relaxed">
-                        There's an easier way to buy LowLand Cards in bulk! Give a LowLand Card to gift, reward, incentivize, or show appreciation towards your customers, clients and team members.
+                        Dễ dàng đặt mua thẻ quà tặng LowLand Coffee số lượng lớn để tri ân đối tác, khách hàng và đồng nghiệp thân thiết của bạn.
                     </p>
                     <div class="pt-2">
-                        <button type="button" onclick="showToast('Thẻ quà tặng', 'Tính năng mua Gift Card số lượng lớn đang sẵn sàng cho doanh nghiệp!', 'info')" class="px-8 py-3 rounded-full bg-red-highland hover:bg-red-700 text-white font-extrabold text-sm uppercase tracking-wider shadow-md transition">
-                            Tìm hiểu thêm
+                        <button type="button" onclick="showToast('Thẻ quà tặng', 'Tính năng mua Gift Card số lượng lớn đang sẵn sàng cho doanh nghiệp!', 'info')" class="px-8 py-3 rounded-full bg-red-highland hover:bg-red-700 text-white font-extrabold text-sm uppercase tracking-wider shadow-md transition inline-flex items-center gap-2">
+                            <i class="fi fi-rr-gift"></i>
+                            <span>Tìm hiểu thêm</span>
                         </button>
                     </div>
                 </div>
@@ -394,9 +373,102 @@
     </section>
 </div>
 
+<!-- ========================================================================= -->
+<!-- MODAL CHI TIẾT SẢN PHẨM CHO GUEST & CUSTOMER (Chức năng 17: Xem thông tin chi tiết, Size, Topping, Giá) -->
+<!-- ========================================================================= -->
+<div id="guest-product-detail-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl border border-gray-100 max-h-[92vh] flex flex-col">
+        <!-- Modal Header Image -->
+        <div class="relative h-60 sm:h-64 bg-gradient-to-b from-amber-50 to-orange-50 flex items-center justify-center p-6 border-b border-gray-100 shrink-0">
+            <img id="gmodal-img" src="/images/logo.jpg" alt="Product" class="max-h-48 sm:max-h-52 object-contain drop-shadow-md animate-float" onerror="this.src='/images/logo.jpg'" />
+            <button type="button" onclick="closeGuestProductDetail()" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center text-base font-bold transition">
+                <i class="fi fi-rr-cross-small text-xl"></i>
+            </button>
+            <span id="gmodal-category" class="absolute bottom-4 left-4 px-3.5 py-1.5 rounded-full bg-red-highland text-white text-xs font-black uppercase tracking-wider shadow">
+                Danh mục
+            </span>
+            <span id="gmodal-stock-badge" class="absolute bottom-4 right-4"></span>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-6 space-y-5 overflow-y-auto flex-1">
+            <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                <div>
+                    <h3 id="gmodal-name" class="text-2xl font-black text-gray-900">Tên sản phẩm</h3>
+                    <p id="gmodal-desc" class="text-sm text-gray-600 mt-1.5 leading-relaxed">Mô tả sản phẩm</p>
+                </div>
+                <div class="text-left sm:text-right shrink-0">
+                    <span class="text-xs font-bold text-gray-400 uppercase block">Giá niêm yết</span>
+                    <span id="gmodal-base-price" class="text-2xl font-black text-red-highland">0đ</span>
+                </div>
+            </div>
+
+            <!-- Chọn Size -->
+            <div class="space-y-2.5 pt-2 border-t border-gray-100">
+                <div class="flex items-center justify-between">
+                    <label class="text-xs font-black uppercase tracking-wider text-gray-700 flex items-center gap-1.5">
+                        <i class="fi fi-rr-cup-togo text-red-highland"></i>
+                        <span>1. Chọn Kích cỡ (Size)</span>
+                    </label>
+                    <span class="text-xs text-gray-400 font-semibold">Chọn 1 size</span>
+                </div>
+                <div id="gmodal-sizes-list" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5"></div>
+            </div>
+
+            <!-- Chọn Topping -->
+            <div class="space-y-2.5 pt-2 border-t border-gray-100">
+                <div class="flex items-center justify-between">
+                    <label class="text-xs font-black uppercase tracking-wider text-gray-700 flex items-center gap-1.5">
+                        <i class="fi fi-rr-layers text-amber-600"></i>
+                        <span>2. Chọn Topping đi kèm</span>
+                    </label>
+                    <span class="text-xs text-gray-400 font-semibold">Có thể chọn nhiều</span>
+                </div>
+                <div id="gmodal-toppings-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+            </div>
+        </div>
+
+        <!-- Modal Footer: Số lượng & Nút thêm vào giỏ -->
+        <div class="p-5 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0">
+            <div class="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-start">
+                <div class="flex items-center gap-2.5 bg-white border border-gray-300 rounded-2xl px-3 py-1.5 shadow-xs">
+                    <button type="button" onclick="changeDetailQuantity(-1)" class="w-7 h-7 rounded-full bg-gray-100 hover:bg-red-highland hover:text-white font-black text-sm transition flex items-center justify-center">
+                        <i class="fi fi-rr-minus-small"></i>
+                    </button>
+                    <span id="gmodal-qty" class="font-black text-base text-gray-900 px-2">1</span>
+                    <button type="button" onclick="changeDetailQuantity(1)" class="w-7 h-7 rounded-full bg-gray-100 hover:bg-red-highland hover:text-white font-black text-sm transition flex items-center justify-center">
+                        <i class="fi fi-rr-plus-small"></i>
+                    </button>
+                </div>
+                <div>
+                    <span class="text-xs text-gray-500 font-bold block">Tổng cộng tạm tính</span>
+                    <span id="gmodal-total-price" class="text-xl font-black text-red-highland">0đ</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2.5 w-full sm:w-auto">
+                <button type="button" onclick="closeGuestProductDetail()" class="px-5 py-3 rounded-2xl bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold text-sm transition">
+                    Đóng
+                </button>
+                <button type="button" id="gmodal-add-cart-btn" onclick="addDetailProductToCart()" class="flex-1 sm:flex-initial px-7 py-3 rounded-2xl bg-red-highland hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-extrabold text-sm uppercase tracking-wider shadow-lg transition flex items-center justify-center gap-2">
+                    <i class="fi fi-rr-shopping-bag"></i>
+                    <span>Thêm vào giỏ hàng</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
-        // Khởi tạo Swiper Banner Hero
+        const PRODUCT_API_BASE = 'http://localhost:8080';
+        let menuCategories = [];
+        let menuProducts = [];
+        let selectedMenuCategoryId = 'ALL';
+        let currentDetailProduct = null;
+        let currentDetailQty = 1;
+
+        // Quy tắc UI 5: Khởi tạo Swiper.js cho Hero Banner Slider
         const swiper = new Swiper('.hero-swiper', {
             loop: true,
             autoplay: {
@@ -413,101 +485,352 @@
             }
         });
 
-        // Filter Menu Tabs
-        function filterMenu(category, btn) {
-            const tabs = document.querySelectorAll('.menu-tab-btn');
-            tabs.forEach(t => {
-                t.classList.remove('active', 'bg-red-highland', 'bg-[#4F392E]', 'text-white', 'border-red-highland', 'border-[#4F392E]');
-                t.classList.add('bg-white', 'text-gray-800', 'border-gray-200');
-            });
+        // Tải Danh mục (Chức năng 12) & Sản phẩm (Chức năng 16) từ Product.API
+        async function loadHomepageCatalog() {
+            try {
+                const [catRes, prodRes] = await Promise.all([
+                    fetch(`${PRODUCT_API_BASE}/api/categories?isActiveOnly=true`),
+                    fetch(`${PRODUCT_API_BASE}/api/products?pageSize=200`)
+                ]);
 
-            const activeBtn = btn || event?.currentTarget || tabs[0];
-            if (activeBtn) {
-                activeBtn.classList.add('active', 'bg-red-highland', 'text-white', 'border-red-highland');
-                activeBtn.classList.remove('bg-white', 'text-gray-800', 'border-gray-200');
-            }
-
-            const items = document.querySelectorAll('.product-item');
-            items.forEach(item => {
-                const itemCat = item.getAttribute('data-category') || '';
-                if (category === 'all' || item.classList.contains(category) || itemCat === category) {
-                    item.style.display = 'flex';
-                } else {
-                    item.style.display = 'none';
+                if (catRes.ok) {
+                    const catJson = await catRes.json();
+                    menuCategories = catJson.data || [];
                 }
-            });
 
-            if (category !== 'all') {
-                showToast('Lọc thực đơn', `Đang hiển thị danh mục: ${category.toUpperCase()}`, 'info');
+                if (prodRes.ok) {
+                    const prodJson = await prodRes.json();
+                    menuProducts = prodJson.data?.items || prodJson.data || [];
+                }
+
+                renderMenuCategoryTabs();
+                applyMenuFilters();
+            } catch (e) {
+                console.log('Không thể tải dữ liệu từ Product.API', e);
             }
         }
 
-        // Tải toàn bộ danh sách sản phẩm động từ CSDL thật (Product.API 5002)
-        async function loadHomepageProducts() {
-            try {
-                const res = await fetch('http://localhost:8080/api/products?pageSize=100');
-                if (!res.ok) return;
-                const json = await res.json();
-                const items = json.data?.items || json.data || [];
-                if (!items || items.length === 0) return;
+        // Quy tắc UI 4: Render Flowbite Tabs Danh mục động (Chức năng 12: View Category)
+        function renderMenuCategoryTabs() {
+            const container = document.getElementById('menu-category-tabs');
+            if (!container) return;
 
-                const grid = document.getElementById('product-grid');
-                if (!grid) return;
+            let html = `
+                <li role="presentation">
+                    <button type="button" role="tab" onclick="selectMenuCategory('ALL')" class="menu-tab-btn active inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-red-highland text-white shadow-md transition-all border-2 border-red-highland" data-cat-id="ALL">
+                        <i class="fi fi-rr-apps text-base"></i>
+                        <span>Tất cả món (${menuProducts.length})</span>
+                    </button>
+                </li>
+            `;
 
-                grid.innerHTML = items.map(p => {
-                    let cat = 'coffee';
-                    let bgGrad = 'from-amber-50 to-amber-100/50';
-                    const cName = (p.categoryName || '').toLowerCase();
-                    if (cName.includes('trà') || cName.includes('tea')) {
-                        cat = 'tea';
-                        bgGrad = 'from-red-50 to-red-100/50';
-                    } else if (cName.includes('freeze') || cName.includes('đá xay')) {
-                        cat = 'freeze';
-                        bgGrad = 'from-emerald-50 to-emerald-100/50';
-                    } else if (cName.includes('bánh') || cName.includes('snack') || cName.includes('mousse')) {
-                        cat = 'bakery';
-                        bgGrad = 'from-amber-50 to-orange-100/50';
-                    }
+            menuCategories.forEach(cat => {
+                const cName = (cat.name || '').toLowerCase();
+                let icon = 'fi-rr-coffee';
+                if (cName.includes('trà') || cName.includes('tra') || cName.includes('tea')) icon = 'fi-rr-leaf';
+                else if (cName.includes('freeze') || cName.includes('đá xay') || cName.includes('da xay')) icon = 'fi-rr-glass';
+                else if (cName.includes('bánh') || cName.includes('banh') || cName.includes('snack')) icon = 'fi-rr-cake-birthday';
 
-                    const imgUrl = (p.imageUrl && p.imageUrl.startsWith('http') && !p.imageUrl.includes('placehold.co'))
-                        ? p.imageUrl
-                        : getFallbackImage(p.name, cat);
+                const count = menuProducts.filter(p => p.categoryId === cat.id).length;
 
-                    const priceFormatted = (p.basePrice || 0).toLocaleString('vi-VN');
-                    const safeName = (p.name || '').replace(/'/g, "\\'");
+                html += `
+                    <li role="presentation">
+                        <button type="button" role="tab" onclick="selectMenuCategory('${cat.id}')" class="menu-tab-btn inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-white text-gray-700 hover:text-red-highland hover:border-red-highland shadow-xs transition-all border-2 border-gray-200" data-cat-id="${cat.id}">
+                            <i class="fi ${icon} text-base text-red-highland"></i>
+                            <span>${cat.name} (${count})</span>
+                        </button>
+                    </li>
+                `;
+            });
 
-                    return `
-                        <div class="product-item ${cat} group bg-white rounded-3xl border border-gray-100 shadow-md hover:shadow-2xl transition-all duration-300 p-5 sm:p-6 flex flex-col justify-between" data-category="${cat}">
-                            <div>
-                                <div class="relative bg-gradient-to-b ${bgGrad} rounded-2xl p-5 flex items-center justify-center overflow-hidden h-56 sm:h-64 shadow-inner">
-                                    <img src="${imgUrl}" alt="${p.name}" class="max-h-48 sm:max-h-56 object-contain group-hover:scale-110 transition-transform duration-300" />
-                                    <button type="button" onclick="toggleBookmark(this)" class="absolute top-3.5 right-3.5 p-2 rounded-full bg-white/90 hover:bg-white text-gray-400 hover:text-red-highland shadow-sm transition" title="Lưu món yêu thích">
-                                        <i class="fi fi-rr-bookmark text-base"></i>
-                                    </button>
-                                </div>
-                                <div class="mt-5 space-y-2">
-                                    <h4 class="font-black text-xl sm:text-2xl text-gray-900 group-hover:text-red-highland transition">${p.name}</h4>
-                                    <p class="text-sm sm:text-base text-gray-600 line-clamp-2 leading-relaxed">
-                                        ${p.description || 'Thơm ngon vẹn tròn, mang trọn tinh hoa di sản cà phê Việt.'}
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
-                                <div>
-                                    <span class="text-xs sm:text-sm text-gray-400 font-medium">Giá chỉ từ</span>
-                                    <p class="text-2xl sm:text-3xl font-black text-red-highland">${priceFormatted}đ</p>
-                                </div>
-                                <button type="button" onclick="addToCart({ id: '${p.id}', name: '${safeName}', size: 'Size M', price: ${p.basePrice || 0}, image: '${imgUrl}' })" class="w-12 h-12 rounded-2xl bg-red-highland hover:bg-red-700 text-white flex items-center justify-center shadow-lg transition transform active:scale-95" title="Thêm vào giỏ">
-                                    <i class="fi fi-rr-shopping-bag text-xl"></i>
+            container.innerHTML = html;
+        }
+
+        function selectMenuCategory(catId) {
+            selectedMenuCategoryId = catId;
+            document.querySelectorAll('.menu-tab-btn').forEach(btn => {
+                const isSelected = btn.getAttribute('data-cat-id') === catId;
+                if (isSelected) {
+                    btn.className = "menu-tab-btn active inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-red-highland text-white shadow-md transition-all border-2 border-red-highland";
+                } else {
+                    btn.className = "menu-tab-btn inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-white text-gray-700 hover:text-red-highland hover:border-red-highland shadow-xs transition-all border-2 border-gray-200";
+                }
+            });
+            applyMenuFilters();
+        }
+
+        // Chức năng 18: Search & Filter Product (Tìm kiếm theo từ khóa, lọc theo giá, danh mục)
+        function applyMenuFilters() {
+            const keyword = (document.getElementById('menu-search-keyword')?.value || '').toLowerCase().trim();
+            const priceRange = document.getElementById('menu-filter-price')?.value || 'ALL';
+            const sortBy = document.getElementById('menu-sort-by')?.value || 'DEFAULT';
+
+            let filtered = menuProducts.filter(p => {
+                if (selectedMenuCategoryId !== 'ALL' && p.categoryId !== selectedMenuCategoryId) {
+                    return false;
+                }
+
+                const price = p.basePrice || 0;
+                if (priceRange === 'UNDER_30' && price >= 30000) return false;
+                if (priceRange === '30_TO_45' && (price < 30000 || price > 45000)) return false;
+                if (priceRange === 'OVER_45' && price <= 45000) return false;
+
+                if (keyword) {
+                    const matchName = (p.name || '').toLowerCase().includes(keyword);
+                    const matchDesc = (p.description || '').toLowerCase().includes(keyword);
+                    const matchCat = (p.categoryName || '').toLowerCase().includes(keyword);
+                    if (!matchName && !matchDesc && !matchCat) return false;
+                }
+
+                return true;
+            });
+
+            if (sortBy === 'PRICE_ASC') {
+                filtered.sort((a, b) => (a.basePrice || 0) - (b.basePrice || 0));
+            } else if (sortBy === 'PRICE_DESC') {
+                filtered.sort((a, b) => (b.basePrice || 0) - (a.basePrice || 0));
+            } else if (sortBy === 'NAME_ASC') {
+                filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            }
+
+            renderMenuProducts(filtered);
+        }
+
+        // Quy tắc UI 4: Render Flowbite Product Cards trên Menu (Chức năng 16)
+        function renderMenuProducts(items) {
+            const grid = document.getElementById('product-grid');
+            if (!grid) return;
+
+            if (!items || items.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full py-16 text-center bg-white rounded-3xl border border-gray-100 shadow-xs space-y-3">
+                        <i class="fi fi-rr-search text-4xl text-gray-300 inline-block"></i>
+                        <h4 class="text-lg font-black text-gray-700">Không tìm thấy món phù hợp</h4>
+                        <p class="text-sm text-gray-400">Hãy thử từ khóa khác hoặc chọn lại mức giá / danh mục</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = items.map(p => {
+                let cat = 'coffee';
+                let bgGrad = 'from-amber-50 to-amber-100/50';
+                const cName = (p.categoryName || '').toLowerCase();
+                if (cName.includes('trà') || cName.includes('tra') || cName.includes('tea')) {
+                    cat = 'tea';
+                    bgGrad = 'from-red-50 to-red-100/50';
+                } else if (cName.includes('freeze') || cName.includes('đá xay') || cName.includes('da xay')) {
+                    cat = 'freeze';
+                    bgGrad = 'from-emerald-50 to-emerald-100/50';
+                } else if (cName.includes('bánh') || cName.includes('banh') || cName.includes('snack') || cName.includes('mousse')) {
+                    cat = 'bakery';
+                    bgGrad = 'from-amber-50 to-orange-100/50';
+                }
+
+                const imgUrl = (p.imageUrl && p.imageUrl.startsWith('http') && !p.imageUrl.includes('placehold.co'))
+                    ? p.imageUrl
+                    : getFallbackImage(p.name, cat);
+
+                const priceFormatted = (p.basePrice || 0).toLocaleString('vi-VN');
+                const safeName = (p.name || '').replace(/'/g, "\\'");
+                const isAvail = p.isAvailable !== false;
+
+                const stockBadge = !isAvail
+                    ? `<span class="absolute top-3.5 left-3.5 px-3 py-1 rounded-full bg-gray-900/80 text-white text-xs font-extrabold uppercase flex items-center gap-1">
+                         <i class="fi fi-rr-cross-circle text-[10px]"></i> Tạm hết hàng
+                       </span>`
+                    : `<span class="absolute top-3.5 left-3.5 px-3 py-1 rounded-full bg-white/90 text-gray-800 text-[11px] font-bold shadow-xs">${p.categoryName || 'Thực đơn'}</span>`;
+
+                const actionBtns = isAvail
+                    ? `<div class="flex items-center gap-2">
+                           <button type="button" onclick="openGuestProductDetail('${p.id}')" class="px-3.5 py-2.5 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold text-xs transition flex items-center gap-1" title="Xem chi tiết, chọn Size & Topping">
+                               <i class="fi fi-rr-eye text-xs"></i>
+                               <span>Chi tiết</span>
+                           </button>
+                           <button type="button" onclick="addToCart({ id: '${p.id}', name: '${safeName}', size: 'Size M', price: ${p.basePrice || 0}, image: '${imgUrl}' })" class="w-11 h-11 rounded-2xl bg-red-highland hover:bg-red-700 text-white flex items-center justify-center shadow-lg transition transform active:scale-95" title="Thêm nhanh vào giỏ">
+                               <i class="fi fi-rr-shopping-bag text-lg"></i>
+                           </button>
+                       </div>`
+                    : `<button type="button" onclick="openGuestProductDetail('${p.id}')" class="px-4 py-2.5 rounded-2xl bg-gray-100 text-gray-500 font-bold text-xs flex items-center gap-1">
+                           <i class="fi fi-rr-eye text-xs"></i>
+                           <span>Xem chi tiết</span>
+                       </button>`;
+
+                return `
+                    <div class="product-item group bg-white rounded-3xl border border-gray-200 shadow-sm hover:shadow-2xl transition-all duration-300 p-5 sm:p-6 flex flex-col justify-between ${!isAvail ? 'opacity-75' : ''}">
+                        <div>
+                            <div onclick="openGuestProductDetail('${p.id}')" class="cursor-pointer relative bg-gradient-to-b ${bgGrad} rounded-2xl p-5 flex items-center justify-center overflow-hidden h-56 sm:h-64 shadow-inner">
+                                <img src="${imgUrl}" alt="${p.name}" class="max-h-48 sm:max-h-56 object-contain group-hover:scale-110 transition-transform duration-300" />
+                                ${stockBadge}
+                                <button type="button" onclick="event.stopPropagation(); toggleBookmark(this)" class="absolute top-3.5 right-3.5 p-2 rounded-full bg-white/90 hover:bg-white text-gray-400 hover:text-red-highland shadow-sm transition" title="Lưu món yêu thích">
+                                    <i class="fi fi-rr-bookmark text-base"></i>
                                 </button>
                             </div>
+                            <div class="mt-5 space-y-2 cursor-pointer" onclick="openGuestProductDetail('${p.id}')">
+                                <h4 class="font-black text-xl sm:text-2xl text-gray-900 group-hover:text-red-highland transition">${p.name}</h4>
+                                <p class="text-sm sm:text-base text-gray-600 line-clamp-2 leading-relaxed">
+                                    ${p.description || 'Thơm ngon vẹn tròn, mang trọn tinh hoa di sản cà phê Việt.'}
+                                </p>
+                            </div>
                         </div>
-                    `;
-                }).join('');
+                        <div class="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between gap-2">
+                            <div>
+                                <span class="text-xs sm:text-sm text-gray-400 font-medium">Giá chỉ từ</span>
+                                <p class="text-2xl sm:text-3xl font-black text-red-highland">${priceFormatted}đ</p>
+                            </div>
+                            ${actionBtns}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
 
-            } catch (e) {
-                console.log('Không thể tải sản phẩm từ Product.API, sử dụng fallback HTML', e);
+        // Chức năng 17: View Product Detail (Xem thông tin chi tiết, Size, Topping, Giá cho cả Guest & Customer)
+        async function openGuestProductDetail(productId) {
+            try {
+                const res = await fetch(`${PRODUCT_API_BASE}/api/products/${productId}`);
+                const json = await res.json().catch(() => null);
+                const prod = json?.data || menuProducts.find(p => p.id === productId);
+                if (!prod) return;
+
+                currentDetailProduct = prod;
+                currentDetailQty = 1;
+                document.getElementById('gmodal-qty').innerText = '1';
+
+                let cat = 'coffee';
+                const cName = (prod.categoryName || '').toLowerCase();
+                if (cName.includes('trà') || cName.includes('tra')) cat = 'tea';
+                else if (cName.includes('freeze')) cat = 'freeze';
+                else if (cName.includes('bánh') || cName.includes('banh')) cat = 'bakery';
+
+                const imgUrl = (prod.imageUrl && prod.imageUrl.startsWith('http') && !prod.imageUrl.includes('placehold.co'))
+                    ? prod.imageUrl
+                    : getFallbackImage(prod.name, cat);
+                currentDetailProduct._resolvedImage = imgUrl;
+
+                document.getElementById('gmodal-img').src = imgUrl;
+                document.getElementById('gmodal-name').innerText = prod.name;
+                document.getElementById('gmodal-desc').innerText = prod.description || 'Thơm ngon vẹn tròn, mang trọn tinh hoa di sản cà phê Việt.';
+                document.getElementById('gmodal-category').innerText = prod.categoryName || prod.category?.name || 'Thực đơn';
+                document.getElementById('gmodal-base-price').innerText = `${(prod.basePrice || 0).toLocaleString('vi-VN')}đ`;
+
+                const stockEl = document.getElementById('gmodal-stock-badge');
+                const addBtn = document.getElementById('gmodal-add-cart-btn');
+                if (prod.isAvailable !== false) {
+                    stockEl.innerHTML = `<span class="px-3 py-1 rounded-full bg-emerald-600 text-white text-xs font-bold shadow flex items-center gap-1"><i class="fi fi-rr-check text-[10px]"></i> Còn hàng</span>`;
+                    addBtn.disabled = false;
+                } else {
+                    stockEl.innerHTML = `<span class="px-3 py-1 rounded-full bg-rose-600 text-white text-xs font-bold shadow flex items-center gap-1"><i class="fi fi-rr-cross-small"></i> Tạm hết hàng</span>`;
+                    addBtn.disabled = true;
+                }
+
+                const options = prod.options || [];
+                const sizes = prod.sizes || options.filter(o => (o.optionType || '').toUpperCase() === 'SIZE' && o.isAvailable !== false);
+                const toppings = prod.toppings || options.filter(o => (o.optionType || '').toUpperCase() === 'TOPPING' && o.isAvailable !== false);
+
+                const sizesList = document.getElementById('gmodal-sizes-list');
+                if (sizes.length === 0) {
+                    sizesList.innerHTML = `
+                        <label class="cursor-pointer flex items-center justify-between p-3 rounded-2xl border-2 border-red-highland bg-red-50/40 font-bold text-xs text-gray-900">
+                            <input type="radio" name="gmodal-size" value="Size M" data-extra="0" checked onchange="recalculateDetailPrice()" class="text-red-highland focus:ring-red-highland mr-2" />
+                            <span class="flex-1">Tiêu chuẩn (Size M)</span>
+                            <span class="text-red-highland font-black">+0đ</span>
+                        </label>
+                    `;
+                } else {
+                    sizesList.innerHTML = sizes.map((s, idx) => `
+                        <label class="cursor-pointer flex items-center justify-between p-3 rounded-2xl border-2 border-gray-200 hover:border-red-highland font-bold text-xs text-gray-900 transition">
+                            <input type="radio" name="gmodal-size" value="${s.name}" data-extra="${s.extraPrice || 0}" ${idx === 0 ? 'checked' : ''} onchange="recalculateDetailPrice()" class="text-red-highland focus:ring-red-highland mr-2" />
+                            <span class="flex-1">${s.name}</span>
+                            <span class="text-red-highland font-black">+${(s.extraPrice || 0).toLocaleString('vi-VN')}đ</span>
+                        </label>
+                    `).join('');
+                }
+
+                const toppingsList = document.getElementById('gmodal-toppings-list');
+                if (toppings.length === 0) {
+                    toppingsList.innerHTML = `<span class="text-xs text-gray-400 italic col-span-full">Sản phẩm này không có Topping đi kèm.</span>`;
+                } else {
+                    toppingsList.innerHTML = toppings.map(t => `
+                        <label class="cursor-pointer flex items-center justify-between p-3 rounded-2xl border border-gray-200 hover:border-amber-500 bg-amber-50/30 font-bold text-xs text-gray-900 transition">
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" name="gmodal-topping" value="${t.name}" data-extra="${t.extraPrice || 0}" onchange="recalculateDetailPrice()" class="rounded text-red-highland focus:ring-red-highland" />
+                                <span>${t.name}</span>
+                            </div>
+                            <span class="text-amber-800 font-black">+${(t.extraPrice || 0).toLocaleString('vi-VN')}đ</span>
+                        </label>
+                    `).join('');
+                }
+
+                recalculateDetailPrice();
+
+                const modal = document.getElementById('guest-product-detail-modal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } catch (err) {
+                console.error(err);
             }
+        }
+
+        function closeGuestProductDetail() {
+            const modal = document.getElementById('guest-product-detail-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function changeDetailQuantity(delta) {
+            currentDetailQty = Math.max(1, currentDetailQty + delta);
+            document.getElementById('gmodal-qty').innerText = String(currentDetailQty);
+            recalculateDetailPrice();
+        }
+
+        function recalculateDetailPrice() {
+            if (!currentDetailProduct) return;
+            const basePrice = currentDetailProduct.basePrice || 0;
+            const selectedSizeEl = document.querySelector('input[name="gmodal-size"]:checked');
+            const sizeExtra = selectedSizeEl ? (parseFloat(selectedSizeEl.getAttribute('data-extra')) || 0) : 0;
+
+            let toppingExtra = 0;
+            document.querySelectorAll('input[name="gmodal-topping"]:checked').forEach(cb => {
+                toppingExtra += parseFloat(cb.getAttribute('data-extra')) || 0;
+            });
+
+            const unitPrice = basePrice + sizeExtra + toppingExtra;
+            const total = unitPrice * currentDetailQty;
+            document.getElementById('gmodal-total-price').innerText = `${total.toLocaleString('vi-VN')}đ`;
+        }
+
+        function addDetailProductToCart() {
+            if (!currentDetailProduct) return;
+
+            const basePrice = currentDetailProduct.basePrice || 0;
+            const selectedSizeEl = document.querySelector('input[name="gmodal-size"]:checked');
+            const sizeName = selectedSizeEl ? selectedSizeEl.value : 'Size M';
+            const sizeExtra = selectedSizeEl ? (parseFloat(selectedSizeEl.getAttribute('data-extra')) || 0) : 0;
+
+            const selectedToppings = [];
+            let toppingExtra = 0;
+            document.querySelectorAll('input[name="gmodal-topping"]:checked').forEach(cb => {
+                selectedToppings.push(cb.value);
+                toppingExtra += parseFloat(cb.getAttribute('data-extra')) || 0;
+            });
+
+            const optionLabel = selectedToppings.length > 0
+                ? `${sizeName} (+ ${selectedToppings.join(', ')})`
+                : sizeName;
+
+            const finalUnitPrice = basePrice + sizeExtra + toppingExtra;
+
+            addToCart({
+                id: currentDetailProduct.id,
+                name: currentDetailProduct.name,
+                size: optionLabel,
+                price: finalUnitPrice,
+                quantity: currentDetailQty,
+                image: currentDetailProduct._resolvedImage || '/images/logo.jpg'
+            });
+
+            closeGuestProductDetail();
         }
 
         function getFallbackImage(name, cat) {
@@ -518,26 +841,23 @@
             if (n.includes('freeze') || cat === 'freeze') {
                 return 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400&auto=format&fit=crop&q=80';
             }
-            if (n.includes('bánh') || cat === 'bakery') {
+            if (n.includes('bánh') || n.includes('banh') || cat === 'bakery') {
                 return 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&auto=format&fit=crop&q=80';
             }
             return 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400&auto=format&fit=crop&q=80';
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            loadHomepageProducts();
+            loadHomepageCatalog();
         });
 
         function toggleBookmark(btn) {
-            const svg = btn.querySelector('svg');
-            const isSaved = svg.getAttribute('fill') === 'currentColor';
+            const isSaved = btn.classList.contains('text-red-highland');
             if (isSaved) {
-                svg.setAttribute('fill', 'none');
                 btn.classList.remove('text-red-highland');
                 btn.classList.add('text-gray-400');
                 showToast('Yêu thích', 'Đã bỏ lưu món ăn', 'info');
             } else {
-                svg.setAttribute('fill', 'currentColor');
                 btn.classList.add('text-red-highland');
                 btn.classList.remove('text-gray-400');
                 showToast('Yêu thích', 'Đã lưu món vào danh sách yêu thích của bạn!', 'success');
