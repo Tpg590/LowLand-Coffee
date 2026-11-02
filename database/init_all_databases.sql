@@ -1,4 +1,4 @@
--- ====================================================================================
+﻿-- ====================================================================================
 -- SCRIPT TỔNG HỢP: KHỞI TẠO TOÀN BỘ 5 CƠ SỞ DỮ LIỆU MICROSERVICES (PRN232)
 -- Hệ thống: LowLand Coffee Website (Thiết kế theo chuẩn DBML dbdiagram.io - UUIDs)
 -- 1. Coffee_AuthDB (Auth & User - Khang)

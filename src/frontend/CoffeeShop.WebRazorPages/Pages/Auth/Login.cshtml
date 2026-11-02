@@ -1,4 +1,4 @@
-@page
+﻿@page
 @model CoffeeShop.WebRazorPages.Pages.Auth.LoginModel
 @{
     ViewData["Title"] = "Đăng nhập - LowLand Coffee";
@@ -79,7 +79,7 @@
 
             try {
                 // Gọi trực tiếp Auth.API (Cổng 5001) kết nối 100% CSDL SQL Server thật
-                const res = await fetch('http://localhost:5001/api/auth/login', {
+                const res = await fetch('http://localhost:8080/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ emailOrPhone: identifier, password: password })

@@ -1,14 +1,18 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 using Order.API.DTOs;
-using Order.API.Services.Interfaces;
+using Order.API.Services;
 
 namespace Order.API.Controllers;
 
+/// <summary>
+/// Controller xử lý toàn bộ nghiệp vụ Đơn hàng (Order Service - Phần III, mục 22 đến 27 trong ma trận phân quyền).
+/// Phân quyền chuẩn: Chỉ có Customer và Staff tham gia vào Order & Payment Service.
+/// </summary>
 [ApiController]
 [Route("api/orders")]
+[Authorize(Roles = "Customer,Staff")]
 public class OrderController : ControllerBase
 {
     private readonly IOrderService _orderService;
@@ -18,198 +22,139 @@ public class OrderController : ControllerBase
         _orderService = orderService;
     }
 
-    private Guid GetCurrentUserId()
+    /// <summary>
+    /// [Mục 22 - Create Order]:
+    /// - Customer đặt hàng online (UserId lấy từ JWT Token).
+    /// - Staff tạo đơn trực tiếp tại quầy POS (cho phép gắn CustomerId / CustomerName của khách).
+    /// </summary>
+    [HttpPost]
+    [Authorize(Roles = "Customer,Staff")]
+    public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request, CancellationToken cancellationToken)
     {
-        var claimVal = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                       ?? User.FindFirst("sub")?.Value
-                       ?? User.FindFirst("CustomerId")?.Value
-                       ?? User.FindFirst("id")?.Value;
+        var (userId, role) = GetCurrentUserContext();
+        if (!userId.HasValue)
+        {
+            return Unauthorized(ApiResponse<OrderDetailDto>.Fail("Không xác định được danh tính người dùng từ Token.", 401));
+        }
 
-        return Guid.TryParse(claimVal, out var guid) ? guid : Guid.Empty;
+        var clientIp = GetClientIpAddress();
+        var result = await _orderService.CreateOrderAsync(userId.Value, role, request, clientIp, cancellationToken);
+        return StatusCode(result.StatusCode, result);
     }
 
-    private string GetCurrentUserRole()
+    /// <summary>
+    /// [Mục 23 & 25 - View Order List & Search/Filter Order (Customer)]:
+    /// Khách hàng xem danh sách đơn hàng cá nhân của chính mình, hỗ trợ lọc theo trạng thái và mã đơn.
+    /// </summary>
+    [HttpGet("my-orders")]
+    [Authorize(Roles = "Customer")]
+    public async Task<IActionResult> GetMyOrders([FromQuery] OrderFilterRequest filter, CancellationToken cancellationToken)
     {
-        return User.FindFirst(ClaimTypes.Role)?.Value
-               ?? User.FindFirst("role")?.Value
-               ?? "Customer";
+        var (userId, _) = GetCurrentUserContext();
+        if (!userId.HasValue)
+        {
+            return Unauthorized(ApiResponse<PagedResult<OrderDto>>.Fail("Không xác định được danh tính khách hàng.", 401));
+        }
+
+        var result = await _orderService.GetOrdersAsync(userId.Value, "Customer", filter, cancellationToken);
+        return StatusCode(result.StatusCode, result);
     }
 
-    private string? GetCurrentUserName()
+    /// <summary>
+    /// [Mục 23 & 25 - View Order List & Search/Filter Order (Staff)]:
+    /// Nhân viên xem toàn bộ danh sách đơn hàng trên hệ thống, hỗ trợ tìm kiếm mã đơn và lọc trạng thái.
+    /// </summary>
+    [HttpGet]
+    [Authorize(Roles = "Staff")]
+    public async Task<IActionResult> GetAllOrders([FromQuery] OrderFilterRequest filter, CancellationToken cancellationToken)
     {
-        return User.FindFirst(ClaimTypes.Name)?.Value
-               ?? User.FindFirst("name")?.Value
-               ?? User.FindFirst("FullName")?.Value;
+        var (userId, role) = GetCurrentUserContext();
+        var result = await _orderService.GetOrdersAsync(userId, role, filter, cancellationToken);
+        return StatusCode(result.StatusCode, result);
+    }
+
+    /// <summary>
+    /// [Mục 24 - View Order Detail]:
+    /// Xem thông tin chi tiết các món (items), tùy chọn và giá tiền trong một đơn hàng.
+    /// - Customer: chỉ được xem đơn của chính mình (chống lỗ hổng BOLA/IDOR).
+    /// - Staff: được xem chi tiết mọi đơn hàng để phục vụ và điều phối.
+    /// </summary>
+    [HttpGet("{id:guid}")]
+    [Authorize(Roles = "Customer,Staff")]
+    public async Task<IActionResult> GetOrderById(Guid id, CancellationToken cancellationToken)
+    {
+        var (userId, role) = GetCurrentUserContext();
+        var result = await _orderService.GetOrderDetailAsync(id, userId, role, cancellationToken);
+        return StatusCode(result.StatusCode, result);
+    }
+
+    /// <summary>
+    /// [Mục 26 - Update Order Status]:
+    /// Nhân viên cập nhật trạng thái đơn hàng theo đúng quy trình tuần tự:
+    /// Pending -> Processing -> Shipping -> Completed.
+    /// </summary>
+    [HttpPut("{id:guid}/status")]
+    [Authorize(Roles = "Staff")]
+    public async Task<IActionResult> UpdateOrderStatus(
+        Guid id,
+        [FromBody] UpdateOrderStatusRequest request,
+        CancellationToken cancellationToken)
+    {
+        var (userId, role) = GetCurrentUserContext();
+        if (!userId.HasValue)
+        {
+            return Unauthorized(ApiResponse<OrderDetailDto>.Fail("Không xác định được danh tính nhân viên.", 401));
+        }
+
+        var result = await _orderService.UpdateOrderStatusAsync(id, request, userId.Value, role, cancellationToken);
+        return StatusCode(result.StatusCode, result);
+    }
+
+    /// <summary>
+    /// [Mục 27 - Cancel Order]:
+    /// - Customer: Chỉ được hủy đơn hàng của chính mình khi đơn còn ở trạng thái mới (Pending).
+    /// - Staff: Được phép hủy đơn hàng kèm theo lý do hủy bắt buộc.
+    /// </summary>
+    [HttpPost("{id:guid}/cancel")]
+    [Authorize(Roles = "Customer,Staff")]
+    public async Task<IActionResult> CancelOrder(
+        Guid id,
+        [FromBody] CancelOrderRequest request,
+        CancellationToken cancellationToken)
+    {
+        var (userId, role) = GetCurrentUserContext();
+        if (!userId.HasValue)
+        {
+            return Unauthorized(ApiResponse<OrderDetailDto>.Fail("Không xác định được danh tính người dùng.", 401));
+        }
+
+        var result = await _orderService.CancelOrderAsync(id, request, userId.Value, role, cancellationToken);
+        return StatusCode(result.StatusCode, result);
+    }
+
+    private (Guid? userId, string role) GetCurrentUserContext()
+    {
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                     ?? User.FindFirstValue("sub")
+                     ?? User.FindFirstValue("uid")
+                     ?? User.FindFirstValue("userId");
+
+        Guid? userId = Guid.TryParse(userIdStr, out var parsedId) ? parsedId : null;
+
+        var role = User.FindFirstValue(ClaimTypes.Role)
+                ?? User.FindFirstValue("role")
+                ?? "Customer";
+
+        return (userId, role);
     }
 
     private string GetClientIpAddress()
     {
-        if (Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedFor) && !string.IsNullOrWhiteSpace(forwardedFor))
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+        if (string.IsNullOrWhiteSpace(ip) || ip == "::1")
         {
-            var ip = forwardedFor.ToString().Split(',')[0].Trim();
-            if (ip == "::1") return "127.0.0.1";
-            return ip;
+            ip = "127.0.0.1";
         }
-
-        var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
-        if (string.IsNullOrWhiteSpace(remoteIp) || remoteIp == "::1")
-        {
-            return "127.0.0.1";
-        }
-        return remoteIp;
-    }
-
-    /// <summary>
-    /// Chức năng 1: Tạo đơn hàng mới (Customer đặt online / Staff tạo tại quầy)
-    /// </summary>
-    [HttpPost]
-    [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<OrderDetailDto>), StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(ApiResponse<OrderDetailDto>), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request, CancellationToken cancellationToken)
-    {
-        if (!ModelState.IsValid)
-        {
-            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            return BadRequest(ApiResponse<OrderDetailDto>.Fail("Dữ liệu không hợp lệ", 400, errors));
-        }
-
-        var userId = GetCurrentUserId();
-        var userRole = GetCurrentUserRole();
-        var clientIp = GetClientIpAddress();
-        var userName = GetCurrentUserName();
-
-        var isStaffOrAdmin = string.Equals(userRole, "Staff", StringComparison.OrdinalIgnoreCase) ||
-                             string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase);
-
-        // Nếu là Customer đặt đơn mà chưa có CustomerName trong request, tự động lấy họ tên từ Token đăng nhập
-        if (string.IsNullOrWhiteSpace(request.CustomerName) && !string.IsNullOrWhiteSpace(userName) && !isStaffOrAdmin)
-        {
-            request.CustomerName = userName;
-        }
-
-        var result = await _orderService.CreateOrderAsync(userId, userRole, request, clientIp, cancellationToken);
-        return StatusCode(result.StatusCode, result);
-    }
-
-    /// <summary>
-    /// Chức năng 1B: Nhân viên tạo đơn hàng tại quầy POS (Dành riêng cho Staff & Admin)
-    /// Hỗ trợ: Khách vãng lai (customerId = null) hoặc Khách thành viên (customerId = guid). Tự động sinh mã VNPay QR nếu chọn VNPay.
-    /// </summary>
-    [HttpPost("pos")]
-    [Authorize(Roles = "Staff,Admin")]
-    [ProducesResponseType(typeof(ApiResponse<OrderDetailDto>), StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(ApiResponse<OrderDetailDto>), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CreatePosOrder([FromBody] CreateOrderRequest request, CancellationToken cancellationToken)
-    {
-        if (!ModelState.IsValid)
-        {
-            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            return BadRequest(ApiResponse<OrderDetailDto>.Fail("Dữ liệu không hợp lệ", 400, errors));
-        }
-
-        var userId = GetCurrentUserId();
-        var userRole = GetCurrentUserRole();
-        var clientIp = GetClientIpAddress();
-
-        var result = await _orderService.CreateOrderAsync(userId, userRole, request, clientIp, cancellationToken);
-        return StatusCode(result.StatusCode, result);
-    }
-
-    /// <summary>
-    /// Chức năng 2A: Xem danh sách đơn cá nhân của Customer (có phân trang)
-    /// </summary>
-    [HttpGet("my-orders")]
-    [Authorize(Roles = "Customer,Staff,Admin")]
-    [ProducesResponseType(typeof(ApiResponse<PagedResult<OrderDto>>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetMyOrders([FromQuery] OrderFilterRequest filter, CancellationToken cancellationToken)
-    {
-        var userId = GetCurrentUserId();
-        var userRole = "Customer"; // Ép quyền xem chỉ của cá nhân
-
-        var result = await _orderService.GetOrdersAsync(userId, userRole, filter, cancellationToken);
-        return StatusCode(result.StatusCode, result);
-    }
-
-    /// <summary>
-    /// Chức năng 2B: Staff & Admin xem toàn bộ đơn tại quán (có phân trang & lọc trạng thái)
-    /// </summary>
-    [HttpGet]
-    [Authorize(Roles = "Staff,Admin")]
-    [ProducesResponseType(typeof(ApiResponse<PagedResult<OrderDto>>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAllOrders([FromQuery] OrderFilterRequest filter, CancellationToken cancellationToken)
-    {
-        var userId = GetCurrentUserId();
-        var userRole = GetCurrentUserRole();
-
-        var result = await _orderService.GetOrdersAsync(userId, userRole, filter, cancellationToken);
-        return StatusCode(result.StatusCode, result);
-    }
-
-    /// <summary>
-    /// Chức năng 3: Xem chi tiết 1 đơn hàng (BOLA / IDOR protection kiểm tra chặt chẽ)
-    /// </summary>
-    [HttpGet("{id:guid}")]
-    [Authorize(Roles = "Customer,Staff,Admin")]
-    [ProducesResponseType(typeof(ApiResponse<OrderDetailDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<OrderDetailDto>), StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(ApiResponse<OrderDetailDto>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetOrderDetail([FromRoute] Guid id, CancellationToken cancellationToken)
-    {
-        var userId = GetCurrentUserId();
-        var userRole = GetCurrentUserRole();
-
-        var result = await _orderService.GetOrderDetailAsync(id, userId, userRole, cancellationToken);
-        return StatusCode(result.StatusCode, result);
-    }
-
-    /// <summary>
-    /// Chức năng 4: Cập nhật trạng thái đơn hàng theo thứ tự: Tiếp nhận -> Pha chế -> Giao hàng -> Hoàn thành (Dành cho Staff & Admin)
-    /// </summary>
-    [HttpPut("{id:guid}/status")]
-    [Authorize(Roles = "Staff,Admin")]
-    [ProducesResponseType(typeof(ApiResponse<OrderDetailDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<OrderDetailDto>), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ApiResponse<OrderDetailDto>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdateOrderStatus(
-        [FromRoute] Guid id, [FromBody] UpdateOrderStatusRequest request, CancellationToken cancellationToken)
-    {
-        if (!ModelState.IsValid)
-        {
-            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            return BadRequest(ApiResponse<OrderDetailDto>.Fail("Dữ liệu không hợp lệ", 400, errors));
-        }
-
-        var userId = GetCurrentUserId();
-        var userRole = GetCurrentUserRole();
-
-        var result = await _orderService.UpdateOrderStatusAsync(id, request, userId, userRole, cancellationToken);
-        return StatusCode(result.StatusCode, result);
-    }
-
-    /// <summary>
-    /// Chức năng 5: Hủy đơn hàng (Áp dụng Strict Rate Limiting tối đa 5 lần trong 10-15 phút)
-    /// Customer chỉ hủy khi PENDING; Staff/Admin bắt buộc nhập lý do.
-    /// </summary>
-    [HttpPost("{id:guid}/cancel")]
-    [Authorize]
-    [EnableRateLimiting("StrictPolicy")]
-    [ProducesResponseType(typeof(ApiResponse<OrderDetailDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<OrderDetailDto>), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ApiResponse<OrderDetailDto>), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> CancelOrder(
-        [FromRoute] Guid id, [FromBody] CancelOrderRequest request, CancellationToken cancellationToken)
-    {
-        if (!ModelState.IsValid)
-        {
-            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            return BadRequest(ApiResponse<OrderDetailDto>.Fail("Dữ liệu không hợp lệ", 400, errors));
-        }
-
-        var userId = GetCurrentUserId();
-        var userRole = GetCurrentUserRole();
-
-        var result = await _orderService.CancelOrderAsync(id, request, userId, userRole, cancellationToken);
-        return StatusCode(result.StatusCode, result);
+        return ip;
     }
 }

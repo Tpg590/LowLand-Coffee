@@ -1,142 +1,126 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 using Order.API.DTOs;
-using Order.API.Services.Interfaces;
+using Order.API.Services;
 
 namespace Order.API.Controllers;
 
+/// <summary>
+/// Controller xử lý nghiệp vụ Thanh toán (Payment Service - Phần III, mục 28 & 29 trong ma trận phân quyền).
+/// Bao gồm:
+/// - Mục 28: Generate VNPay QR (Customer & Staff)
+/// - Mục 29: Confirm Payment (Webhook VNPay tự động xác nhận hoặc Staff xác nhận tiền mặt)
+/// </summary>
 [ApiController]
 [Route("api/payments")]
 public class PaymentController : ControllerBase
 {
     private readonly IPaymentService _paymentService;
-    private readonly IVnPayService _vnPayService;
 
-    public PaymentController(IPaymentService paymentService, IVnPayService vnPayService)
+    public PaymentController(IPaymentService paymentService)
     {
         _paymentService = paymentService;
-        _vnPayService = vnPayService;
     }
 
-    private Guid GetCurrentUserId()
+    /// <summary>
+    /// [Mục 28 - Generate VNPay QR]: Tạo URL thanh toán và mã QR VNPay cho đơn hàng.
+    /// Phân quyền: Customer (tạo QR cho đơn cá nhân) và Staff (tạo QR tại quầy POS / bảng điều phối).
+    /// </summary>
+    [HttpPost("vnpay/create-url")]
+    [Authorize(Roles = "Customer,Staff")]
+    public async Task<IActionResult> CreateVnPayUrl([FromBody] CreateVnPayPaymentRequest request, CancellationToken cancellationToken)
     {
-        var claimVal = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                       ?? User.FindFirst("sub")?.Value
-                       ?? User.FindFirst("CustomerId")?.Value
-                       ?? User.FindFirst("id")?.Value;
+        if (request == null || request.OrderId == Guid.Empty)
+        {
+            return BadRequest(ApiResponse<VnPayPaymentResponseDto>.Fail("OrderId không hợp lệ.", 400));
+        }
 
-        return Guid.TryParse(claimVal, out var guid) ? guid : Guid.Empty;
+        var (userId, role) = GetCurrentUserContext();
+        var clientIp = GetClientIpAddress();
+
+        var result = await _paymentService.GenerateVnPayPaymentUrlAsync(
+            request.OrderId, userId, role, clientIp, cancellationToken);
+
+        return StatusCode(result.StatusCode, result);
     }
 
-    private string GetCurrentUserRole()
+    /// <summary>
+    /// [Mục 29A - Confirm Payment (VNPay Webhook IPN)]:
+    /// Đầu mối nhận thông báo kết quả thanh toán tự động (Server-to-Server IPN) từ cổng VNPay.
+    /// Kiểm tra chữ ký số HMAC-SHA512 (SecureHash), đối chiếu số tiền và cập nhật trạng thái thanh toán.
+    /// </summary>
+    [HttpGet("vnpay-ipn")]
+    [AllowAnonymous]
+    public async Task<IActionResult> VnPayIpn(CancellationToken cancellationToken)
     {
-        return User.FindFirst(ClaimTypes.Role)?.Value
-               ?? User.FindFirst("role")?.Value
-               ?? "Customer";
+        var response = await _paymentService.ProcessIpnCallbackAsync(Request.Query, cancellationToken);
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// [Mục 29B - Confirm Payment (VNPay Return Callback)]:
+    /// Đầu mối nhận kết quả khi trình duyệt của khách hàng redirect từ cổng VNPay về hệ thống.
+    /// Xác thực chữ ký số HMAC-SHA512 và đồng bộ trạng thái đơn hàng ngay lập tức.
+    /// </summary>
+    [HttpGet("vnpay-return")]
+    [AllowAnonymous]
+    public async Task<IActionResult> VnPayReturn(CancellationToken cancellationToken)
+    {
+        var result = await _paymentService.ProcessPaymentReturnAsync(Request.Query, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return BadRequest(ApiResponse<VnPayReturnResultDto>.Fail(result.Message, 400));
+        }
+
+        return Ok(ApiResponse<VnPayReturnResultDto>.Success(result, result.Message));
+    }
+
+    /// <summary>
+    /// [Mục 29C - Confirm Payment (Staff Cash Confirm)]:
+    /// Nhân viên (Staff) xác nhận đã thu tiền mặt cho đơn hàng tại quầy hoặc đơn COD.
+    /// Phân quyền: Chỉ Staff.
+    /// </summary>
+    [HttpPut("{orderId:guid}/cash-confirm")]
+    [Authorize(Roles = "Staff")]
+    public async Task<IActionResult> ConfirmCashPayment(
+        Guid orderId,
+        [FromBody] CashPaymentConfirmRequest? request,
+        CancellationToken cancellationToken)
+    {
+        var (userId, role) = GetCurrentUserContext();
+        if (!userId.HasValue)
+        {
+            return Unauthorized(ApiResponse<OrderPaymentDto>.Fail("Không xác định được danh tính nhân viên.", 401));
+        }
+
+        var result = await _paymentService.ConfirmCashPaymentAsync(orderId, userId.Value, role, request, cancellationToken);
+        return StatusCode(result.StatusCode, result);
+    }
+
+    private (Guid? userId, string role) GetCurrentUserContext()
+    {
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                     ?? User.FindFirstValue("sub")
+                     ?? User.FindFirstValue("uid")
+                     ?? User.FindFirstValue("userId");
+
+        Guid? userId = Guid.TryParse(userIdStr, out var parsedId) ? parsedId : null;
+
+        var role = User.FindFirstValue(ClaimTypes.Role)
+                ?? User.FindFirstValue("role")
+                ?? "Customer";
+
+        return (userId, role);
     }
 
     private string GetClientIpAddress()
     {
-        if (Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedFor) && !string.IsNullOrWhiteSpace(forwardedFor))
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+        if (string.IsNullOrWhiteSpace(ip) || ip == "::1")
         {
-            var ip = forwardedFor.ToString().Split(',')[0].Trim();
-            if (ip == "::1") return "127.0.0.1";
-            return ip;
+            ip = "127.0.0.1";
         }
-
-        var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
-        if (string.IsNullOrWhiteSpace(remoteIp) || remoteIp == "::1")
-        {
-            return "127.0.0.1";
-        }
-        return remoteIp;
-    }
-
-    /// <summary>
-    /// Chức năng 6A: Tạo liên kết chuyển hướng sang cổng VNPay cho đơn hàng chưa thanh toán (từ Request Body)
-    /// Áp dụng Strict Rate Limiting (tối đa 5 lần thử trong 10-15 phút)
-    /// </summary>
-    [HttpPost("vnpay/create-url")]
-    [Authorize]
-    [EnableRateLimiting("StrictPolicy")]
-    [ProducesResponseType(typeof(ApiResponse<VnPayPaymentResponseDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<VnPayPaymentResponseDto>), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ApiResponse<VnPayPaymentResponseDto>), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> CreateVnPayUrl([FromBody] CreateVnPayPaymentRequest request, CancellationToken cancellationToken)
-    {
-        var userId = GetCurrentUserId();
-        var userRole = GetCurrentUserRole();
-        var clientIp = GetClientIpAddress();
-
-        var result = await _paymentService.GenerateVnPayPaymentUrlAsync(request.OrderId, userId, userRole, clientIp, cancellationToken);
-        return StatusCode(result.StatusCode, result);
-    }
-
-    /// <summary>
-    /// Chức năng 6B: Tạo liên kết chuyển hướng sang cổng VNPay theo Order ID trên Route
-    /// Áp dụng Strict Rate Limiting (tối đa 5 lần thử trong 10-15 phút)
-    /// </summary>
-    [HttpPost("{orderId:guid}/vnpay-url")]
-    [HttpPost("{orderId:guid}/vnpay-qr")]
-    [Authorize]
-    [EnableRateLimiting("StrictPolicy")]
-    [ProducesResponseType(typeof(ApiResponse<VnPayPaymentResponseDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<VnPayPaymentResponseDto>), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> GenerateVnPayUrl([FromRoute] Guid orderId, CancellationToken cancellationToken)
-    {
-        var userId = GetCurrentUserId();
-        var userRole = GetCurrentUserRole();
-        var clientIp = GetClientIpAddress();
-
-        var result = await _paymentService.GenerateVnPayPaymentUrlAsync(orderId, userId, userRole, clientIp, cancellationToken);
-        return StatusCode(result.StatusCode, result);
-    }
-
-    /// <summary>
-    /// Chức năng 7A: Webhook IPN từ VNPay (Server-to-Server, xác thực checksum HMACSHA512 & Idempotency)
-    /// </summary>
-    [HttpGet("vnpay-ipn")]
-    [AllowAnonymous]
-    [Produces("application/json")]
-    public async Task<IActionResult> VnPayIpn(CancellationToken cancellationToken)
-    {
-        var ipnResult = await _vnPayService.ProcessIpnCallbackAsync(Request.Query, cancellationToken);
-        return Ok(ipnResult);
-    }
-
-    /// <summary>
-    /// Chức năng 7B: Return URL sau khi khách thanh toán xong trên cổng VNPay và redirect về
-    /// </summary>
-    [HttpGet("vnpay-return")]
-    [AllowAnonymous]
-    [ProducesResponseType(typeof(ApiResponse<VnPayReturnResultDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> VnPayReturn(CancellationToken cancellationToken)
-    {
-        var returnResult = await _vnPayService.ProcessPaymentReturnAsync(Request.Query, cancellationToken);
-        if (returnResult.IsSuccess)
-        {
-            return Ok(ApiResponse<VnPayReturnResultDto>.Success(returnResult, returnResult.Message));
-        }
-
-        return BadRequest(ApiResponse<VnPayReturnResultDto>.Fail(returnResult.Message, 400));
-    }
-
-    /// <summary>
-    /// Chức năng 7C: Staff xác nhận thanh toán tiền mặt tại quầy
-    /// </summary>
-    [HttpPut("{orderId:guid}/cash-confirm")]
-    [Authorize(Roles = "Staff,Admin")]
-    [ProducesResponseType(typeof(ApiResponse<OrderPaymentDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<OrderPaymentDto>), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> ConfirmCashPayment(
-        [FromRoute] Guid orderId, [FromBody] CashPaymentConfirmRequest? request, CancellationToken cancellationToken)
-    {
-        var staffId = GetCurrentUserId();
-        var staffRole = GetCurrentUserRole();
-
-        var result = await _paymentService.ConfirmCashPaymentAsync(orderId, staffId, staffRole, request, cancellationToken);
-        return StatusCode(result.StatusCode, result);
+        return ip;
     }
 }

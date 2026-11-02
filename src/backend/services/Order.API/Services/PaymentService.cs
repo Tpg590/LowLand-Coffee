@@ -1,28 +1,37 @@
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
-using Order.API.Data;
 using Order.API.DTOs;
 using Order.API.Entities;
-using Order.API.Services.Interfaces;
+using Order.API.Repositories;
 
-namespace Order.API.Services.Implementations;
+namespace Order.API.Services;
 
-public class VnPayService : IVnPayService
+/// <summary>
+/// Dịch vụ xử lý Thanh toán đơn hàng & tích hợp cổng VNPay (Mục 28: Tạo QR VNPay, Mục 29: Xác nhận thanh toán).
+/// Tuân thủ kiến trúc phân tầng chuẩn: Controller -> Service -> Repository -> DbContext.
+/// </summary>
+public class PaymentService : IPaymentService
 {
+    private readonly IOrderRepository _orderRepository;
+    private readonly IPaymentRepository _paymentRepository;
     private readonly IConfiguration _configuration;
-    private readonly OrderDbContext _dbContext;
-    private readonly ILogger<VnPayService> _logger;
+    private readonly IMapper _mapper;
+    private readonly ILogger<PaymentService> _logger;
 
-    public VnPayService(
+    public PaymentService(
+        IOrderRepository orderRepository,
+        IPaymentRepository paymentRepository,
         IConfiguration configuration,
-        OrderDbContext dbContext,
-        ILogger<VnPayService> logger)
+        IMapper mapper,
+        ILogger<PaymentService> logger)
     {
+        _orderRepository = orderRepository;
+        _paymentRepository = paymentRepository;
         _configuration = configuration;
-        _dbContext = dbContext;
+        _mapper = mapper;
         _logger = logger;
     }
 
@@ -42,6 +51,9 @@ public class VnPayService : IVnPayService
         ? _configuration["VnPay:ReturnUrl"]!
         : (Environment.GetEnvironmentVariable("VNPAY_RETURN_URL") ?? "http://localhost:5000/MyOrders");
 
+    /// <summary>
+    /// [Mục 28 - Generate VNPay QR]: Tạo đường dẫn thanh toán VNPay có chữ ký số HMAC-SHA512.
+    /// </summary>
     public VnPayPaymentResponseDto CreatePaymentUrl(Entities.Order order, string clientIp, string? customReturnUrl = null)
     {
         var vnpParams = new SortedList<string, string>(new VnPayCompare());
@@ -80,7 +92,7 @@ public class VnPayService : IVnPayService
 
         if (hashData.Length > 0)
         {
-            hashData.Length--; // Bỏ dấu & cuối cùng
+            hashData.Length--;
             query.Length--;
         }
 
@@ -97,6 +109,64 @@ public class VnPayService : IVnPayService
         };
     }
 
+    /// <summary>
+    /// [Mục 28 - Generate VNPay QR]: Tạo đường dẫn thanh toán & mã QR VNPay cho đơn hàng thông qua Repository.
+    /// Phân quyền: Customer (chỉ tạo cho đơn cá nhân) và Staff (tạo cho đơn bất kỳ tại quầy).
+    /// </summary>
+    public async Task<ApiResponse<VnPayPaymentResponseDto>> GenerateVnPayPaymentUrlAsync(
+        Guid orderId, Guid? currentUserId, string currentUserRole, string clientIp, CancellationToken cancellationToken = default)
+    {
+        var order = await _orderRepository.GetByIdWithDetailsAsync(orderId, asNoTracking: false, cancellationToken);
+
+        if (order == null)
+        {
+            return ApiResponse<VnPayPaymentResponseDto>.Fail("Không tìm thấy đơn hàng.", 404);
+        }
+
+        // Kiểm tra BOLA / IDOR: Nếu là Customer thì chỉ được tạo mã QR cho đơn hàng của chính mình
+        var isStaff = string.Equals(currentUserRole, "Staff", StringComparison.OrdinalIgnoreCase);
+
+        if (!isStaff && currentUserId.HasValue && order.UserId != currentUserId.Value)
+        {
+            _logger.LogWarning("BOLA/IDOR Violation: User {UserId} cố gắng tạo mã thanh toán cho đơn {OrderId} của User {OwnerId}",
+                currentUserId, orderId, order.UserId);
+            return ApiResponse<VnPayPaymentResponseDto>.Fail("Bạn không có quyền truy cập đơn hàng này.", 403);
+        }
+
+        if (order.Status == OrderStatus.CANCELLED)
+        {
+            return ApiResponse<VnPayPaymentResponseDto>.Fail("Đơn hàng này đã bị hủy, không thể thanh toán.", 400);
+        }
+
+        // Kiểm tra xem đơn hàng đã được thanh toán thành công trước đó hay chưa
+        var isAlreadyPaid = order.OrderPayments.Any(p => p.PaymentStatus == PaymentStatus.SUCCESS);
+        if (isAlreadyPaid)
+        {
+            return ApiResponse<VnPayPaymentResponseDto>.Fail("Đơn hàng này đã được thanh toán thành công trước đó.", 400);
+        }
+
+        // Đảm bảo có bản ghi OrderPayment với phương thức VNPAY ở trạng thái PENDING thông qua PaymentRepository
+        var vnpayPayment = order.OrderPayments.FirstOrDefault(p => p.PaymentMethod == PaymentMethod.VNPAY);
+        if (vnpayPayment == null)
+        {
+            vnpayPayment = new OrderPayment
+            {
+                OrderId = order.Id,
+                PaymentMethod = PaymentMethod.VNPAY,
+                Amount = order.FinalAmount,
+                PaymentStatus = PaymentStatus.PENDING
+            };
+            await _paymentRepository.AddAsync(vnpayPayment, cancellationToken);
+        }
+
+        var paymentResponse = CreatePaymentUrl(order, clientIp);
+        return ApiResponse<VnPayPaymentResponseDto>.Success(paymentResponse, "Tạo mã QR và đường dẫn thanh toán VNPay thành công.");
+    }
+
+    /// <summary>
+    /// [Mục 29A - Confirm Payment (VNPay IPN Webhook)]:
+    /// Xác thực chữ ký số HMAC-SHA512, kiểm tra số tiền và cập nhật trạng thái thanh toán qua Repository.
+    /// </summary>
     public async Task<VnPayIpnResponseDto> ProcessIpnCallbackAsync(IQueryCollection queryParams, CancellationToken cancellationToken = default)
     {
         var vnpParams = new SortedList<string, string>(new VnPayCompare());
@@ -112,7 +182,6 @@ public class VnPayService : IVnPayService
             }
             else if (key.Equals("vnp_SecureHashType", StringComparison.OrdinalIgnoreCase))
             {
-                // Bỏ qua vnp_SecureHashType không đưa vào chuỗi tính checksum
                 continue;
             }
             else if (key.StartsWith("vnp_", StringComparison.OrdinalIgnoreCase))
@@ -121,7 +190,7 @@ public class VnPayService : IVnPayService
             }
         }
 
-        // 1. Kiểm tra chữ ký Checksum
+        // 1. Kiểm tra chữ ký số Checksum HMAC-SHA512
         var hashData = new StringBuilder();
         foreach (var (k, v) in vnpParams)
         {
@@ -139,7 +208,7 @@ public class VnPayService : IVnPayService
             return new VnPayIpnResponseDto { RspCode = "97", Message = "Invalid Checksum" };
         }
 
-        // 2. Tìm đơn hàng
+        // 2. Tìm đơn hàng thông qua IOrderRepository
         vnpParams.TryGetValue("vnp_TxnRef", out var txnRef);
         vnpParams.TryGetValue("vnp_Amount", out var amountStr);
         vnpParams.TryGetValue("vnp_ResponseCode", out var responseCode);
@@ -150,12 +219,9 @@ public class VnPayService : IVnPayService
             return new VnPayIpnResponseDto { RspCode = "01", Message = "Order not found" };
         }
 
-        // txnRef dạng ORD-xxx hoặc ORD-xxx_timestamp
         var orderCode = txnRef.Contains('_') ? txnRef.Split('_')[0] : txnRef;
 
-        var order = await _dbContext.Orders
-            .Include(o => o.OrderPayments)
-            .FirstOrDefaultAsync(o => o.OrderCode == orderCode, cancellationToken);
+        var order = await _orderRepository.GetByOrderCodeWithDetailsAsync(orderCode, cancellationToken);
 
         if (order == null)
         {
@@ -163,7 +229,7 @@ public class VnPayService : IVnPayService
             return new VnPayIpnResponseDto { RspCode = "01", Message = "Order not found" };
         }
 
-        // 3. Kiểm tra số tiền
+        // 3. Đối chiếu số tiền
         if (!long.TryParse(amountStr, out var vnpAmount))
         {
             return new VnPayIpnResponseDto { RspCode = "04", Message = "Invalid amount" };
@@ -172,15 +238,15 @@ public class VnPayService : IVnPayService
         var expectedAmount = (long)Math.Round(order.FinalAmount * 100);
         if (expectedAmount != vnpAmount)
         {
-            _logger.LogWarning("VNPay IPN: Số tiền không khớp cho đơn {OrderCode}. Nhận: {Received}, Kì vọng: {Expected}",
+            _logger.LogWarning("VNPay IPN: Số tiền không khớp cho đơn {OrderCode}. Nhận: {Received}, Kỳ vọng: {Expected}",
                 orderCode, vnpAmount, expectedAmount);
             return new VnPayIpnResponseDto { RspCode = "04", Message = "Invalid amount" };
         }
 
-        // 4. Kiểm tra Idempotency (Trùng lặp giao dịch)
+        // 4. Kiểm tra chống xử lý trùng lặp (Idempotency)
         var existingSuccessPayment = order.OrderPayments.FirstOrDefault(p =>
-            p.PaymentMethod == Entities.PaymentMethod.VNPAY &&
-            p.PaymentStatus == Entities.PaymentStatus.SUCCESS);
+            p.PaymentMethod == PaymentMethod.VNPAY &&
+            p.PaymentStatus == PaymentStatus.SUCCESS);
 
         if (existingSuccessPayment != null)
         {
@@ -188,49 +254,66 @@ public class VnPayService : IVnPayService
             return new VnPayIpnResponseDto { RspCode = "02", Message = "Order already confirmed" };
         }
 
-        // 5. Cập nhật kết quả thanh toán
-        var vnpayPayment = order.OrderPayments.FirstOrDefault(p => p.PaymentMethod == Entities.PaymentMethod.VNPAY)
-                           ?? new OrderPayment
-                           {
-                               OrderId = order.Id,
-                               PaymentMethod = Entities.PaymentMethod.VNPAY,
-                               Amount = order.FinalAmount
-                           };
-
-        if (!_dbContext.OrderPayments.Contains(vnpayPayment))
+        // 5. Cập nhật kết quả thanh toán qua IPaymentRepository & IOrderRepository
+        var vnpayPayment = order.OrderPayments.FirstOrDefault(p => p.PaymentMethod == PaymentMethod.VNPAY);
+        var isNewPayment = false;
+        if (vnpayPayment == null)
         {
-            await _dbContext.OrderPayments.AddAsync(vnpayPayment, cancellationToken);
+            vnpayPayment = new OrderPayment
+            {
+                OrderId = order.Id,
+                PaymentMethod = PaymentMethod.VNPAY,
+                Amount = order.FinalAmount
+            };
+            isNewPayment = true;
         }
 
         vnpayPayment.TransactionCode = transactionNo;
 
         if (responseCode == "00")
         {
-            vnpayPayment.PaymentStatus = Entities.PaymentStatus.SUCCESS;
+            vnpayPayment.PaymentStatus = PaymentStatus.SUCCESS;
             vnpayPayment.PaidAt = DateTime.UtcNow;
 
-            // Nếu đơn còn ở PENDING thì chuyển lên PROCESSING
+            if (isNewPayment)
+            {
+                await _paymentRepository.AddAsync(vnpayPayment, cancellationToken);
+            }
+            else
+            {
+                await _paymentRepository.UpdateAsync(vnpayPayment, cancellationToken);
+            }
+
             if (order.Status == OrderStatus.PENDING)
             {
                 order.Status = OrderStatus.PROCESSING;
-                order.UpdatedAt = DateTime.UtcNow;
+                await _orderRepository.UpdateAsync(order, cancellationToken);
             }
-
-            await _dbContext.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation("VNPay IPN: Xác nhận thanh toán thành công cho đơn {OrderCode}, mã GD VNPay: {TxnNo}", orderCode, transactionNo);
             return new VnPayIpnResponseDto { RspCode = "00", Message = "Confirm Success" };
         }
         else
         {
-            vnpayPayment.PaymentStatus = Entities.PaymentStatus.FAILED;
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            vnpayPayment.PaymentStatus = PaymentStatus.FAILED;
+            if (isNewPayment)
+            {
+                await _paymentRepository.AddAsync(vnpayPayment, cancellationToken);
+            }
+            else
+            {
+                await _paymentRepository.UpdateAsync(vnpayPayment, cancellationToken);
+            }
 
             _logger.LogWarning("VNPay IPN: Giao dịch không thành công cho đơn {OrderCode}, ResponseCode: {Code}", orderCode, responseCode);
             return new VnPayIpnResponseDto { RspCode = "00", Message = "Confirm Success" };
         }
     }
 
+    /// <summary>
+    /// [Mục 29B - Confirm Payment (VNPay Return URL)]:
+    /// Đồng bộ kết quả thanh toán khi trình duyệt khách hàng redirect từ cổng VNPay về hệ thống.
+    /// </summary>
     public async Task<VnPayReturnResultDto> ProcessPaymentReturnAsync(IQueryCollection queryParams, CancellationToken cancellationToken = default)
     {
         var vnpParams = new SortedList<string, string>(new VnPayCompare());
@@ -246,7 +329,6 @@ public class VnPayService : IVnPayService
             }
             else if (key.Equals("vnp_SecureHashType", StringComparison.OrdinalIgnoreCase))
             {
-                // Bỏ qua vnp_SecureHashType không đưa vào chuỗi tính checksum
                 continue;
             }
             else if (key.StartsWith("vnp_", StringComparison.OrdinalIgnoreCase))
@@ -276,7 +358,6 @@ public class VnPayService : IVnPayService
         if (!isHashMatch)
         {
             _logger.LogWarning("VNPay Return: Hash mismatch. Calculated: {Calc}, Received: {Recv}", calculatedHash, receivedHash);
-            // Nếu mã phản hồi không phải 00 hoặc không có TxnRef thì từ chối ngay
             if (responseCode != "00" || string.IsNullOrWhiteSpace(txnRef))
             {
                 return new VnPayReturnResultDto
@@ -292,37 +373,43 @@ public class VnPayService : IVnPayService
 
         if (responseCode == "00")
         {
-            // Cập nhật DB nếu IPN chưa kịp chạy hoặc trong môi trường localhost
-            var order = await _dbContext.Orders
-                .Include(o => o.OrderPayments)
-                .FirstOrDefaultAsync(o => o.OrderCode == orderCode, cancellationToken);
+            var order = await _orderRepository.GetByOrderCodeWithDetailsAsync(orderCode, cancellationToken);
 
             if (order != null)
             {
-                var payment = order.OrderPayments.FirstOrDefault(p => p.PaymentMethod == Entities.PaymentMethod.VNPAY);
+                var payment = order.OrderPayments.FirstOrDefault(p => p.PaymentMethod == PaymentMethod.VNPAY);
+                var isNewPayment = false;
                 if (payment == null)
                 {
                     payment = new OrderPayment
                     {
                         OrderId = order.Id,
-                        PaymentMethod = Entities.PaymentMethod.VNPAY,
+                        PaymentMethod = PaymentMethod.VNPAY,
                         Amount = order.FinalAmount,
                         CreatedAt = DateTime.UtcNow
                     };
-                    await _dbContext.OrderPayments.AddAsync(payment, cancellationToken);
+                    isNewPayment = true;
                 }
 
-                payment.PaymentStatus = Entities.PaymentStatus.SUCCESS;
+                payment.PaymentStatus = PaymentStatus.SUCCESS;
                 payment.TransactionCode = transactionNo ?? $"VNP_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
                 payment.PaidAt = DateTime.UtcNow;
+
+                if (isNewPayment)
+                {
+                    await _paymentRepository.AddAsync(payment, cancellationToken);
+                }
+                else
+                {
+                    await _paymentRepository.UpdateAsync(payment, cancellationToken);
+                }
 
                 if (order.Status == OrderStatus.PENDING)
                 {
                     order.Status = OrderStatus.PROCESSING;
-                    order.UpdatedAt = DateTime.UtcNow;
+                    await _orderRepository.UpdateAsync(order, cancellationToken);
                 }
 
-                await _dbContext.SaveChangesAsync(cancellationToken);
                 _logger.LogInformation("VNPay Return: Đã cập nhật thành công đơn {OrderCode} sang SUCCESS và PROCESSING.", orderCode);
             }
 
@@ -344,6 +431,77 @@ public class VnPayService : IVnPayService
             Amount = amount,
             Message = $"Giao dịch thanh toán không thành công (Mã lỗi VNPay: {responseCode})."
         };
+    }
+
+    /// <summary>
+    /// [Mục 29C - Confirm Payment]: Nhân viên (Staff) xác nhận đã thu tiền mặt tại quầy hoặc đơn giao hàng.
+    /// Khi xác nhận thành công, nếu đơn đang ở trạng thái PENDING sẽ tự động chuyển sang PROCESSING (Pha chế).
+    /// </summary>
+    public async Task<ApiResponse<OrderPaymentDto>> ConfirmCashPaymentAsync(
+        Guid orderId, Guid staffId, string staffRole, CashPaymentConfirmRequest? request, CancellationToken cancellationToken = default)
+    {
+        var isStaff = string.Equals(staffRole, "Staff", StringComparison.OrdinalIgnoreCase);
+
+        if (!isStaff)
+        {
+            return ApiResponse<OrderPaymentDto>.Fail("Chỉ nhân viên (Staff) mới có quyền xác nhận thu tiền mặt.", 403);
+        }
+
+        var order = await _orderRepository.GetByIdWithDetailsAsync(orderId, asNoTracking: false, cancellationToken);
+
+        if (order == null)
+        {
+            return ApiResponse<OrderPaymentDto>.Fail("Không tìm thấy đơn hàng.", 404);
+        }
+
+        if (order.Status == OrderStatus.CANCELLED)
+        {
+            return ApiResponse<OrderPaymentDto>.Fail("Đơn hàng đã bị hủy, không thể xác nhận thu tiền mặt.", 400);
+        }
+
+        var cashPayment = order.OrderPayments.FirstOrDefault(p => p.PaymentMethod == PaymentMethod.CASH);
+        var isNewPayment = false;
+        if (cashPayment == null)
+        {
+            cashPayment = new OrderPayment
+            {
+                OrderId = order.Id,
+                PaymentMethod = PaymentMethod.CASH,
+                Amount = order.FinalAmount,
+                PaymentStatus = PaymentStatus.PENDING
+            };
+            isNewPayment = true;
+        }
+
+        if (cashPayment.PaymentStatus == PaymentStatus.SUCCESS)
+        {
+            return ApiResponse<OrderPaymentDto>.Fail("Đơn hàng đã được xác nhận thanh toán tiền mặt trước đó.", 400);
+        }
+
+        cashPayment.PaymentStatus = PaymentStatus.SUCCESS;
+        cashPayment.PaidAt = DateTime.UtcNow;
+        cashPayment.TransactionCode = request?.TransactionCode ?? $"CASH_STAFF_{staffId.ToString()[..8]}_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
+
+        if (isNewPayment)
+        {
+            await _paymentRepository.AddAsync(cashPayment, cancellationToken);
+        }
+        else
+        {
+            await _paymentRepository.UpdateAsync(cashPayment, cancellationToken);
+        }
+
+        if (order.Status == OrderStatus.PENDING)
+        {
+            order.Status = OrderStatus.PROCESSING;
+            await _orderRepository.UpdateAsync(order, cancellationToken);
+        }
+
+        _logger.LogInformation("Staff {StaffId} đã xác nhận thanh toán tiền mặt cho đơn {OrderCode}, số tiền {Amount}",
+            staffId, order.OrderCode, order.FinalAmount);
+
+        var paymentDto = _mapper.Map<OrderPaymentDto>(cashPayment);
+        return ApiResponse<OrderPaymentDto>.Success(paymentDto, "Xác nhận thanh toán tiền mặt thành công.");
     }
 
     private static string HmacSha512(string key, string inputData)
@@ -371,3 +529,4 @@ public class VnPayService : IVnPayService
         }
     }
 }
+
