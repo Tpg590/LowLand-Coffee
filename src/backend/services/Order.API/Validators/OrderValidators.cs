@@ -94,7 +94,6 @@ public class CancelOrderRequestValidator : AbstractValidator<CancelOrderRequest>
     public CancelOrderRequestValidator()
     {
         RuleFor(x => x.Reason)
-            .NotEmpty().WithMessage("Lý do hủy đơn không được để trống.")
             .MaximumLength(500).WithMessage("Lý do hủy đơn tối đa 500 ký tự.")
             .Must(NotContainDangerousInput).WithMessage("Lý do hủy chứa ký tự không hợp lệ.");
     }

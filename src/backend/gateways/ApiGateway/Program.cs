@@ -2,6 +2,7 @@ using System.Diagnostics;
 using ApiGateway.Extensions;
 using ApiGateway.Middleware;
 using ApiGateway.Models;
+using Yarp.ReverseProxy.Transforms;
 
 var builder = WebApplication.CreateBuilder(args);
 var startTime = DateTime.UtcNow;
@@ -23,8 +24,31 @@ if (Directory.Exists(rateLimitsPath))
 builder.Configuration.AddEnvironmentVariables();
 
 // 1. Đăng ký YARP Reverse Proxy nạp cấu hình từ yarp.json
+//    Kiêm xử lý tập trung lỗi 500 Internal Server Error từ các Microservice downstream
+//    (còn lỗi 400 Bad Request / Validation do từng Microservice trực tiếp xử lý và trả về)
 builder.Services.AddReverseProxy()
-    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"))
+    .AddTransforms(builderContext =>
+    {
+        builderContext.AddResponseTransform(async transformContext =>
+        {
+            if (transformContext.ProxyResponse != null &&
+                (int)transformContext.ProxyResponse.StatusCode == StatusCodes.Status500InternalServerError)
+            {
+                transformContext.SuppressResponseBody = true;
+                transformContext.HttpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                transformContext.HttpContext.Response.ContentType = "application/json";
+
+                var payload = ApiResponse<object>.Fail(
+                    message: "Đã xảy ra lỗi hệ thống nội bộ (500 Internal Server Error). Vui lòng thử lại sau.",
+                    statusCode: StatusCodes.Status500InternalServerError,
+                    errors: ["Downstream Microservice returned 500 Internal Server Error."]
+                );
+
+                await transformContext.HttpContext.Response.WriteAsJsonAsync(payload);
+            }
+        });
+    });
 
 // 2. Đăng ký Chính sách CORS tập trung (hỗ trợ Web client & SignalR credentials)
 builder.Services.AddGatewayCors(builder.Configuration);
@@ -51,7 +75,7 @@ app.UseMiddleware<CorrelationIdMiddleware>();
 // 2. Ghi nhật ký tập trung & Đo lường độ trễ (Centralized Request Logging)
 app.UseMiddleware<RequestLoggingMiddleware>();
 
-// 3. Xử lý ngoại lệ và chuẩn hóa lỗi kết nối downstream (502/503/504 -> ApiResponse)
+// 3. Xử lý ngoại lệ 500 tại Gateway và chuẩn hóa lỗi kết nối downstream (502/503/504 -> ApiResponse)
 app.UseMiddleware<GatewayResponseHandlerMiddleware>();
 
 // 4. Áp dụng CORS Policy
@@ -111,6 +135,7 @@ app.MapGet("/", (IConfiguration config) =>
             "Fixed-Window Rate Limiting (General & Auth Policies)",
             "Distributed Tracing (X-Correlation-Id)",
             "JWT Token Pre-validation & Header Forwarding",
+            "Centralized 500/502/503/504 Error Handling",
             "Unified Swagger UI Portal (/swagger)",
             "Health Check Endpoint (/health)"
         ]

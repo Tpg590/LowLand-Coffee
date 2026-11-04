@@ -1,97 +1,77 @@
-using System.Text;
-using System.Threading.RateLimiting;
+
+ using System.Text;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Order.API.Data;
 using Order.API.DTOs;
 using Order.API.Mappings;
-using Order.API.Middlewares;
-using Order.API.Services.Implementations;
-using Order.API.Services.Interfaces;
+using Order.API.Repositories;
+using Order.API.Services;
 using Order.API.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Cấu hình Kestrel Payload Limit (Tối đa 1MB chống DoS / Crash app)
-builder.WebHost.ConfigureKestrel(serverOptions =>
-{
-    serverOptions.Limits.MaxRequestBodySize = 1024 * 1024; // 1MB
-});
+// 1. Add Controllers & Xử lý lỗi 400 Bad Request (Validation) tại Microservice theo chuẩn ApiResponse
+//    (Lỗi 500 Internal Server Error và Rate Limiting đã do tầng API Gateway đảm nhiệm tập trung)
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState
+                .Where(e => e.Value?.Errors.Count > 0)
+                .SelectMany(e => e.Value!.Errors.Select(err => err.ErrorMessage))
+                .ToList();
 
-// 2. Add Controllers & FluentValidation
-builder.Services.AddControllers();
+            var firstError = errors.FirstOrDefault() ?? "Dữ liệu đầu vào không hợp lệ (400 Bad Request).";
+            var response = ApiResponse<object>.Fail(firstError, StatusCodes.Status400BadRequest, errors);
+            return new BadRequestObjectResult(response);
+        };
+    });
+
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateOrderRequestValidator>();
 
-// 3. Database Context (Coffee_OrderDB)
+// 2. Configure EF Core DbContext with SQL Server (Coffee_OrderDB)
 var connectionString = builder.Configuration.GetConnectionString("OrderConnection")
     ?? Environment.GetEnvironmentVariable("ORDER_DB_CONNECTION")
-    ?? "Server=localhost;Database=Coffee_OrderDB;TrustServerCertificate=True;";
+    ?? "Server=localhost,1433;Database=Coffee_OrderDB;User Id=sa;Password=YourPassword123!;TrustServerCertificate=True;";
 builder.Services.AddDbContext<OrderDbContext>(options =>
 {
     options.UseSqlServer(connectionString);
 });
 
-// 4. Cấu hình CORS
+// 3. Register Repositories and Services (Dependency Injection: Controller -> Service -> Repository -> DbContext)
+builder.Services.AddAutoMapper(cfg => cfg.AddProfile<OrderMappingProfile>());
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+
+var productApiUrl = builder.Configuration["Services:ProductApiUrl"] ?? "http://localhost:5002";
+builder.Services.AddHttpClient("ProductApi", client =>
+{
+    client.BaseAddress = new Uri(productApiUrl);
+    client.Timeout = TimeSpan.FromSeconds(5);
+});
+
+// 4. Add CORS Policy
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.SetIsOriginAllowed(_ => true)
+        policy.AllowAnyOrigin()
               .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials();
+              .AllowAnyHeader();
     });
 });
 
-// 5. Cấu hình Rate Limiting (Global Policy & Strict Policy cho các endpoint nhạy cảm)
-builder.Services.AddRateLimiter(rateLimiterOptions =>
-{
-    rateLimiterOptions.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-
-    rateLimiterOptions.OnRejected = async (context, cancellationToken) =>
-    {
-        context.HttpContext.Response.ContentType = "application/json";
-        var response = ApiResponse<object>.Fail("Bạn đã gửi quá nhiều yêu cầu trong khoảng thời gian ngắn. Vui lòng thử lại sau.", 429);
-        await context.HttpContext.Response.WriteAsJsonAsync(response, cancellationToken);
-    };
-
-    // Global Rate Limiter: 100 requests / phút
-    rateLimiterOptions.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
-    {
-        var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        return RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: clientIp,
-            factory: _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = 100,
-                Window = TimeSpan.FromMinutes(1),
-                QueueLimit = 0
-            });
-    });
-
-    // Strict Policy: Tối đa 5 lần thử trong 10-15 phút (chống spam thanh toán QR, brute-force & spam hủy đơn)
-    rateLimiterOptions.AddPolicy("StrictPolicy", httpContext =>
-    {
-        var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        var userId = httpContext.User.Identity?.Name ?? clientIp;
-        return RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: $"{userId}_{httpContext.Request.Path}",
-            factory: _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = 5,
-                Window = TimeSpan.FromMinutes(10),
-                QueueLimit = 0
-            });
-    });
-});
-
-// 6. Cấu hình JWT Authentication
+// 5. Configure JWT Authentication
 var jwtSecretKey = !string.IsNullOrWhiteSpace(builder.Configuration["JwtSettings:SecretKey"])
     ? builder.Configuration["JwtSettings:SecretKey"]!
     : (Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? "LowLandCoffee_Super_Secret_Key_For_PRN232_Assignment_2026_Key");
@@ -123,20 +103,7 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-// 7. Đăng ký Services & HTTP Clients
-var productApiUrl = builder.Configuration["Services:ProductApiUrl"] ?? "http://localhost:5002";
-builder.Services.AddHttpClient<IProductPricingService, ProductPricingService>(client =>
-{
-    client.BaseAddress = new Uri(productApiUrl);
-    client.Timeout = TimeSpan.FromSeconds(5);
-});
-
-builder.Services.AddScoped<IVnPayService, VnPayService>();
-builder.Services.AddScoped<IPaymentService, PaymentService>();
-builder.Services.AddScoped<IOrderService, OrderService>();
-builder.Services.AddAutoMapper(cfg => cfg.AddProfile<OrderMappingProfile>());
-
-// 8. Cấu hình Swagger với JWT Bearer
+// 6. Configure Swagger with JWT Bearer Support
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -144,7 +111,7 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "LowLand Coffee - Order & Payment API",
         Version = "v1",
-        Description = "Microservice xử lý Giỏ hàng, Đặt món, Thanh toán VNPay/Tiền mặt & Lịch sử đơn hàng"
+        Description = "Microservice xử lý Đặt món, Quản lý đơn hàng & Thanh toán VNPay/Tiền mặt (PRN232)"
     });
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -175,26 +142,18 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-// 9. Pipeline xử lý HTTP Requests
-app.UseMiddleware<GlobalExceptionMiddleware>();
-app.UseMiddleware<SecurityHeadersMiddleware>();
-
-if (app.Environment.IsDevelopment() || true)
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Order.API v1"));
-}
+// 7. Configure HTTP request pipeline
+app.UseSwagger();
+app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Order.API v1"));
 
 app.UseCors("AllowAll");
-
-app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-// 10. Đảm bảo cột product_name trong order_items hỗ trợ Unicode (NVARCHAR)
+// 8. Đảm bảo cột product_name (NVARCHAR) và customer_name tồn tại trong CSDL
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
@@ -220,7 +179,7 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        app.Logger.LogWarning("Không thể cập nhật NVARCHAR cho order_items: {Message}", ex.Message);
+        app.Logger.LogWarning("Không thể kiểm tra schema phụ trợ cho OrderDB: {Message}", ex.Message);
     }
 }
 

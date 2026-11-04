@@ -5,8 +5,20 @@
     ViewData["Title"] = "Màn hình Thu ngân POS & Điều phối đơn - Nhân viên";
 }
 
+<!-- ========================================================================= -->
+<!-- GIAO DIỆN NHÂN VIÊN (STAFF UI) - QUẦY THU NGÂN POS & ĐIỀU PHỐI ĐƠN HÀNG   -->
+<!-- Đáp ứng đầy đủ 8/8 chức năng của Staff trong ma trận phân quyền (22-29):  -->
+<!-- - Mục 22: Create Order (Staff tạo đơn trực tiếp tại quán / POS)           -->
+<!-- - Mục 23: View Order List (Staff xem toàn bộ đơn hàng trên hệ thống)      -->
+<!-- - Mục 24: View Order Detail (Xem thông tin chi tiết items, giá tiền)      -->
+<!-- - Mục 25: Search & Filter Order (Tìm kiếm mã đơn/tên khách & lọc trạng thái)-->
+<!-- - Mục 26: Update Order Status (Pending -> Processing -> Shipping -> Completed)-->
+<!-- - Mục 27: Cancel Order (Staff hủy đơn kèm lý do bắt buộc)                 -->
+<!-- - Mục 28: Generate VNPay QR (Tạo mã QR VNPay để khách thanh toán đơn)     -->
+<!-- - Mục 29: Confirm Payment (Staff xác nhận thu tiền mặt hoặc VNPay tự động)-->
+<!-- ========================================================================= -->
 <div class="w-full px-4 sm:px-6 lg:px-8 py-5 space-y-6">
-    <!-- Top Action Bar with Clear Mode Switcher -->
+    <!-- Thanh tiêu đề & Chuyển đổi chế độ (Bán hàng tại quầy POS <-> Điều phối đơn hàng) -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-gray-200 gap-4">
         <div class="flex items-center gap-3.5">
             <span class="w-12 h-12 rounded-2xl bg-red-highland text-white flex items-center justify-center font-black text-xl shadow-md">
@@ -14,46 +26,47 @@
             </span>
             <div>
                 <h1 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
-                    <span>Màn hình Bán hàng Quầy Thu ngân</span>
-                    <span class="px-3 py-1 rounded-full bg-blue-100 text-blue-900 text-xs font-black uppercase border border-blue-200">Khu vực Nhân viên</span>
+                    <span>Quầy Thu ngân POS & Điều phối đơn</span>
+                    <span class="px-3 py-1 rounded-full bg-blue-100 text-blue-900 text-xs font-black uppercase border border-blue-200">Staff</span>
                 </h1>
-                <p class="text-sm text-gray-500 font-medium mt-0.5">Nhân viên: <span class="font-bold text-gray-800" id="pos-staff-badge">Thu Ngân 01</span> • Bán hàng & Điều phối đơn</p>
+                <p class="text-sm text-gray-500 font-medium mt-0.5">
+                    Nhân viên trực ca: <span class="font-bold text-gray-800" id="pos-staff-badge">Nhân viên POS</span> • Tạo đơn tại quán & Điều phối trạng thái
+                </p>
             </div>
         </div>
 
         <div class="flex items-center gap-3">
-            <!-- Mode Switcher Tabs (To, rõ ràng, Flaticon icon) -->
+            <!-- Bộ nút chuyển đổi giữa 2 màn hình nghiệp vụ của Staff -->
             <div class="bg-gray-200 p-1.5 rounded-2xl flex items-center gap-1.5 text-sm font-bold shadow-inner">
                 <button type="button" id="tab-btn-pos" onclick="switchView('pos')" class="px-5 py-2.5 rounded-xl bg-white text-gray-900 shadow-sm transition flex items-center gap-2">
                     <i class="fi fi-rr-shopping-cart text-base text-red-highland flex items-center"></i>
-                    <span>Bán hàng tại quầy</span>
+                    <span>Bán hàng tại quầy (POS)</span>
                 </button>
                 <button type="button" id="tab-btn-orders" onclick="switchView('orders')" class="px-5 py-2.5 rounded-xl text-gray-600 hover:text-gray-900 transition flex items-center gap-2">
                     <i class="fi fi-rr-clipboard-list text-base flex items-center"></i>
                     <span>Điều phối đơn hàng</span>
-                    <span id="pending-orders-badge" class="px-2 py-0.5 rounded-full bg-red-highland text-white text-xs font-black shadow-sm">2</span>
+                    <span id="pending-orders-badge" class="px-2 py-0.5 rounded-full bg-red-highland text-white text-xs font-black shadow-sm">0</span>
                 </button>
             </div>
         </div>
     </div>
 
     <!-- ========================================================================= -->
-    <!-- VIEW 1: POS Counter Register (Màn hình Bán hàng tại quầy) -->
+    <!-- VIEW 1: MÀN HÌNH BÁN HÀNG TẠI QUẦY POS (Mục 22: Staff tạo đơn tại quán)   -->
     <!-- ========================================================================= -->
     <div id="view-pos" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        <!-- Left: Product Catalog & Fast Filters (lg:col-span-8) -->
+        <!-- Cột trái (8 cột): Danh mục & Thực đơn sản phẩm tải động từ Product.API -->
         <div class="lg:col-span-8 space-y-4">
-            <!-- Category Tabs & Search Bar -->
+            <!-- Thanh tìm kiếm món & Lọc theo danh mục -->
             <div class="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col sm:flex-row gap-3.5 items-center justify-between">
-                <!-- Search Input -->
                 <div class="relative w-full sm:w-80">
-                    <input type="text" id="pos-search" onkeyup="filterPosProducts()" placeholder="Tìm món nhanh (tên món)..." class="w-full bg-gray-50 border border-gray-300 rounded-xl pl-11 pr-4 py-3 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland focus:bg-white placeholder-gray-400 transition" />
+                    <input type="text" id="pos-search" onkeyup="filterPosProducts()" placeholder="Tìm món nhanh theo tên..." class="w-full bg-gray-50 border border-gray-300 rounded-xl pl-11 pr-4 py-3 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland focus:bg-white placeholder-gray-400 transition" />
                     <span class="absolute left-3.5 top-3.5 text-gray-400">
                         <i class="fi fi-rr-search text-base flex items-center"></i>
                     </span>
                 </div>
 
-                <!-- Category Pills (Tải động từ Product.API) -->
+                <!-- Các nút lọc danh mục (Nạp từ Product.API) -->
                 <div id="pos-category-pills" class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
                     <button type="button" onclick="setCategoryFilter('ALL', this)" class="pos-cat-btn active px-4 py-2.5 rounded-xl text-sm font-bold bg-[#4F392E] text-white transition flex-shrink-0 shadow-sm flex items-center gap-1.5">
                         <i class="fi fi-rr-apps text-xs"></i>
@@ -62,49 +75,47 @@
                 </div>
             </div>
 
-            <!-- Products Grid (Chữ to rõ, hình ảnh sắc nét, chạm 1 chạm để thêm) -->
+            <!-- Lưới hiển thị các món đồ uống (Chạm để thêm vào hóa đơn POS) -->
             <div id="pos-product-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
-                <!-- Được nạp tự động qua API Products hoặc dữ liệu thực -->
             </div>
         </div>
 
-        <!-- Right: Current Bill / Register Ticket (Hóa đơn thu ngân) -->
+        <!-- Cột phải (4 cột): Hóa đơn thu ngân POS hiện tại -->
         <div class="lg:col-span-4 sticky top-20">
             <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-xl border border-gray-200 space-y-4">
-                <!-- Bill Header & Order Type Toggle -->
+                <!-- Đầu hóa đơn & Chọn hình thức phục vụ (Tại quán / Mang về) -->
                 <div class="flex items-center justify-between pb-3.5 border-b border-gray-200">
                     <div>
-                        <span id="pos-bill-code" class="text-sm font-black text-red-highland uppercase tracking-wider block">HÓA ĐƠN BÁN LẺ</span>
-                        <span class="text-xs text-gray-500 font-medium">Giờ tạo: <span id="pos-time" class="font-bold text-gray-800">11:30</span></span>
+                        <span id="pos-bill-code" class="text-sm font-black text-red-highland uppercase tracking-wider block">HÓA ĐƠN TẠI QUẦY</span>
+                        <span class="text-xs text-gray-500 font-medium">Giờ mở ca: <span id="pos-time" class="font-bold text-gray-800">--:--</span></span>
                     </div>
 
-                    <!-- Dine-in / Take-away toggle -->
                     <div class="bg-gray-100 p-1 rounded-xl flex text-xs font-bold">
                         <button type="button" id="btn-dine-in" onclick="setOrderType('DINE_IN')" class="px-3 py-1.5 rounded-lg bg-white shadow-sm text-gray-900 transition">Tại quán</button>
                         <button type="button" id="btn-take-away" onclick="setOrderType('TAKE_AWAY')" class="px-3 py-1.5 rounded-lg text-gray-500 hover:text-gray-900 transition">Mang về</button>
                     </div>
                 </div>
 
-                <!-- Customer lookup -->
+                <!-- Tìm kiếm khách hàng thành viên qua Auth.API hoặc nhập tên khách lẻ -->
                 <div class="pb-1 relative">
                     <div class="flex items-center justify-between mb-1.5">
                         <label class="text-xs font-black text-gray-500 uppercase tracking-wider block">Khách hàng</label>
-                        <span class="text-[11px] text-gray-400 font-medium">Tìm tên hoặc SĐT</span>
+                        <span class="text-[11px] text-gray-400 font-medium">Tìm thành viên hoặc nhập tên khách lẻ</span>
                     </div>
                     <div class="relative">
-                        <input type="text" id="pos-customer-search" 
-                               oninput="searchCustomer(this.value)" 
+                        <input type="text" id="pos-customer-search"
+                               oninput="searchCustomer(this.value)"
                                onfocus="if (this.value) searchCustomer(this.value)"
                                onclick="if (this.value) searchCustomer(this.value)"
                                onkeydown="if (event.key === 'Enter') { event.preventDefault(); selectFirstCustomer(); }"
-                               placeholder="Nhập tên hoặc SĐT khách..." autocomplete="off"
+                               placeholder="Nhập tên hoặc SĐT khách hàng..." autocomplete="off"
                                class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland focus:bg-white placeholder-gray-400 transition" />
                         <span class="absolute left-3 top-2.5 text-gray-400"><i class="fi fi-rr-user text-base flex items-center"></i></span>
                         <div id="customer-dropdown" class="absolute z-50 left-0 right-0 top-full mt-1.5 bg-white border border-gray-200 rounded-2xl shadow-2xl hidden max-h-64 overflow-y-auto divide-y divide-gray-100"></div>
                     </div>
-                    
-                    <!-- Khách hàng đã chọn -->
-                    <div id="selected-customer-badge" class="hidden mt-2 p-3 bg-emerald-50 border-2 border-emerald-300 rounded-2xl text-xs text-emerald-900 shadow-sm animate-fade-in">
+
+                    <!-- Thẻ hiển thị khách hàng thành viên đã chọn -->
+                    <div id="selected-customer-badge" class="hidden mt-2 p-3 bg-emerald-50 border-2 border-emerald-300 rounded-2xl text-xs text-emerald-900 shadow-sm">
                         <div class="flex items-center justify-between gap-2">
                             <div class="flex items-center gap-2.5 min-w-0">
                                 <span class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-sm font-black flex-shrink-0 shadow">
@@ -121,7 +132,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <button type="button" onclick="clearCustomer()" class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-red-50 text-red-600 border border-red-200 text-xs font-bold transition flex items-center gap-1 flex-shrink-0 shadow-sm" title="Hủy chọn khách này">
+                            <button type="button" onclick="clearCustomer()" class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-red-50 text-red-600 border border-red-200 text-xs font-bold transition flex items-center gap-1 flex-shrink-0 shadow-sm">
                                 <i class="fi fi-rr-cross text-xs"></i>
                                 <span>Bỏ chọn</span>
                             </button>
@@ -129,50 +140,54 @@
                     </div>
                 </div>
 
-                <!-- Ticket Items List -->
-                <div id="pos-ticket-items" class="max-h-[320px] overflow-y-auto space-y-3.5 divide-y divide-gray-100 pr-1">
-                    <div id="pos-empty-cart-message" class="text-center py-12 text-gray-400 text-sm">
+                <!-- Danh sách các món trong hóa đơn POS -->
+                <div id="pos-ticket-items" class="max-h-[300px] overflow-y-auto space-y-3.5 divide-y divide-gray-100 pr-1">
+                    <div id="pos-empty-cart-message" class="text-center py-10 text-gray-400 text-sm">
                         <i class="fi fi-rr-shopping-bag text-4xl mx-auto mb-2 text-gray-300 block"></i>
                         <span class="font-medium">Chưa có món nào trong hóa đơn.<br />Chạm vào món bên trái để thêm!</span>
                     </div>
                 </div>
 
-                <!-- Price Calculation Breakdown (To rõ ràng) -->
-                <div class="space-y-2.5 pt-3.5 border-t border-gray-200 text-sm">
+                <!-- Ghi chú hóa đơn tại quầy -->
+                <div>
+                    <input type="text" id="pos-note-input" placeholder="Ghi chú đơn tại quầy (ít đá, giảm ngọt, số bàn...)" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2 text-xs font-medium text-gray-800 focus:ring-2 focus:ring-red-highland" />
+                </div>
+
+                <!-- Chi tiết tính tiền tại quầy -->
+                <div class="space-y-2 pt-3 border-t border-gray-200 text-sm">
                     <div class="flex justify-between text-gray-600 font-medium">
                         <span>Tạm tính</span>
-                        <span id="pos-subtotal" class="font-bold text-gray-900">0đ</span>
+                        <span id="pos-subtotal" class="font-bold text-gray-900">0 đ</span>
                     </div>
                     <div class="flex justify-between text-gray-600 font-medium">
-                        <span>Giảm giá / Khuyến mãi</span>
-                        <span id="pos-discount" class="font-bold text-emerald-600">-0đ</span>
+                        <span>Giảm giá</span>
+                        <span id="pos-discount" class="font-bold text-emerald-600">0 đ</span>
                     </div>
-                    <div class="flex justify-between items-baseline pt-2.5 border-t-2 border-gray-200">
+                    <div class="flex justify-between items-baseline pt-2 border-t-2 border-gray-200">
                         <span class="text-base font-black text-gray-900">Tổng thanh toán:</span>
-                        <span id="pos-total" class="text-2xl sm:text-3xl font-black text-red-highland">0đ</span>
+                        <span id="pos-total" class="text-2xl sm:text-3xl font-black text-red-highland">0 đ</span>
                     </div>
                 </div>
 
-                <!-- Payment Method Tabs: Tiền mặt vs VNPay QR (Flaticon Icons) -->
-                <div class="space-y-3 pt-2">
+                <!-- Chọn phương thức thanh toán tại quầy: Tiền mặt (CASH) hoặc Tạo mã QR VNPay (VNPAY) -->
+                <div class="space-y-3 pt-1">
                     <div class="grid grid-cols-2 gap-2.5">
                         <button type="button" id="btn-pay-cash" onclick="setPosPaymentMethod('CASH')" class="py-3 px-3.5 rounded-2xl border-2 border-red-highland bg-red-50 text-red-highland font-black text-sm flex items-center justify-center gap-2 transition shadow-sm">
                             <i class="fi fi-rr-money-bill-wave text-base flex items-center"></i>
                             <span>Tiền mặt</span>
                         </button>
                         <button type="button" id="btn-pay-vnpay" onclick="setPosPaymentMethod('VNPAY')" class="py-3 px-3.5 rounded-2xl border border-gray-300 bg-white text-gray-700 font-bold text-sm flex items-center justify-center gap-2 transition hover:bg-gray-50">
-                            <i class="fi fi-rr-credit-card text-base flex items-center"></i>
-                            <span>VNPay QR</span>
+                            <i class="fi fi-rr-qrcode text-base flex items-center"></i>
+                            <span>Mã QR VNPay</span>
                         </button>
                     </div>
 
-                    <!-- Cash Drawer Quick Amount Buttons (Nếu chọn Tiền mặt) -->
+                    <!-- Hộp tính tiền thừa cho khách khi thu tiền mặt tại quầy -->
                     <div id="cash-drawer-box" class="p-3.5 rounded-2xl bg-gray-50 border border-gray-200 space-y-2.5">
                         <div class="flex items-center justify-between text-sm">
                             <span class="font-bold text-gray-700">Khách đưa:</span>
                             <div class="relative">
                                 <input type="number" id="cash-given" oninput="calculateChange()" placeholder="0" class="w-32 text-right bg-white border border-gray-300 rounded-xl px-3 py-1.5 text-sm font-black text-gray-900 focus:ring-2 focus:ring-red-highland" />
-                                <span class="text-xs text-gray-400 absolute right-1 -bottom-4">đ</span>
                             </div>
                         </div>
                         <div class="flex items-center gap-1.5 justify-end pt-1">
@@ -183,20 +198,20 @@
                         </div>
                         <div class="flex items-center justify-between text-sm pt-2 border-t border-gray-200">
                             <span class="font-semibold text-gray-600">Tiền thối lại:</span>
-                            <span id="cash-change" class="text-lg font-black text-emerald-600">0đ</span>
+                            <span id="cash-change" class="text-lg font-black text-emerald-600">0 đ</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Submit / Checkout Action Buttons -->
+                <!-- Nút Xóa trắng & Tạo đơn / Thanh toán -->
                 <div class="grid grid-cols-12 gap-2.5 pt-2">
                     <button type="button" onclick="clearPosTicket()" class="col-span-4 py-3.5 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm transition flex items-center justify-center gap-1.5">
                         <i class="fi fi-rr-trash text-sm"></i>
-                        <span>Xóa trắng</span>
+                        <span>Làm mới</span>
                     </button>
-                    <button type="button" onclick="checkoutPosOrder()" id="btn-pos-checkout" class="col-span-8 py-3.5 rounded-2xl bg-red-highland hover:bg-red-700 text-white font-black text-base uppercase tracking-wider shadow-lg transition active:scale-95 flex items-center justify-center gap-2">
+                    <button type="button" onclick="checkoutPosOrder()" id="btn-pos-checkout" class="col-span-8 py-3.5 rounded-2xl bg-red-highland hover:bg-red-700 text-white font-black text-sm sm:text-base uppercase tracking-wider shadow-lg transition active:scale-95 flex items-center justify-center gap-2">
                         <i class="fi fi-rr-receipt text-lg"></i>
-                        <span>Thanh toán & In hóa đơn</span>
+                        <span>Tạo đơn & Thanh toán</span>
                     </button>
                 </div>
             </div>
@@ -204,34 +219,70 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- VIEW 2: Order Management & Status Transitions (Điều phối & Giao hàng) -->
+    <!-- VIEW 2: BẢNG ĐIỀU PHỐI TOÀN BỘ ĐƠN HÀNG (Mục 23, 24, 25, 26, 27, 28, 29)  -->
     <!-- ========================================================================= -->
     <div id="view-orders" class="hidden space-y-6">
         <div class="bg-white p-6 rounded-3xl border border-gray-200 shadow-xl space-y-5">
-            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4 border-b border-gray-200">
+            <!-- Tiêu đề quy trình điều phối tuần tự: Pending -> Processing -> Shipping -> Completed -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-gray-200">
                 <div>
-                    <h3 class="text-xl font-black text-gray-900">Danh sách đơn hàng cần xử lý</h3>
-                    <p class="text-sm text-gray-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                        <span>Quy trình điều phối:</span>
-                        <span class="font-bold text-amber-700">Chờ xác nhận</span>
+                    <h3 class="text-xl font-black text-gray-900">Điều phối toàn bộ đơn hàng trên hệ thống</h3>
+                    <p class="text-sm text-gray-500 mt-1 flex items-center gap-1.5 flex-wrap">
+                        <span>Quy trình chuẩn (Mục 26):</span>
+                        <span class="font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">Pending (Chờ xác nhận)</span>
                         <i class="fi fi-rr-arrow-right text-xs text-gray-400"></i>
-                        <span class="font-bold text-blue-700">Đang pha chế</span>
+                        <span class="font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200">Processing (Pha chế)</span>
                         <i class="fi fi-rr-arrow-right text-xs text-gray-400"></i>
-                        <span class="font-bold text-purple-700">Đang giao hàng</span>
+                        <span class="font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200">Shipping (Giao hàng)</span>
                         <i class="fi fi-rr-arrow-right text-xs text-gray-400"></i>
-                        <span class="font-bold text-emerald-700">Hoàn tất đơn</span>
+                        <span class="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">Completed (Hoàn thành)</span>
                     </p>
                 </div>
 
                 <div class="flex items-center gap-3">
                     <button type="button" onclick="loadPosOrdersList()" class="px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-sm transition flex items-center gap-2 shadow-sm">
                         <i class="fi fi-rr-refresh text-sm"></i>
-                        <span>Tải lại danh sách</span>
+                        <span>Làm mới danh sách</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Orders Table with Instant Action Buttons (Chữ to, dễ đọc) -->
+            <!-- [Mục 25 - Search & Filter Order cho Staff]: Thanh tìm kiếm & lọc trạng thái -->
+            <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-200">
+                <!-- Tìm kiếm theo mã đơn hoặc tên khách hàng -->
+                <div class="relative flex-1 max-w-md">
+                    <i class="fi fi-rr-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                    <input type="text"
+                           id="staff-orders-search-input"
+                           oninput="onStaffOrdersSearch(this.value)"
+                           placeholder="Tìm theo mã đơn (#ORD-...) hoặc tên khách hàng..."
+                           class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-gray-300 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland outline-none transition" />
+                </div>
+
+                <!-- Các nút lọc theo trạng thái đơn hàng -->
+                <div id="staff-orders-filter-pills" class="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0">
+                    <button type="button" onclick="setStaffOrdersStatusFilter('', this)" class="staff-filter-btn active px-3.5 py-2 rounded-xl text-xs font-black bg-gray-900 text-white transition whitespace-nowrap">
+                        Tất cả
+                    </button>
+                    <button type="button" onclick="setStaffOrdersStatusFilter('PENDING', this)" class="staff-filter-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-white text-gray-700 border border-gray-200 hover:bg-gray-100 transition whitespace-nowrap">
+                        Pending (Chờ xác nhận)
+                    </button>
+                    <button type="button" onclick="setStaffOrdersStatusFilter('PROCESSING', this)" class="staff-filter-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-white text-gray-700 border border-gray-200 hover:bg-gray-100 transition whitespace-nowrap">
+                        Processing (Pha chế)
+                    </button>
+                    <button type="button" onclick="setStaffOrdersStatusFilter('SHIPPING', this)" class="staff-filter-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-white text-gray-700 border border-gray-200 hover:bg-gray-100 transition whitespace-nowrap">
+                        Shipping (Đang giao)
+                    </button>
+                    <button type="button" onclick="setStaffOrdersStatusFilter('COMPLETED', this)" class="staff-filter-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-white text-gray-700 border border-gray-200 hover:bg-gray-100 transition whitespace-nowrap">
+                        Completed (Hoàn thành)
+                    </button>
+                    <button type="button" onclick="setStaffOrdersStatusFilter('CANCELLED', this)" class="staff-filter-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-white text-gray-700 border border-gray-200 hover:bg-gray-100 transition whitespace-nowrap">
+                        Cancelled (Đã hủy)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bảng hiển thị danh sách toàn bộ đơn hàng (Mục 23) -->
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm text-gray-700">
                     <thead class="bg-gray-100 text-gray-800 uppercase font-black text-xs tracking-wider">
@@ -240,13 +291,12 @@
                             <th class="py-3.5 px-4">Khách hàng</th>
                             <th class="py-3.5 px-4">Món đã gọi</th>
                             <th class="py-3.5 px-4">Tổng tiền</th>
-                            <th class="py-3.5 px-4">Thanh toán</th>
+                            <th class="py-3.5 px-4">Thanh toán (Mục 28, 29)</th>
                             <th class="py-3.5 px-4">Trạng thái</th>
-                            <th class="py-3.5 px-4 text-center">Thao tác xử lý</th>
+                            <th class="py-3.5 px-4 text-center">Điều phối & Xử lý (Mục 24, 26, 27)</th>
                         </tr>
                     </thead>
                     <tbody id="pos-orders-table-body" class="divide-y divide-gray-200 font-medium text-sm">
-                        <!-- Populated via JS -->
                     </tbody>
                 </table>
             </div>
@@ -254,13 +304,12 @@
     </div>
 </div>
 
-
 <!-- ========================================================================= -->
-<!-- Modal Chi Tiết Đơn Hàng Dành Cho Nhân Viên -->
+<!-- MODAL 1: XEM CHI TIẾT ĐƠN HÀNG DÀNH CHO NHÂN VIÊN (Mục 24)                -->
 <!-- ========================================================================= -->
 <div id="modal-order-detail" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-scale-up">
-        <!-- Header -->
+    <div class="bg-white rounded-3xl max-w-xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+        <!-- Đầu Modal -->
         <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <span class="w-10 h-10 rounded-xl bg-amber-500 text-slate-900 flex items-center justify-center font-bold text-lg">
@@ -276,12 +325,12 @@
             </div>
             <button type="button" onclick="closeOrderDetailModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition">✕</button>
         </div>
-        <!-- Body -->
+
+        <!-- Thân Modal -->
         <div class="p-6 overflow-y-auto space-y-5 flex-1">
-            <!-- Status & Payment -->
             <div class="flex items-center justify-between p-3.5 bg-gray-50 rounded-2xl border border-gray-200 text-xs">
                 <div>
-                    <span class="text-gray-500 block font-semibold">Trạng thái</span>
+                    <span class="text-gray-500 block font-semibold">Trạng thái hiện tại</span>
                     <span id="detail-order-status" class="font-black text-sm text-gray-900">Chờ xác nhận</span>
                 </div>
                 <div class="text-right">
@@ -289,7 +338,14 @@
                     <span id="detail-order-payment" class="font-black text-sm text-gray-900">Tiền mặt</span>
                 </div>
             </div>
-            <!-- Customer Name -->
+
+            <!-- Lý do hủy nếu đơn đã hủy -->
+            <div id="detail-cancel-reason-box" class="hidden p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-900">
+                <span class="font-black block text-rose-700 mb-0.5">Đơn hàng đã hủy — Lý do:</span>
+                <span id="detail-cancel-reason-text" class="font-medium"></span>
+            </div>
+
+            <!-- Thông tin khách hàng -->
             <div class="flex items-center gap-3 px-3.5 py-2.5 bg-blue-50 border border-blue-100 rounded-2xl text-xs">
                 <span class="w-8 h-8 rounded-full bg-blue-200 flex items-center justify-center text-blue-800 flex-shrink-0"><i class="fi fi-rr-user text-sm"></i></span>
                 <div>
@@ -297,57 +353,177 @@
                     <span id="detail-customer-name" class="font-black text-sm text-gray-900">—</span>
                 </div>
             </div>
-            <!-- Items list -->
-            <div>
 
-                <h4 class="text-xs font-black uppercase text-gray-500 tracking-wider mb-2.5">Danh sách món nước</h4>
+            <!-- Danh sách chi tiết các món & giá tiền -->
+            <div>
+                <h4 class="text-xs font-black uppercase text-gray-500 tracking-wider mb-2.5">Danh sách món & đơn giá</h4>
                 <div id="detail-items-list" class="divide-y divide-gray-100 border border-gray-200 rounded-2xl overflow-hidden bg-gray-50/50">
-                    <!-- Dynamic -->
                 </div>
             </div>
-            <!-- Total -->
-            <div class="p-4 bg-gray-50 rounded-2xl border border-gray-200 flex justify-between items-center">
-                <span class="font-bold text-gray-700 text-sm">Tổng tiền thanh toán</span>
-                <span id="detail-order-total" class="font-black text-red-highland text-xl">0 đ</span>
+
+            <!-- Tổng tiền -->
+            <div class="p-4 bg-gray-50 rounded-2xl border border-gray-200 space-y-1.5 text-sm">
+                <div class="flex justify-between text-xs text-gray-500">
+                    <span>Tạm tính</span>
+                    <span id="detail-order-subtotal" class="font-bold text-gray-800">0 đ</span>
+                </div>
+                <div class="flex justify-between text-xs text-gray-500">
+                    <span>Giảm giá</span>
+                    <span id="detail-order-discount" class="font-bold text-emerald-600">-0 đ</span>
+                </div>
+                <div class="pt-1.5 border-t border-gray-200 flex justify-between items-center">
+                    <span class="font-bold text-gray-900">Tổng thanh toán</span>
+                    <span id="detail-order-total" class="font-black text-red-highland text-xl">0 đ</span>
+                </div>
             </div>
-            <!-- Note -->
+
+            <!-- Ghi chú đơn hàng -->
             <div id="detail-note-box" class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 hidden">
-                <span class="font-bold block mb-0.5">Ghi chú của khách:</span>
+                <span class="font-bold block mb-0.5">Ghi chú đơn hàng:</span>
                 <span id="detail-order-note" class="italic"></span>
             </div>
         </div>
-        <!-- Footer -->
-        <div class="px-6 py-3.5 bg-gray-50 border-t border-gray-100 flex justify-end">
+
+        <!-- Chân Modal: Nút Hủy đơn kèm lý do (Mục 27) & Tạo QR VNPay (Mục 28) -->
+        <div class="px-6 py-3.5 bg-gray-50 border-t border-gray-100 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+                <button type="button" id="detail-btn-staff-cancel" onclick="openStaffCancelModalFromDetail()" class="hidden px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs flex items-center gap-1.5 transition">
+                    <i class="fi fi-rr-cross-circle"></i>
+                    <span>Hủy đơn kèm lý do</span>
+                </button>
+                <button type="button" id="detail-btn-staff-qr" onclick="generateStaffVnPayQrFromDetail()" class="hidden px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 transition">
+                    <i class="fi fi-rr-qrcode"></i>
+                    <span>Tạo QR VNPay</span>
+                </button>
+            </div>
             <button type="button" onclick="closeOrderDetailModal()" class="px-5 py-2 rounded-xl border border-gray-300 hover:bg-gray-200 text-gray-700 font-bold text-sm transition">Đóng</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL 2: NHÂN VIÊN HỦY ĐƠN HÀNG KÈM LÝ DO BẮT BUỘC (Mục 27 - Cancel Order)-->
+<!-- ========================================================================= -->
+<div id="modal-staff-cancel" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5">
+        <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+            <div class="flex items-center gap-2.5">
+                <span class="w-9 h-9 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-lg">
+                    <i class="fi fi-rr-triangle-warning"></i>
+                </span>
+                <h3 class="text-lg font-black text-gray-900">Hủy đơn hàng (Nhân viên)</h3>
+            </div>
+            <button type="button" onclick="closeStaffCancelModal()" class="text-gray-400 hover:text-gray-600">✕</button>
+        </div>
+
+        <div class="space-y-3">
+            <p class="text-sm text-gray-600">
+                Xác nhận hủy đơn hàng <strong id="staff-cancel-order-code" class="text-gray-900">#ORD</strong>.
+            </p>
+            <div class="bg-rose-50 p-3 rounded-xl border border-rose-200 text-xs text-rose-900">
+                Theo quy định phân quyền (Mục 27): Nhân viên khi hủy đơn hàng <strong>bắt buộc phải ghi rõ lý do hủy</strong>.
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1.5">Lý do hủy đơn <span class="text-red-500">*</span></label>
+                <select id="staff-cancel-reason-select" onchange="toggleStaffCustomReason(this.value)" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-red-highland">
+                    <option value="Hết nguyên liệu pha chế món này">Hết nguyên liệu pha chế món này</option>
+                    <option value="Khách hàng gọi điện nhờ nhân viên hủy đơn">Khách hàng gọi điện nhờ nhân viên hủy đơn</option>
+                    <option value="Không liên hệ được số điện thoại người nhận">Không liên hệ được số điện thoại người nhận</option>
+                    <option value="Quán quá tải / ngoài khu vực giao hàng">Quán quá tải / ngoài khu vực giao hàng</option>
+                    <option value="OTHER">Nhập lý do cụ thể khác...</option>
+                </select>
+
+                <div id="staff-custom-reason-box" class="hidden mt-2">
+                    <input type="text" id="staff-cancel-custom-reason" placeholder="Nhập lý do hủy đơn bắt buộc..." class="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-2 text-sm text-gray-800 focus:ring-2 focus:ring-red-highland" />
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3 pt-2">
+            <button type="button" onclick="closeStaffCancelModal()" class="flex-1 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm transition">
+                Đóng
+            </button>
+            <button type="button" id="btn-staff-submit-cancel" onclick="submitStaffCancelOrder()" class="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm shadow-md transition active:scale-95">
+                Xác nhận hủy đơn
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL 3: HIỂN THỊ MÃ QR VNPAY TẠI QUẦY POS (Mục 28 - Generate VNPay QR)   -->
+<!-- ========================================================================= -->
+<div id="modal-staff-vnpay-qr" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl text-center space-y-5">
+        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+            <div class="flex items-center gap-2">
+                <span class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-black text-xs">VNPAY-QR</span>
+                <h3 class="text-lg font-black text-gray-900">Mã QR Thanh Toán Đơn Hàng</h3>
+            </div>
+            <button type="button" onclick="closeStaffVnPayQrModal()" class="text-gray-400 hover:text-gray-600 font-bold">✕</button>
+        </div>
+
+        <div class="space-y-1">
+            <p class="text-xs text-gray-500">Mã đơn: <strong id="staff-qr-ordercode" class="text-gray-900">#ORD</strong></p>
+            <p class="text-2xl font-black text-red-highland" id="staff-qr-amount">0 đ</p>
+        </div>
+
+        <div class="p-4 bg-white rounded-2xl border-2 border-dashed border-blue-200 inline-block mx-auto shadow-inner">
+            <img id="staff-qr-img" src="" alt="VNPay QR Code" class="w-52 h-52 object-contain mx-auto" />
+        </div>
+
+        <p class="text-xs text-gray-500 leading-relaxed">
+            Đưa mã QR này cho khách hàng quét bằng ứng dụng Ngân hàng / Ví VNPay hoặc mở trực tiếp cổng thanh toán VNPay Sandbox.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-3 pt-2">
+            <a id="staff-qr-gateway-link" href="#" class="flex-1 py-3 px-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg transition flex items-center justify-center gap-2">
+                <i class="fi fi-rr-credit-card"></i>
+                <span>Mở cổng VNPay</span>
+            </a>
+            <button type="button" onclick="closeStaffVnPayQrModal()" class="py-3 px-4 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs transition">
+                Hoàn tất / Đóng
+            </button>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        // Dữ liệu sản phẩm và danh mục tải hoàn toàn động 100% từ Product.API (Cổng 5002)
+        // =========================================================================
+        // BIẾN TRẠNG THÁI TOÀN CỤC CỦA MÀN HÌNH STAFF POS & ĐIỀU PHỐI ĐƠN
+        // Toàn bộ dữ liệu sản phẩm và đơn hàng được nạp 100% từ Backend API thực tế
+        // =========================================================================
+        // Địa chỉ cổng API Gateway tập trung (YARP Reverse Proxy - Cổng 8080)
+        const API_GATEWAY_URL = 'http://localhost:8080';
         let posProducts = [];
         let currentCategory = 'ALL';
         let posCart = [];
         let orderType = 'DINE_IN';
         let currentPosPayment = 'CASH';
 
-        // Customer POS state
-        let posCustomer = null; // { id: Guid|null, name: string }
+        // Thông tin khách hàng thành viên được chọn tại quầy POS
+        let posCustomer = null;
         let customerSearchTimeout = null;
+        let lastSearchResults = [];
 
-        // Danh sách đơn hàng động từ Order.API (không dùng mock data)
+        // Danh sách đơn hàng & trạng thái bộ lọc ở View 2 (Điều phối đơn)
         let posOrders = [];
+        let staffOrdersStatusFilter = '';
+        let staffOrdersSearchQuery = '';
+        let staffPendingCancelOrderId = null;
+        let staffCurrentDetailOrder = null;
 
-        // Dịch trạng thái sang tiếng Việt
+        // Từ điển dịch trạng thái đơn hàng & thanh toán sang Tiếng Việt rõ ràng
         const STATUS_VI = {
-            'PENDING':    'Chờ xác nhận',
-            'PROCESSING': 'Đang pha chế',
-            'CONFIRMED':  'Đang pha chế',
-            'SHIPPING':   'Đang giao hàng',
-            'DELIVERING': 'Đang giao hàng',
-            'COMPLETED':  'Đã hoàn thành',
-            'CANCELLED':  'Đã hủy'
+            'PENDING':    'Pending (Chờ xác nhận)',
+            'PROCESSING': 'Processing (Đang pha chế)',
+            'CONFIRMED':  'Processing (Đang pha chế)',
+            'SHIPPING':   'Shipping (Đang giao hàng)',
+            'DELIVERING': 'Shipping (Đang giao hàng)',
+            'COMPLETED':  'Completed (Đã hoàn thành)',
+            'CANCELLED':  'Cancelled (Đã hủy)'
         };
         const PAY_STATUS_VI = {
             'PENDING':   'Chờ thanh toán',
@@ -355,7 +531,6 @@
             'PAID':      'Đã thanh toán',
             'FAILED':    'Thanh toán lỗi',
             'CANCELLED': 'Đã hủy',
-            'REFUNDED':  'Đã hoàn tiền',
             'UNPAID':    'Chưa thanh toán'
         };
         const PAY_METHOD_VI = {
@@ -363,10 +538,12 @@
             'VNPAY': 'VNPay QR'
         };
 
-        // Nạp danh mục động từ Product.API (Cổng 5002)
+        /**
+         * Nạp danh sách danh mục đồ uống qua API Gateway (Port 8080 -> Product.API).
+         */
         async function loadCategoriesFromApi() {
             try {
-                const res = await fetch('http://localhost:5002/api/categories');
+                const res = await fetch(`${API_GATEWAY_URL}/api/categories`);
                 if (res.ok) {
                     const result = await res.json();
                     const cats = result.data || [];
@@ -400,50 +577,38 @@
             }
         }
 
-        // Lấy danh sách sản phẩm thật từ Product.API (Cổng 5002)
+        /**
+         * Nạp danh sách sản phẩm thực tế qua API Gateway (Port 8080 -> Product.API) để hiển thị trên màn hình POS.
+         */
         async function loadProductsFromApi() {
             await loadCategoriesFromApi();
             try {
-                const res = await fetch('http://localhost:5002/api/products?pageSize=100');
+                const res = await fetch(`${API_GATEWAY_URL}/api/products?pageSize=100`);
                 if (res.ok) {
                     const result = await res.json();
                     const items = result.data?.items || result.data || [];
                     if (items && items.length > 0) {
-                        posProducts = items.map(p => {
-                            return {
-                                id: p.id,
-                                name: p.name,
-                                categoryId: p.categoryId,
-                                categoryName: p.categoryName || '',
-                                price: p.basePrice || 0,
-                                img: (p.imageUrl && p.imageUrl.startsWith('http') && !p.imageUrl.includes('placehold.co')) 
-                                     ? p.imageUrl 
-                                     : getFallbackImage(p.name, (p.categoryName || '').toLowerCase())
-                            };
-                        });
+                        posProducts = items.map(p => ({
+                            id: p.id,
+                            name: p.name,
+                            categoryId: p.categoryId,
+                            categoryName: p.categoryName || '',
+                            price: p.basePrice || 0,
+                            img: (p.imageUrl && p.imageUrl.startsWith('http') && !p.imageUrl.includes('placehold.co'))
+                                 ? p.imageUrl
+                                 : '/images/logo.jpg'
+                        }));
                     }
                 }
             } catch (err) {
-                console.error('Product.API chưa sẵn sàng hoặc lỗi kết nối:', err);
+                console.error('Lỗi khi tải danh sách món từ Product.API:', err);
             }
             filterPosProducts();
         }
 
-        function getFallbackImage(name, cat) {
-            const n = (name || '').toLowerCase();
-            const c = (cat || '').toLowerCase();
-            if (n.includes('sen') || n.includes('đào') || c.includes('trà') || c.includes('tea')) {
-                return 'https://images.unsplash.com/photo-1556881286-fc6915169721?w=400&auto=format&fit=crop&q=80';
-            }
-            if (n.includes('freeze') || c.includes('freeze') || c.includes('đá xay')) {
-                return 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400&auto=format&fit=crop&q=80';
-            }
-            if (n.includes('bánh') || c.includes('bánh') || c.includes('mousse')) {
-                return 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&auto=format&fit=crop&q=80';
-            }
-            return 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400&auto=format&fit=crop&q=80';
-        }
-
+        /**
+         * Render lưới sản phẩm trên màn hình bán hàng tại quầy POS.
+         */
         function renderCatalog(items) {
             const grid = document.getElementById('pos-product-grid');
             if (!grid) return;
@@ -461,7 +626,7 @@
                 card.innerHTML = `
                     <div>
                         <div class="h-32 rounded-xl bg-gray-50 flex items-center justify-center overflow-hidden mb-2.5 border border-gray-100">
-                            <img src="${p.img}" alt="${p.name}" class="h-full w-full object-cover group-hover:scale-105 transition duration-300" />
+                            <img src="${p.img}" alt="${p.name}" onerror="this.src='/images/logo.jpg'" class="h-full w-full object-cover group-hover:scale-105 transition duration-300" />
                         </div>
                         <h4 class="font-extrabold text-sm sm:text-base text-gray-900 group-hover:text-red-highland transition line-clamp-2 leading-snug">${p.name}</h4>
                     </div>
@@ -474,13 +639,16 @@
             });
         }
 
+        /**
+         * Lọc sản phẩm trên màn hình POS theo từ khóa tìm kiếm và danh mục.
+         */
         function filterPosProducts() {
             const searchInput = document.getElementById('pos-search');
             const keyword = searchInput ? searchInput.value.toLowerCase().trim() : '';
             const filtered = posProducts.filter(p => {
                 const matchName = p.name.toLowerCase().includes(keyword);
-                const matchCat = currentCategory === 'ALL' || 
-                                 p.categoryId === currentCategory || 
+                const matchCat = currentCategory === 'ALL' ||
+                                 p.categoryId === currentCategory ||
                                  (p.categoryName && p.categoryName.toLowerCase() === currentCategory.toLowerCase());
                 return matchName && matchCat;
             });
@@ -492,13 +660,15 @@
             document.querySelectorAll('.pos-cat-btn').forEach(b => {
                 b.className = 'pos-cat-btn px-4 py-2.5 rounded-xl text-sm font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 transition flex-shrink-0 flex items-center gap-1.5';
             });
-            const targetBtn = btn || (window.event ? window.event.currentTarget || window.event.target : null);
-            if (targetBtn) {
-                targetBtn.className = 'pos-cat-btn active px-4 py-2.5 rounded-xl text-sm font-bold bg-[#4F392E] text-white transition flex-shrink-0 shadow-sm flex items-center gap-1.5';
+            if (btn) {
+                btn.className = 'pos-cat-btn active px-4 py-2.5 rounded-xl text-sm font-bold bg-[#4F392E] text-white transition flex-shrink-0 shadow-sm flex items-center gap-1.5';
             }
             filterPosProducts();
         }
 
+        /**
+         * Thêm món vào hóa đơn thu ngân POS.
+         */
         function addItemToPosTicket(prod) {
             const existing = posCart.find(i => i.id === prod.id);
             if (existing) {
@@ -512,7 +682,7 @@
                 });
             }
             renderTicket();
-            showToast('Đã thêm món', `+1 "${prod.name}" vào hóa đơn`, 'info', 1500);
+            showToast('Đã thêm món', `+1 "${prod.name}" vào hóa đơn tại quầy`, 'info', 1500);
         }
 
         function changeTicketQty(id, delta) {
@@ -526,13 +696,16 @@
             renderTicket();
         }
 
+        /**
+         * Render danh sách món trong hóa đơn POS bên phải và tính tổng tiền.
+         */
         function renderTicket() {
             const container = document.getElementById('pos-ticket-items');
             container.innerHTML = '';
 
             if (posCart.length === 0) {
                 container.innerHTML = `
-                    <div id="pos-empty-cart-message" class="text-center py-12 text-gray-400 text-sm">
+                    <div id="pos-empty-cart-message" class="text-center py-10 text-gray-400 text-sm">
                         <i class="fi fi-rr-shopping-bag text-4xl mx-auto mb-2 text-gray-300 block"></i>
                         <span class="font-medium">Chưa có món nào trong hóa đơn.<br />Chạm vào món bên trái để thêm!</span>
                     </div>
@@ -544,7 +717,7 @@
                     row.innerHTML = `
                         <div class="flex-1 min-w-0">
                             <span class="font-extrabold text-sm text-gray-900 truncate block">${item.name}</span>
-                            <span class="text-xs text-gray-500 font-medium">${item.price.toLocaleString('vi-VN')} đ/ly</span>
+                            <span class="text-xs text-gray-500 font-medium">${item.price.toLocaleString('vi-VN')} đ/phần</span>
                         </div>
                         <div class="flex items-center gap-1.5">
                             <button type="button" onclick="changeTicketQty('${item.id}', -1)" class="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 flex items-center justify-center font-bold text-sm">-</button>
@@ -557,7 +730,7 @@
                 });
             }
 
-            let subtotal = posCart.reduce((sum, i) => sum + (i.price * i.qty), 0);
+            const subtotal = posCart.reduce((sum, i) => sum + (i.price * i.qty), 0);
             document.getElementById('pos-subtotal').textContent = `${subtotal.toLocaleString('vi-VN')} đ`;
             document.getElementById('pos-total').textContent = `${subtotal.toLocaleString('vi-VN')} đ`;
             calculateChange();
@@ -618,23 +791,23 @@
             posCart = [];
             document.getElementById('cash-given').value = '';
             document.getElementById('cash-change').textContent = '0 đ';
+            const noteInput = document.getElementById('pos-note-input');
+            if (noteInput) noteInput.value = '';
             renderTicket();
             clearCustomer();
-            showToast('Làm mới hóa đơn', 'Đã xóa trắng hóa đơn quầy', 'info');
         }
 
         function checkoutPosOrder() {
             if (posCart.length === 0) {
-                showToast('Hóa đơn trống', 'Vui lòng chọn ít nhất 1 món nước vào hóa đơn trước khi thanh toán!', 'warning');
+                showToast('Hóa đơn trống', 'Vui lòng chọn ít nhất 1 món vào hóa đơn trước khi thanh toán!', 'warning');
                 return;
             }
-
             completePosTransaction(currentPosPayment);
         }
 
-        // ===================== CUSTOMER SEARCH =====================
-        let lastSearchResults = [];
-
+        /**
+         * Tìm kiếm tài khoản khách hàng thành viên qua Auth.API (Port 5001) khi tạo đơn tại quầy.
+         */
         async function searchCustomer(query) {
             clearTimeout(customerSearchTimeout);
             const dropdown = document.getElementById('customer-dropdown');
@@ -646,32 +819,25 @@
                 return;
             }
 
-            // Hiển thị trạng thái đang tìm kiếm ngay lập tức
             dropdown.innerHTML = `
                 <div class="p-3.5 text-xs text-gray-500 text-center flex items-center justify-center gap-2">
-                    <svg class="animate-spin h-4 w-4 text-red-highland" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                    </svg>
-                    <span>Đang tìm kiếm khách hàng trong hệ thống...</span>
+                    <span>Đang tìm kiếm khách hàng...</span>
                 </div>`;
             dropdown.classList.remove('hidden');
 
             customerSearchTimeout = setTimeout(async () => {
                 try {
                     const token = localStorage.getItem('auth_token');
-                    const headers = {};
-                    if (token) headers['Authorization'] = `Bearer ${token}`;
+                    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
-                    const res = await fetch(`http://localhost:5001/api/users/search?q=${encodeURIComponent(query.trim())}&pageSize=10`, {
+                    const res = await fetch(`${API_GATEWAY_URL}/api/users/search?q=${encodeURIComponent(query.trim())}&pageSize=10`, {
                         headers: headers
                     });
 
                     if (!res.ok) {
                         dropdown.innerHTML = `
                             <div class="p-3 text-xs text-gray-500 text-center italic">
-                                Không thể kết nối máy chủ Auth.API.<br />
-                                <span class="text-gray-700 font-semibold">Tên "${query}" sẽ được lưu cho khách lẻ.</span>
+                                Tên "${query}" sẽ được lưu cho khách lẻ tại quầy.
                             </div>`;
                         return;
                     }
@@ -687,10 +853,9 @@
                     if (lastSearchResults.length === 0) {
                         dropdown.innerHTML = `
                             <div class="p-3.5 text-xs text-gray-500 text-center italic">
-                                Không tìm thấy tài khoản phù hợp trong hệ thống.<br />
+                                Không tìm thấy tài khoản thành viên.<br />
                                 <span class="text-gray-800 font-bold">Tên "${query}" sẽ được lưu làm khách lẻ.</span>
                             </div>`;
-                        dropdown.classList.remove('hidden');
                         return;
                     }
 
@@ -700,27 +865,22 @@
                         const email = (u.email || '').replace(/'/g, '&#39;');
                         const initial = (name || '?')[0].toUpperCase();
                         return `
-                        <div onclick="selectCustomer('${u.id}', '${name}', '${phone}', '${email}')" 
+                        <div onclick="selectCustomer('${u.id}', '${name}', '${phone}', '${email}')"
                              class="p-3 hover:bg-red-50/70 cursor-pointer flex items-center justify-between text-sm transition border-b border-gray-100 last:border-b-0 group">
                             <div class="flex items-center gap-3 min-w-0">
                                 <span class="w-9 h-9 rounded-full bg-red-highland text-white flex items-center justify-center text-xs font-black flex-shrink-0 shadow-sm">${initial}</span>
                                 <div class="truncate">
                                     <div class="font-extrabold text-sm text-gray-900 group-hover:text-red-highland transition truncate">${u.fullName || '(Chưa đặt tên)'}</div>
                                     <div class="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap">
-                                        ${phone ? `<span class="font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">SĐT: ${phone}</span>` : '<span class="text-gray-400">Chưa có SĐT</span>'}
+                                        ${phone ? `<span class="font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">SĐT: ${phone}</span>` : ''}
                                         ${email ? `<span class="text-gray-400 truncate text-[11px]">${email}</span>` : ''}
                                     </div>
                                 </div>
                             </div>
-                            <button type="button" class="px-3 py-1.5 rounded-xl text-xs font-black text-white bg-red-highland hover:bg-red-700 transition flex-shrink-0 shadow-sm ml-2 flex items-center gap-1">
-                                <i class="fi fi-rr-check text-xs"></i>
-                                <span>Chọn</span>
-                            </button>
+                            <span class="px-3 py-1.5 rounded-xl text-xs font-black text-white bg-red-highland">Chọn</span>
                         </div>
                     `;}).join('');
-                    dropdown.classList.remove('hidden');
                 } catch (e) {
-                    console.error('Lỗi tìm kiếm khách hàng:', e);
                     dropdown.classList.add('hidden');
                 }
             }, 200);
@@ -737,18 +897,10 @@
             posCustomer = { id: id, name: name, phone: phone, email: email };
             document.getElementById('pos-customer-search').value = name;
             document.getElementById('customer-dropdown').classList.add('hidden');
-            
             document.getElementById('selected-customer-name').textContent = name;
-            const phoneEl = document.getElementById('selected-customer-phone');
-            if (phoneEl) {
-                phoneEl.textContent = phone ? `SĐT: ${phone}` : 'Chưa có SĐT';
-            }
-            const emailEl = document.getElementById('selected-customer-email');
-            if (emailEl) {
-                emailEl.textContent = email ? `• ${email}` : '';
-            }
+            document.getElementById('selected-customer-phone').textContent = phone ? `SĐT: ${phone}` : 'Chưa có SĐT';
+            document.getElementById('selected-customer-email').textContent = email ? `• ${email}` : '';
             document.getElementById('selected-customer-badge').classList.remove('hidden');
-            showToast('Đã chọn khách hàng', `${name} ${phone ? `(${phone})` : ''}`, 'info', 2000);
         }
 
         function clearCustomer() {
@@ -759,46 +911,47 @@
             document.getElementById('customer-dropdown').classList.add('hidden');
         }
 
-        // Đóng dropdown khi click ngoài
         document.addEventListener('click', (e) => {
             if (!e.target.closest('#pos-customer-search') && !e.target.closest('#customer-dropdown')) {
                 document.getElementById('customer-dropdown')?.classList.add('hidden');
             }
         });
-        // ===================== END CUSTOMER SEARCH =====================
 
+        /**
+         * [Mục 22 & Mục 28]: Nhân viên tạo đơn tại quán (POST /api/orders).
+         * - Nếu chọn CASH: Đơn tự động xác nhận đã thu tiền mặt và chuyển sang PROCESSING (Đang pha chế).
+         * - Nếu chọn VNPAY: Hiển thị ngay Modal Mã QR VNPay tại quầy để khách quét hoặc mở cổng thanh toán.
+         */
         async function completePosTransaction(method) {
-            const billCode = `HD-${Date.now().toString().slice(-4)}`;
             const total = posCart.reduce((sum, i) => sum + (i.price * i.qty), 0);
             const token = localStorage.getItem('auth_token');
 
             if (!token) {
-                showToast('Chưa đăng nhập', 'Vui lòng đăng nhập tài khoản Nhân viên để tạo đơn!', 'error');
+                showToast('Chưa đăng nhập', 'Vui lòng đăng nhập tài khoản Nhân viên (Staff) để tạo đơn!', 'error');
                 return;
             }
 
-            // Khách hàng: Lấy từ khách đã chọn, hoặc từ chuỗi đã gõ trong input, hoặc null để backend tự động sinh "Khách vãng lai #xxxx"
             const typedCustomerName = document.getElementById('pos-customer-search')?.value?.trim();
-            let customerName = posCustomer ? posCustomer.name : (typedCustomerName || null);
-            let customerId = posCustomer ? posCustomer.id : null;
+            const customNote = document.getElementById('pos-note-input')?.value?.trim();
+            const baseNote = orderType === 'DINE_IN' ? 'Uống tại quán (POS)' : 'Khách mang về (POS)';
+
+            const payload = {
+                customerId: posCustomer ? posCustomer.id : null,
+                customerName: posCustomer ? posCustomer.name : (typedCustomerName || null),
+                items: posCart.map(item => ({
+                    productId: item.id,
+                    productName: item.name,
+                    unitPrice: item.price,
+                    quantity: item.qty
+                })),
+                discountAmount: 0,
+                paymentMethod: method,
+                note: customNote ? `${baseNote} | ${customNote}` : baseNote,
+                returnUrl: window.location.origin + '/Staff/Orders?view=orders'
+            };
 
             try {
-                const payload = {
-                    customerId: customerId,
-                    customerName: customerName,
-                    items: posCart.map(item => ({
-                        productId: item.id,
-                        productName: item.name,
-                        unitPrice: item.price,
-                        quantity: item.qty
-                    })),
-                    discountAmount: 0,
-                    paymentMethod: method,
-                    note: orderType === 'DINE_IN' ? 'Uống tại quán (POS)' : 'Khách mang về (POS)',
-                    returnUrl: window.location.origin + '/Staff/Orders'
-                };
-
-                const res = await fetch('http://localhost:5003/api/orders', {
+                const res = await fetch(`${API_GATEWAY_URL}/api/orders`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -810,37 +963,34 @@
                 const data = await res.json().catch(() => null);
                 const created = data?.data || {};
 
-                if (!res.ok) {
-                    const msg = (data && data.message) || (data && data.errors && data.errors[0]) || 'Không thể tạo đơn hàng.';
-                    showToast('Lỗi thanh toán', msg, 'error');
+                if (!res.ok || data?.isSuccess === false) {
+                    const msg = data?.message || (data?.errors && data.errors[0]) || 'Không thể tạo đơn hàng tại quầy.';
+                    showToast('Lỗi tạo đơn', msg, 'error');
                     return;
                 }
 
+                clearPosTicket();
+                await loadPosOrdersList();
+
+                // Nếu chọn thanh toán VNPAY: Hiển thị Modal QR VNPay ngay tại quầy POS (Mục 28)
                 if (method === 'VNPAY') {
                     const vnpayUrl = created?.vnPayPayment?.paymentUrl;
                     if (vnpayUrl) {
-                        clearPosTicket();
-                        showToast('Chuyển hướng VNPay', 'Đang chuyển hướng sang cổng thanh toán VNPay...', 'info', 2000);
-                        setTimeout(() => {
-                            window.location.href = vnpayUrl;
-                        }, 500);
-                        return;
-                    } else {
-                        showToast('Lỗi VNPay', 'Đơn hàng đã tạo nhưng máy chủ không trả về URL thanh toán VNPay.', 'error');
+                        showStaffVnPayQrModal(created.orderCode, created.finalAmount || total, vnpayUrl);
                         return;
                     }
                 }
 
-                showToast('Thanh toán thành công', `Hóa đơn #${created.orderCode || billCode} (${total.toLocaleString('vi-VN')} đ) đã lưu hệ thống!`, 'success');
-                clearPosTicket();
-                clearCustomer();
-                await loadPosOrdersList();
+                showToast('Tạo đơn thành công', `Đơn #${created.orderCode} (${total.toLocaleString('vi-VN')} đ) đã chuyển sang Pha chế!`, 'success');
             } catch (e) {
                 console.error(e);
-                showToast('Lỗi kết nối', 'Không thể kết nối đến máy chủ Order.API', 'error');
+                showToast('Lỗi kết nối', 'Không thể kết nối đến máy chủ Order.API (Port 5003).', 'error');
             }
         }
 
+        /**
+         * Chuyển đổi qua lại giữa View 1 (Bán hàng POS) và View 2 (Điều phối đơn hàng).
+         */
         function switchView(view) {
             const posView = document.getElementById('view-pos');
             const ordersView = document.getElementById('view-orders');
@@ -861,14 +1011,30 @@
             }
         }
 
+        /**
+         * [Mục 23 & Mục 25 - View Order List & Search/Filter Order]:
+         * Tải danh sách toàn bộ đơn hàng từ Order.API kèm bộ lọc trạng thái & từ khóa tìm kiếm.
+         */
         async function loadPosOrdersList() {
             const tbody = document.getElementById('pos-orders-table-body');
             if (!tbody) return;
 
             const token = localStorage.getItem('auth_token');
+            if (!token) return;
 
             try {
-                const res = await fetch('http://localhost:5003/api/orders?pageNumber=1&pageSize=100', {
+                const queryParams = new URLSearchParams({
+                    pageNumber: '1',
+                    pageSize: '100'
+                });
+                if (staffOrdersStatusFilter) {
+                    queryParams.set('status', staffOrdersStatusFilter);
+                }
+                if (staffOrdersSearchQuery) {
+                    queryParams.set('orderCode', staffOrdersSearchQuery);
+                }
+
+                const res = await fetch(`${API_GATEWAY_URL}/api/orders?${queryParams.toString()}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -880,35 +1046,37 @@
                     if (Array.isArray(items)) {
                         posOrders = items.map(o => ({
                             id: o.id,
+                            rawOrderCode: o.orderCode || o.id.substring(0, 8).toUpperCase(),
                             orderCode: o.orderCode ? `#${o.orderCode}` : `#${o.id.substring(0, 8).toUpperCase()}`,
                             customerName: o.customerName || 'Khách vãng lai',
                             itemsSummary: o.itemsSummary || `${o.totalItems || 1} món`,
                             totalAmount: o.finalAmount || o.totalAmount || 0,
                             paymentMethod: (o.paymentMethod || 'CASH').toUpperCase(),
-                            paymentStatus: o.paymentStatus || 'UNPAID',
+                            paymentStatus: (o.paymentStatus || 'PENDING').toUpperCase(),
                             status: (o.status || 'PENDING').toUpperCase(),
                             note: o.note || '',
+                            cancelReason: o.cancelReason || '',
                             createdAt: o.createdAt
                         }));
                     }
                 }
             } catch (err) {
-                console.error('Không thể tải đơn hàng từ Order.API:', err);
+                console.error('Không thể tải danh sách đơn hàng từ Order.API:', err);
             }
 
             tbody.innerHTML = '';
 
-            // Cập nhật số đơn đang chờ xử lý
-            const pendingCount = posOrders.filter(o => o.status === 'PENDING' || o.status === 'PROCESSING' || o.status === 'SHIPPING').length;
+            // Cập nhật số lượng đơn đang cần xử lý lên huy hiệu (badge)
+            const activeCount = posOrders.filter(o => o.status === 'PENDING' || o.status === 'PROCESSING' || o.status === 'SHIPPING').length;
             const badge = document.getElementById('pending-orders-badge');
-            if (badge) badge.innerText = pendingCount;
+            if (badge) badge.innerText = activeCount;
 
             if (posOrders.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="8" class="py-12 text-center text-gray-400 font-medium">
+                        <td colspan="7" class="py-12 text-center text-gray-400 font-medium">
                             <i class="fi fi-rr-inbox text-3xl block mb-2 text-gray-300"></i>
-                            Chưa có đơn hàng nào tại quán
+                            Không có đơn hàng nào khớp với bộ lọc hiện tại
                         </td>
                     </tr>
                 `;
@@ -920,65 +1088,77 @@
                 tr.className = 'hover:bg-gray-50 transition';
 
                 let statusBadge = '';
-                let actionBtn = '';
+                let nextStepBtn = '';
+                const canCancel = ord.status !== 'COMPLETED' && ord.status !== 'CANCELLED';
+                const isPaid = ord.paymentStatus === 'SUCCESS' || ord.paymentStatus === 'PAID';
 
+                // [Mục 26 - Update Order Status]: Luồng chuyển trạng thái tuần tự Pending -> Processing -> Shipping -> Completed
                 if (ord.status === 'PENDING') {
-                    statusBadge = '<span class="px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-900 border border-amber-200 inline-flex items-center gap-1.5"><i class="fi fi-rr-hourglass-end text-[11px]"></i><span>Chờ xác nhận</span></span>';
-                    actionBtn = `
-                        <button type="button" onclick="updateOrderStatus('${ord.id}', 'PROCESSING')" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition active:scale-95 flex items-center gap-1.5">
+                    statusBadge = '<span class="px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-900 border border-amber-200 inline-flex items-center gap-1.5"><i class="fi fi-rr-hourglass-end text-[11px]"></i><span>Pending</span></span>';
+                    nextStepBtn = `
+                        <button type="button" onclick="updateOrderStatus('${ord.id}', 'PROCESSING')" class="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition active:scale-95 flex items-center gap-1.5" title="Chuyển từ Pending sang Processing (Pha chế)">
                             <i class="fi fi-rr-coffee"></i>
-                            <span>Bắt đầu pha chế</span>
+                            <span>Pha chế</span>
                         </button>
                     `;
                 } else if (ord.status === 'PROCESSING' || ord.status === 'CONFIRMED') {
-                    statusBadge = '<span class="px-3 py-1 rounded-full text-xs font-black bg-blue-100 text-blue-900 border border-blue-200 inline-flex items-center gap-1.5"><i class="fi fi-rr-coffee text-[11px]"></i><span>Đang pha chế</span></span>';
-                    actionBtn = `
-                        <button type="button" onclick="updateOrderStatus('${ord.id}', 'SHIPPING')" class="px-3.5 py-2 rounded-xl bg-purple-600 hover:purple-700 text-white font-bold text-xs shadow-sm transition active:scale-95 flex items-center gap-1.5">
+                    statusBadge = '<span class="px-3 py-1 rounded-full text-xs font-black bg-blue-100 text-blue-900 border border-blue-200 inline-flex items-center gap-1.5"><i class="fi fi-rr-coffee text-[11px]"></i><span>Processing</span></span>';
+                    nextStepBtn = `
+                        <button type="button" onclick="updateOrderStatus('${ord.id}', 'SHIPPING')" class="px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-sm transition active:scale-95 flex items-center gap-1.5" title="Chuyển từ Processing sang Shipping (Giao hàng)">
                             <i class="fi fi-rr-motorcycle"></i>
-                            <span>Bắt đầu giao</span>
+                            <span>Giao hàng</span>
                         </button>
                     `;
                 } else if (ord.status === 'SHIPPING' || ord.status === 'DELIVERING') {
-                    statusBadge = '<span class="px-3 py-1 rounded-full text-xs font-black bg-purple-100 text-purple-900 border border-purple-200 animate-pulse inline-flex items-center gap-1.5"><i class="fi fi-rr-paper-plane text-[11px]"></i><span>Đang giao hàng</span></span>';
-                    actionBtn = `
-                        <button type="button" onclick="updateOrderStatus('${ord.id}', 'COMPLETED')" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition active:scale-95 flex items-center gap-1.5">
+                    statusBadge = '<span class="px-3 py-1 rounded-full text-xs font-black bg-purple-100 text-purple-900 border border-purple-200 inline-flex items-center gap-1.5"><i class="fi fi-rr-paper-plane text-[11px]"></i><span>Shipping</span></span>';
+                    nextStepBtn = `
+                        <button type="button" onclick="updateOrderStatus('${ord.id}', 'COMPLETED')" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition active:scale-95 flex items-center gap-1.5" title="Chuyển từ Shipping sang Completed (Hoàn thành)">
                             <i class="fi fi-rr-check"></i>
-                            <span>Hoàn tất đơn</span>
+                            <span>Hoàn thành</span>
                         </button>
                     `;
                 } else if (ord.status === 'COMPLETED') {
-                    statusBadge = '<span class="px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-900 border border-emerald-200 inline-flex items-center gap-1.5"><i class="fi fi-rr-check text-[11px]"></i><span>Đã hoàn thành</span></span>';
-                    actionBtn = `<span class="text-xs text-emerald-700 font-bold italic inline-flex items-center gap-1"><i class="fi fi-rr-check-circle"></i> Đã hoàn tất</span>`;
+                    statusBadge = '<span class="px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-900 border border-emerald-200 inline-flex items-center gap-1.5"><i class="fi fi-rr-check text-[11px]"></i><span>Completed</span></span>';
+                    nextStepBtn = `<span class="text-xs text-emerald-700 font-bold italic">Đã hoàn tất</span>`;
                 } else {
-                    statusBadge = '<span class="px-3 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-900 border border-rose-200 inline-flex items-center gap-1.5"><i class="fi fi-rr-cross-circle text-[11px]"></i><span>Đã hủy</span></span>';
-                    actionBtn = `<span class="text-xs text-rose-500 font-bold italic inline-flex items-center gap-1"><i class="fi fi-rr-cross"></i> Đã hủy</span>`;
+                    statusBadge = '<span class="px-3 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-900 border border-rose-200 inline-flex items-center gap-1.5"><i class="fi fi-rr-cross-circle text-[11px]"></i><span>Cancelled</span></span>';
+                    nextStepBtn = `<span class="text-xs text-rose-500 font-bold italic" title="${ord.cancelReason}">Đã hủy</span>`;
                 }
 
                 tr.innerHTML = `
                     <td class="py-4 px-4 font-black font-mono text-red-highland text-sm">${ord.orderCode}</td>
                     <td class="py-4 px-4">
                         <div class="flex items-center gap-2">
-                            <span class="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-xs font-black text-gray-600 flex-shrink-0">${(ord.customerName||'K')[0].toUpperCase()}</span>
-                            <span class="font-semibold text-gray-900 text-sm truncate max-w-[130px]">${ord.customerName || 'Khách vãng lai'}</span>
+                            <span class="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-xs font-black text-gray-600 flex-shrink-0">${(ord.customerName || 'K')[0].toUpperCase()}</span>
+                            <span class="font-semibold text-gray-900 text-sm truncate max-w-[140px]">${ord.customerName}</span>
                         </div>
                     </td>
-                    <td class="py-4 px-4 font-semibold text-gray-900 max-w-xs text-sm">${ord.itemsSummary}</td>
+                    <td class="py-4 px-4 font-semibold text-gray-900 max-w-xs text-sm">
+                        <div>${ord.itemsSummary}</div>
+                        ${ord.note ? `<div class="text-[11px] text-amber-700 italic truncate max-w-[220px]">${ord.note}</div>` : ''}
+                    </td>
                     <td class="py-4 px-4 font-black text-gray-900 text-sm">${ord.totalAmount.toLocaleString('vi-VN')} đ</td>
                     <td class="py-4 px-4">
-                        ${(ord.paymentStatus === 'SUCCESS' || ord.paymentStatus === 'PAID') ? `
+                        ${isPaid ? `
                             <span class="px-2.5 py-1 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200">
                                 <i class="fi fi-rr-check-circle text-xs text-emerald-600"></i>
-                                <span>${PAY_METHOD_VI[ord.paymentMethod] || ord.paymentMethod} (Đã thanh toán)</span>
+                                <span>${PAY_METHOD_VI[ord.paymentMethod] || ord.paymentMethod} (Đã thu)</span>
                             </span>
                         ` : `
                             <div class="flex items-center gap-1.5 flex-wrap">
                                 <span class="px-2.5 py-1 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 bg-amber-50 text-amber-800 border border-amber-200">
-                                    <i class="fi fi-rr-time-half-past text-xs text-amber-600"></i>
-                                    <span>${PAY_METHOD_VI[ord.paymentMethod] || ord.paymentMethod} (Chờ thanh toán)</span>
+                                    <span>${PAY_METHOD_VI[ord.paymentMethod] || ord.paymentMethod} (Chờ thu)</span>
                                 </span>
-                                ${ord.paymentMethod === 'CASH' ? `
-                                    <button type="button" onclick="confirmCashPayment('${ord.id}')" class="px-2 py-0.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shadow-sm transition active:scale-95" title="Xác nhận khách đã đưa tiền mặt">
-                                        Thu tiền
+                                ${canCancel && ord.paymentMethod === 'CASH' ? `
+                                    <!-- Mục 29: Staff xác nhận thu tiền mặt -->
+                                    <button type="button" onclick="confirmCashPayment('${ord.id}')" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shadow-sm transition active:scale-95" title="Mục 29: Xác nhận đã thu tiền mặt">
+                                        Thu tiền mặt
+                                    </button>
+                                ` : ''}
+                                ${canCancel ? `
+                                    <!-- Mục 28: Staff tạo mã QR VNPay cho đơn hàng -->
+                                    <button type="button" onclick="generateStaffVnPayQr('${ord.id}')" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] shadow-sm transition active:scale-95" title="Mục 28: Tạo mã QR VNPay cho đơn hàng">
+                                        Tạo QR VNPay
                                     </button>
                                 ` : ''}
                             </div>
@@ -986,11 +1166,19 @@
                     </td>
                     <td class="py-4 px-4">${statusBadge}</td>
                     <td class="py-4 px-4 text-center">
-                        <div class="flex items-center justify-center gap-2">
-                            <button type="button" onclick="viewOrderDetailModal('${ord.id}')" class="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 transition" title="Xem chi tiết đơn">
+                        <div class="flex items-center justify-center gap-2 flex-wrap">
+                            <!-- Mục 24: Xem chi tiết đơn -->
+                            <button type="button" onclick="viewOrderDetailModal('${ord.id}')" class="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 transition" title="Mục 24: Xem chi tiết đơn hàng">
                                 <i class="fi fi-rr-eye text-base flex items-center"></i>
                             </button>
-                            ${actionBtn}
+                            <!-- Mục 26: Cập nhật trạng thái kế tiếp -->
+                            ${nextStepBtn}
+                            <!-- Mục 27: Staff hủy đơn kèm lý do bắt buộc -->
+                            ${canCancel ? `
+                                <button type="button" onclick="openStaffCancelModal('${ord.id}', '${ord.orderCode}')" class="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 transition" title="Mục 27: Hủy đơn kèm lý do">
+                                    <i class="fi fi-rr-cross-circle text-base flex items-center"></i>
+                                </button>
+                            ` : ''}
                         </div>
                     </td>
                 `;
@@ -999,10 +1187,14 @@
             });
         }
 
+        /**
+         * [Mục 26 - Update Order Status]: Nhân viên cập nhật trạng thái đơn hàng tuần tự:
+         * Pending -> Processing -> Shipping -> Completed.
+         */
         async function updateOrderStatus(orderId, nextStatus) {
             const token = localStorage.getItem('auth_token');
             try {
-                const res = await fetch(`http://localhost:5003/api/orders/${orderId}/status`, {
+                const res = await fetch(`${API_GATEWAY_URL}/api/orders/${orderId}/status`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1011,37 +1203,34 @@
                     body: JSON.stringify({ status: nextStatus })
                 });
 
-                if (!res.ok) {
-                    const err = await res.json().catch(() => null);
-                    showToast('Lỗi cập nhật', err?.message || 'Không thể chuyển trạng thái đơn hàng', 'danger');
+                const data = await res.json().catch(() => null);
+                if (!res.ok || data?.isSuccess === false) {
+                    showToast('Lỗi cập nhật trạng thái', data?.message || 'Không thể chuyển trạng thái đơn hàng.', 'error');
                     return;
                 }
 
-                const statusNames = {
-                    'PROCESSING': 'Đang pha chế',
-                    'SHIPPING': 'Đang giao hàng',
-                    'COMPLETED': 'Đã hoàn thành',
-                    'CANCELLED': 'Đã hủy'
-                };
-                showToast('Cập nhật trạng thái', `Đơn hàng đã chuyển sang "${statusNames[nextStatus] || nextStatus}"`, 'success');
+                showToast('Đã cập nhật trạng thái', `Đơn hàng đã chuyển sang "${STATUS_VI[nextStatus] || nextStatus}"`, 'success');
                 await loadPosOrdersList();
             } catch (e) {
                 console.error(e);
-                showToast('Lỗi kết nối', 'Không thể kết nối đến máy chủ Order.API', 'danger');
+                showToast('Lỗi kết nối', 'Không thể kết nối đến máy chủ Order.API', 'error');
             }
         }
 
+        /**
+         * [Mục 24 - View Order Detail]: Nhân viên xem chi tiết các món (items), tùy chọn và giá tiền trong đơn.
+         */
         async function viewOrderDetailModal(orderId) {
             const token = localStorage.getItem('auth_token');
             try {
-                const res = await fetch(`http://localhost:5003/api/orders/${orderId}`, {
+                const res = await fetch(`${API_GATEWAY_URL}/api/orders/${orderId}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 });
 
                 if (!res.ok) {
-                    alert('Không thể tải chi tiết đơn hàng.');
+                    showToast('Lỗi tải chi tiết', 'Không thể tải thông tin chi tiết đơn hàng.', 'error');
                     return;
                 }
 
@@ -1049,26 +1238,37 @@
                 const order = resJson.data || resJson;
                 if (!order) return;
 
+                staffCurrentDetailOrder = order;
+
                 document.getElementById('detail-order-code').innerText = order.orderCode ? `#${order.orderCode}` : `#${order.id.substring(0, 8).toUpperCase()}`;
-                
+
                 const d = new Date(order.createdAt);
                 document.getElementById('detail-order-time').innerText = d.toLocaleDateString('vi-VN', {
                     hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric'
                 });
 
-                // Dịch trạng thái sang tiếng Việt
-                const statusVI = STATUS_VI[(order.status || '').toUpperCase()] || order.status || 'Không rõ';
-                document.getElementById('detail-order-status').innerText = statusVI;
+                const statusUpper = (order.status || '').toUpperCase();
+                document.getElementById('detail-order-status').innerText = STATUS_VI[statusUpper] || order.status || 'Không rõ';
 
-                // Dịch phương thức và trạng thái thanh toán sang tiếng Việt
                 const pmVI = PAY_METHOD_VI[(order.paymentMethod || '').toUpperCase()] || order.paymentMethod || 'Tiền mặt';
-                const psVI = PAY_STATUS_VI[(order.paymentStatus || '').toUpperCase()] || order.paymentStatus || 'Chưa thanh toán';
+                const psUpper = (order.paymentStatus || '').toUpperCase();
+                const psVI = PAY_STATUS_VI[psUpper] || order.paymentStatus || 'Chưa thanh toán';
                 document.getElementById('detail-order-payment').innerText = `${pmVI} — ${psVI}`;
+
+                document.getElementById('detail-order-subtotal').innerText = `${(order.totalAmount || 0).toLocaleString('vi-VN')} đ`;
+                document.getElementById('detail-order-discount').innerText = `-${(order.discountAmount || 0).toLocaleString('vi-VN')} đ`;
                 document.getElementById('detail-order-total').innerText = `${(order.finalAmount || order.totalAmount || 0).toLocaleString('vi-VN')} đ`;
 
-                // Hiển thị tên khách hàng trong modal
                 const customerNameEl = document.getElementById('detail-customer-name');
                 if (customerNameEl) customerNameEl.innerText = order.customerName || 'Khách vãng lai';
+
+                const cancelBox = document.getElementById('detail-cancel-reason-box');
+                if (statusUpper === 'CANCELLED' && order.cancelReason) {
+                    cancelBox.classList.remove('hidden');
+                    document.getElementById('detail-cancel-reason-text').innerText = order.cancelReason;
+                } else {
+                    cancelBox.classList.add('hidden');
+                }
 
                 const itemsBox = document.getElementById('detail-items-list');
                 if (order.items && order.items.length > 0) {
@@ -1085,7 +1285,7 @@
                         </div>
                     `).join('');
                 } else {
-                    itemsBox.innerHTML = `<div class="p-3 text-xs text-gray-500 italic text-center">Chi tiết các món được lưu trong hóa đơn tổng</div>`;
+                    itemsBox.innerHTML = `<div class="p-3 text-xs text-gray-500 italic text-center">Không có dữ liệu món</div>`;
                 }
 
                 const noteBox = document.getElementById('detail-note-box');
@@ -1096,73 +1296,211 @@
                     noteBox.classList.add('hidden');
                 }
 
-                document.getElementById('modal-order-detail').classList.remove('hidden');
-                document.getElementById('modal-order-detail').classList.add('flex');
-            } catch(e) {
+                const canCancel = statusUpper !== 'COMPLETED' && statusUpper !== 'CANCELLED';
+                const isPaid = psUpper === 'SUCCESS' || psUpper === 'PAID';
+                const btnCancel = document.getElementById('detail-btn-staff-cancel');
+                const btnQr = document.getElementById('detail-btn-staff-qr');
+
+                if (canCancel) btnCancel.classList.remove('hidden');
+                else btnCancel.classList.add('hidden');
+
+                if (canCancel && !isPaid) btnQr.classList.remove('hidden');
+                else btnQr.classList.add('hidden');
+
+                const modal = document.getElementById('modal-order-detail');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } catch (e) {
                 console.error(e);
-                alert('Lỗi kết nối khi tải chi tiết đơn hàng.');
+                showToast('Lỗi kết nối', 'Không thể kết nối máy chủ khi tải chi tiết đơn.', 'error');
             }
         }
 
         function closeOrderDetailModal() {
-            document.getElementById('modal-order-detail').classList.add('hidden');
-            document.getElementById('modal-order-detail').classList.remove('flex');
+            const modal = document.getElementById('modal-order-detail');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            staffCurrentDetailOrder = null;
         }
 
-        // Khởi tạo
-        document.addEventListener('DOMContentLoaded', () => {
-            const now = new Date();
-            const timeEl = document.getElementById('pos-time');
-            if (timeEl) timeEl.innerText = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        /**
+         * [Mục 25 - Search & Filter Order]: Lọc trạng thái & tìm kiếm đơn hàng dành cho Staff.
+         */
+        function setStaffOrdersStatusFilter(status, btnEl) {
+            staffOrdersStatusFilter = status;
+            document.querySelectorAll('#staff-orders-filter-pills .staff-filter-btn').forEach(b => {
+                b.classList.remove('active', 'bg-gray-900', 'text-white');
+                b.classList.add('bg-white', 'text-gray-700');
+            });
+            if (btnEl) {
+                btnEl.classList.remove('bg-white', 'text-gray-700');
+                btnEl.classList.add('active', 'bg-gray-900', 'text-white');
+            }
+            loadPosOrdersList();
+        }
 
-            // Đồng bộ tên nhân viên đăng nhập
-            try {
-                const userStr = localStorage.getItem('current_user');
-                if (userStr) {
-                    const user = JSON.parse(userStr);
-                    const bEl = document.getElementById('pos-staff-badge');
-                    if (bEl && user.fullName) bEl.innerText = user.fullName;
+        function onStaffOrdersSearch(query) {
+            staffOrdersSearchQuery = query ? query.trim() : '';
+            loadPosOrdersList();
+        }
+
+        /**
+         * [Mục 27 - Cancel Order]: Nhân viên hủy đơn hàng kèm lý do bắt buộc.
+         */
+        function openStaffCancelModal(orderId, orderCode) {
+            staffPendingCancelOrderId = orderId;
+            document.getElementById('staff-cancel-order-code').innerText = orderCode || orderId;
+            document.getElementById('staff-cancel-reason-select').value = 'Hết nguyên liệu pha chế món này';
+            document.getElementById('staff-custom-reason-box').classList.add('hidden');
+            document.getElementById('staff-cancel-custom-reason').value = '';
+            const modal = document.getElementById('modal-staff-cancel');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function openStaffCancelModalFromDetail() {
+            if (!staffCurrentDetailOrder) return;
+            const oid = staffCurrentDetailOrder.id;
+            const ocode = staffCurrentDetailOrder.orderCode ? `#${staffCurrentDetailOrder.orderCode}` : `#${oid}`;
+            closeOrderDetailModal();
+            openStaffCancelModal(oid, ocode);
+        }
+
+        function closeStaffCancelModal() {
+            const modal = document.getElementById('modal-staff-cancel');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            staffPendingCancelOrderId = null;
+        }
+
+        function toggleStaffCustomReason(val) {
+            const box = document.getElementById('staff-custom-reason-box');
+            if (val === 'OTHER') box.classList.remove('hidden');
+            else box.classList.add('hidden');
+        }
+
+        async function submitStaffCancelOrder() {
+            if (!staffPendingCancelOrderId) return;
+            const token = localStorage.getItem('auth_token');
+            const selectVal = document.getElementById('staff-cancel-reason-select').value;
+            let reason = selectVal;
+            if (selectVal === 'OTHER') {
+                const custom = document.getElementById('staff-cancel-custom-reason').value.trim();
+                if (!custom) {
+                    showToast('Thiếu lý do hủy', 'Nhân viên bắt buộc phải nhập lý do hủy đơn cụ thể!', 'warning');
+                    return;
                 }
-            } catch (e) {}
-
-            loadProductsFromApi();
-            renderTicket();
-            checkVnPayPosCallback();
-
-            // Kiểm tra query param để tự động mở tab Điều phối đơn nếu được gọi từ menu Đơn hàng
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('view') === 'orders' || urlParams.get('tab') === 'orders') {
-                switchView('orders');
-            } else {
-                switchView('pos');
+                reason = custom;
             }
 
-            // Tự động đồng bộ danh sách đơn hàng thực tế mỗi 10 giây
-            setInterval(() => {
-                loadPosOrdersList();
-            }, 10000);
-        });
+            const btn = document.getElementById('btn-staff-submit-cancel');
+            btn.disabled = true;
+            btn.innerHTML = 'Đang hủy đơn...';
 
+            try {
+                const res = await fetch(`${API_GATEWAY_URL}/api/orders/${staffPendingCancelOrderId}/cancel`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ reason: reason })
+                });
+
+                const data = await res.json().catch(() => null);
+                if (res.ok && data?.isSuccess !== false) {
+                    closeStaffCancelModal();
+                    showToast('Đã hủy đơn hàng', `Đã hủy đơn với lý do: "${reason}"`, 'warning');
+                    await loadPosOrdersList();
+                } else {
+                    const msg = data?.message || (data?.errors && data.errors[0]) || 'Không thể hủy đơn hàng.';
+                    showToast('Lỗi hủy đơn', msg, 'error');
+                }
+            } catch (e) {
+                console.error('Lỗi khi hủy đơn:', e);
+                showToast('Lỗi kết nối', 'Không thể kết nối đến máy chủ Order.API', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Xác nhận hủy đơn';
+            }
+        }
+
+        /**
+         * [Mục 28 - Generate VNPay QR]: Nhân viên tạo mã QR VNPay cho đơn hàng bất kỳ chưa thanh toán.
+         */
+        async function generateStaffVnPayQr(orderId) {
+            const token = localStorage.getItem('auth_token');
+            try {
+                const res = await fetch(`${API_GATEWAY_URL}/api/payments/vnpay/create-url`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ orderId: orderId })
+                });
+
+                const data = await res.json().catch(() => null);
+                const payment = data?.data;
+                if (res.ok && payment?.paymentUrl) {
+                    showStaffVnPayQrModal(payment.orderCode, payment.amount, payment.paymentUrl);
+                } else {
+                    showToast('Không thể tạo mã QR', data?.message || 'Không thể tạo mã QR VNPay cho đơn hàng này.', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                showToast('Lỗi kết nối', 'Không thể kết nối máy chủ Order.API khi tạo QR VNPay.', 'error');
+            }
+        }
+
+        function generateStaffVnPayQrFromDetail() {
+            if (!staffCurrentDetailOrder) return;
+            const oid = staffCurrentDetailOrder.id;
+            closeOrderDetailModal();
+            generateStaffVnPayQr(oid);
+        }
+
+        function showStaffVnPayQrModal(orderCode, amount, paymentUrl) {
+            document.getElementById('staff-qr-ordercode').textContent = `#${orderCode || ''}`;
+            document.getElementById('staff-qr-amount').textContent = `${Number(amount || 0).toLocaleString('vi-VN')} đ`;
+            document.getElementById('staff-qr-gateway-link').href = paymentUrl;
+            document.getElementById('staff-qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(paymentUrl)}`;
+
+            const modal = document.getElementById('modal-staff-vnpay-qr');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeStaffVnPayQrModal() {
+            const modal = document.getElementById('modal-staff-vnpay-qr');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        /**
+         * [Mục 29 - Confirm Payment]: Nhân viên xác nhận đã thu tiền mặt cho đơn hàng (PUT /api/payments/{id}/cash-confirm).
+         */
         async function confirmCashPayment(orderId) {
             const token = localStorage.getItem('auth_token');
             if (!token) {
-                showToast('Chưa đăng nhập', 'Vui lòng đăng nhập tài khoản Nhân viên', 'error');
+                showToast('Chưa đăng nhập', 'Vui lòng đăng nhập tài khoản Nhân viên (Staff)', 'error');
                 return;
             }
             try {
-                const res = await fetch(`http://localhost:5003/api/payments/${orderId}/cash-confirm`, {
+                const res = await fetch(`${API_GATEWAY_URL}/api/payments/${orderId}/cash-confirm`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
-                    }
+                    },
+                    body: JSON.stringify({})
                 });
-                if (res.ok) {
-                    showToast('Đã thu tiền', 'Xác nhận thanh toán tiền mặt thành công! Đơn đã chuyển sang pha chế.', 'success');
+                const data = await res.json().catch(() => null);
+                if (res.ok && data?.isSuccess !== false) {
+                    showToast('Đã xác nhận thu tiền', 'Xác nhận thanh toán tiền mặt thành công! Đơn đã chuyển sang Pha chế.', 'success');
                     await loadPosOrdersList();
                 } else {
-                    const err = await res.json().catch(() => null);
-                    showToast('Không thành công', err?.message || 'Không thể xác nhận thanh toán tiền mặt.', 'error');
+                    showToast('Không thành công', data?.message || 'Không thể xác nhận thanh toán tiền mặt.', 'error');
                 }
             } catch (e) {
                 console.error(e);
@@ -1170,6 +1508,9 @@
             }
         }
 
+        /**
+         * [Mục 29B]: Đồng bộ kết quả khi cổng VNPay redirect về màn hình Staff POS.
+         */
         async function checkVnPayPosCallback() {
             const params = new URLSearchParams(window.location.search);
             const responseCode = params.get('vnp_ResponseCode');
@@ -1178,23 +1519,58 @@
 
             if (responseCode) {
                 try {
-                    // Đồng bộ kết quả VNPay Return sang Order.API để cập nhật trạng thái đơn hàng sang SUCCESS
-                    const res = await fetch(`http://localhost:5003/api/payments/vnpay-return${window.location.search}`);
+                    const res = await fetch(`${API_GATEWAY_URL}/api/payments/vnpay-return${window.location.search}`);
                     const json = await res.json().catch(() => null);
 
                     if (responseCode === '00' && (res.ok || json?.isSuccess)) {
                         const formattedAmt = amount ? (parseInt(amount) / 100).toLocaleString('vi-VN') + ' đ' : '';
-                        showToast('Thanh toán VNPay thành công', `Giao dịch ${txnRef || ''} (${formattedAmt}) đã thanh toán thành công qua VNPay!`, 'success', 6000);
+                        showToast('Thanh toán VNPay thành công', `Giao dịch ${txnRef || ''} (${formattedAmt}) đã thanh toán thành công!`, 'success', 5000);
                     } else {
-                        showToast('Thanh toán chưa hoàn tất', json?.message || 'Giao dịch qua VNPay đã bị hủy hoặc chưa hoàn tất.', 'warning', 5000);
+                        showToast('Thanh toán chưa hoàn tất', json?.message || 'Giao dịch qua VNPay chưa hoàn tất.', 'warning', 5000);
                     }
                 } catch (e) {
-                    console.error('Lỗi gọi API VNPay Return:', e);
+                    console.error('Lỗi đồng bộ VNPay Return:', e);
                 } finally {
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    await loadPosOrdersList();
+                    window.history.replaceState({}, document.title, window.location.pathname + '?view=orders');
+                    switchView('orders');
                 }
             }
         }
+
+        // Khởi tạo màn hình Staff khi trang tải xong
+        document.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            const timeEl = document.getElementById('pos-time');
+            if (timeEl) timeEl.innerText = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+
+            // Hiển thị tên thật của nhân viên đang đăng nhập từ localStorage
+            try {
+                const userStr = localStorage.getItem('current_user');
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    const bEl = document.getElementById('pos-staff-badge');
+                    if (bEl && (user.fullName || user.email)) {
+                        bEl.innerText = user.fullName || user.email;
+                    }
+                }
+            } catch (e) {}
+
+            loadProductsFromApi();
+            renderTicket();
+            checkVnPayPosCallback();
+
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('view') === 'orders' || urlParams.get('tab') === 'orders') {
+                switchView('orders');
+            } else {
+                switchView('pos');
+                loadPosOrdersList();
+            }
+
+            // Tự động làm mới danh sách đơn điều phối mỗi 10 giây
+            setInterval(() => {
+                loadPosOrdersList();
+            }, 10000);
+        });
     </script>
 }

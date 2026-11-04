@@ -1,4 +1,4 @@
-@page
+﻿@page
 @model CoffeeShop.WebRazorPages.Pages.Admin.UsersModel
 @{
     Layout = "_AdminLayout";
@@ -303,7 +303,7 @@
         async function loadUsersFromApi() {
             try {
                 const token = localStorage.getItem('auth_token');
-                const res = await fetch('http://localhost:5001/api/users?pageSize=100', {
+                const res = await fetch('http://localhost:8080/api/users?pageSize=100', {
                     headers: token ? { 'Authorization': `Bearer ${token}` } : {}
                 });
                 if (res.ok) {
@@ -446,7 +446,7 @@
                     return;
                 }
 
-                const res = await fetch('http://localhost:5001/api/users/staff', {
+                const res = await fetch('http://localhost:8080/api/users/staff', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -517,7 +517,7 @@
                 // Lưu cập nhật trực tiếp vào cơ sở dữ liệu Auth.API
                 try {
                     const token = localStorage.getItem('auth_token');
-                    await fetch(`http://localhost:5001/api/users/${id}`, {
+                    await fetch(`http://localhost:8080/api/users/${id}`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
@@ -557,7 +557,7 @@
             const token = localStorage.getItem('auth_token');
 
             try {
-                const res = await fetch(`http://localhost:5001/api/users/${id}/status`, {
+                const res = await fetch(`http://localhost:8080/api/users/${id}/status`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -620,7 +620,7 @@
             const token = localStorage.getItem('auth_token');
 
             try {
-                const res = await fetch(`http://localhost:5001/api/users/${idToDelete}`, {
+                const res = await fetch(`http://localhost:8080/api/users/${idToDelete}`, {
                     method: 'DELETE',
                     headers: {
                         'Authorization': token ? `Bearer ${token}` : ''

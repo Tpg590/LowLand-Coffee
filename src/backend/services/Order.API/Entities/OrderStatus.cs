@@ -19,10 +19,10 @@ public static class OrderStatus
         var s = status.Trim().ToUpperInvariant();
         return s switch
         {
-            "TIẾP NHẬN" or "TIEP NHAN" or "PENDING" or "CHỜ XỬ LÝ" or "CHO XU LY" => PENDING,
-            "PHA CHẾ" or "PHA CHE" or "ĐANG PHA CHẾ" or "DANG PHA CHE" or "PROCESSING" => PROCESSING,
-            "GIAO HÀNG" or "GIAO HANG" or "ĐANG GIAO HÀNG" or "DANG GIAO HANG" or "SHIPPING" => SHIPPING,
-            "HOÀN THÀNH" or "HOAN THANH" or "COMPLETED" or "XONG" => COMPLETED,
+            "TIẾP NHẬN" or "TIEP NHAN" or "PENDING" or "CHỜ XỬ LÝ" or "CHO XU LY" or "CONFIRMED" or "ĐÃ TIẾP NHẬN" or "DA TIEP NHAN" or "ĐÃ XÁC NHẬN" or "DA XAC NHAN" => PENDING,
+            "PHA CHẾ" or "PHA CHE" or "ĐANG PHA CHẾ" or "DANG PHA CHE" or "PROCESSING" or "PREPARING" or "CHUẨN BỊ" or "DANG CHUAN BI" => PROCESSING,
+            "GIAO HÀNG" or "GIAO HANG" or "ĐANG GIAO HÀNG" or "DANG GIAO HANG" or "SHIPPING" or "DELIVERING" or "DELIVERY" or "READY" or "SẴN SÀNG" or "SAN SANG" => SHIPPING,
+            "HOÀN THÀNH" or "HOAN THANH" or "COMPLETED" or "XONG" or "DONE" or "FINISHED" => COMPLETED,
             "HỦY" or "ĐÃ HỦY" or "DA HUY" or "HUY" or "HỦY ĐƠN" or "HUY DON" or "CANCELLED" or "CANCEL" => CANCELLED,
             _ => s
         };

@@ -1,7 +1,10 @@
 using Order.API.DTOs;
 
-namespace Order.API.Services.Interfaces;
+namespace Order.API.Services;
 
+/// <summary>
+/// Interface định nghĩa các nghiệp vụ xử lý Đơn hàng (Mục 22 đến 27).
+/// </summary>
 public interface IOrderService
 {
     Task<ApiResponse<OrderDetailDto>> CreateOrderAsync(
@@ -19,3 +22,4 @@ public interface IOrderService
     Task<ApiResponse<OrderDetailDto>> CancelOrderAsync(
         Guid orderId, CancelOrderRequest request, Guid currentUserId, string currentUserRole, CancellationToken cancellationToken = default);
 }
+

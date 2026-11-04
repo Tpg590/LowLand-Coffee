@@ -1,0 +1,16 @@
+@page
+@model CoffeeShop.WebRazorPages.Pages.Staff.OrderListModel
+@{
+    Layout = "_StaffLayout";
+    ViewData["Title"] = "Điều phối đơn hàng - Nhân viên";
+}
+
+<div class="py-16 text-center">
+    <div class="inline-block animate-spin rounded-full h-10 w-10 border-4 border-red-highland border-t-transparent"></div>
+    <p class="mt-4 text-sm font-bold text-gray-500">Đang chuyển hướng sang Màn hình Điều phối đơn hàng...</p>
+</div>
+
+<script>
+    window.location.replace('/Staff/Orders?view=orders');
+</script>
+
