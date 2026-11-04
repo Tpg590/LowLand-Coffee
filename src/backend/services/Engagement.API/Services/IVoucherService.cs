@@ -11,4 +11,8 @@ public interface IVoucherService
     Task<bool> DeleteVoucherAsync(Guid id);
     Task<ValidateVoucherResponse> ValidateVoucherAsync(ValidateVoucherRequest request);
     Task<bool> ApplyVoucherUsageAsync(ApplyVoucherUsageRequest request);
+    /// <summary>
+    /// Lấy danh sách ID các voucher mà khách hàng đã từng sử dụng.
+    /// </summary>
+    Task<IEnumerable<Guid>> GetUsedVoucherIdsByUserAsync(Guid userId);
 }

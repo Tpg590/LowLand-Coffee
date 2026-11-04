@@ -269,4 +269,12 @@ public class VoucherService : IVoucherService
 
         return true;
     }
+
+    /// <summary>
+    /// Lấy danh sách ID các voucher mà khách hàng đã từng sử dụng.
+    /// </summary>
+    public async Task<IEnumerable<Guid>> GetUsedVoucherIdsByUserAsync(Guid userId)
+    {
+        return await _voucherRepository.GetUsedVoucherIdsByUserAsync(userId);
+    }
 }

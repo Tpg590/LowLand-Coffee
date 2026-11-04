@@ -167,6 +167,12 @@
                             </a>
                         </li>
                         <li>
+                            <a href="/Customer/Vouchers" class="block py-2 pr-4 pl-3 text-white/90 border-b border-red-700 lg:border-0 lg:p-0 hover:text-amber-200 transition">Ưu đãi & Voucher</a>
+                        </li>
+                        <li>
+                            <a href="/Customer/Loyalty" class="block py-2 pr-4 pl-3 text-white/90 border-b border-red-700 lg:border-0 lg:p-0 hover:text-amber-200 transition">Thành viên</a>
+                        </li>
+                        <li>
                             <a href="/Index#promotions" class="block py-2 pr-4 pl-3 text-white/90 border-b border-red-700 lg:border-0 lg:p-0 hover:text-amber-200 transition">Khuyến mãi</a>
                         </li>
                         <li>
@@ -232,8 +238,8 @@
                     <h3 class="text-sm font-bold uppercase tracking-wider text-amber-200 mb-4">Liên kết nhanh</h3>
                     <ul class="space-y-2.5 text-xs text-white/80">
                         <li><a asp-page="/Order" class="hover:text-white hover:underline transition">Đặt món trực tuyến</a></li>
-                        <li><a href="#" class="hover:text-white hover:underline transition">Thẻ thành viên LowLand</a></li>
-                        <li><a href="#" class="hover:text-white hover:underline transition">Dành cho đối tác</a></li>
+                        <li><a href="/Customer/Loyalty" class="hover:text-white hover:underline transition">Thẻ thành viên & Điểm thưởng</a></li>
+                        <li><a href="/Customer/Vouchers" class="hover:text-white hover:underline transition">Kho voucher ưu đãi</a></li>
                         <li><a href="tel:19001755" class="hover:text-amber-200 font-bold transition">Tổng đài hỗ trợ: 1900 1755</a></li>
                     </ul>
                 </div>
@@ -325,6 +331,18 @@
                                 `;
                             } else {
                                 roleLinks.innerHTML = `
+                                    <li>
+                                        <a href="/Customer/Loyalty" class="block px-4 py-2.5 hover:bg-amber-50 text-amber-900 flex items-center gap-2 font-bold">
+                                            <i class="fi fi-sr-medal text-amber-600"></i>
+                                            <span>Thành viên & Điểm thưởng</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="/Customer/Vouchers" class="block px-4 py-2.5 hover:bg-red-50 text-red-highland flex items-center gap-2 font-bold">
+                                            <i class="fi fi-rr-ticket text-red-highland"></i>
+                                            <span>Kho Voucher ưu đãi</span>
+                                        </a>
+                                    </li>
                                     <li>
                                         <a href="/MyOrders" class="block px-4 py-2.5 hover:bg-gray-100 flex items-center gap-2 font-semibold">
                                             <i class="fi fi-rr-clipboard-list text-gray-500"></i>

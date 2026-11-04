@@ -118,16 +118,22 @@
                     Quản lý Thực đơn (Menu)
                 </div>
 
-                <!-- Mục Sản phẩm (Chức năng 16, 17, 18, 19, 20, 21) -->
+                <!-- Mục Sản phẩm -->
                 <a asp-page="/Admin/Products" id="nav-products" class="flex items-center gap-3.5 px-3.5 py-3 rounded-xl font-bold text-sm transition-all text-slate-300 hover:text-white hover:bg-slate-800/80 group">
                     <i class="fi fi-rr-box-alt text-lg text-amber-400 group-hover:scale-110 transition-transform"></i>
                     <span class="flex-1">Sản phẩm</span>
                 </a>
 
-                <!-- Mục Danh mục (Chức năng 12, 13, 14, 15) -->
+                <!-- Mục Danh mục (Categories) -->
                 <a asp-page="/Admin/Categories" id="nav-categories" class="flex items-center gap-3.5 px-3.5 py-3 rounded-xl font-bold text-sm transition-all text-slate-300 hover:text-white hover:bg-slate-800/80 group">
                     <i class="fi fi-rr-apps text-lg text-emerald-400 group-hover:scale-110 transition-transform"></i>
                     <span class="flex-1">Danh mục món</span>
+                </a>
+
+                <!-- Quản lý Mã Giảm Giá & Voucher (Engagement) -->
+                <a asp-page="/Admin/Vouchers" id="nav-vouchers" class="flex items-center gap-3.5 px-3.5 py-3 rounded-xl font-bold text-sm transition-all text-slate-300 hover:text-white hover:bg-slate-800/80 group">
+                    <i class="fi fi-rr-ticket text-lg text-red-400 group-hover:scale-110 transition-transform"></i>
+                    <span class="flex-1">Mã Giảm Giá & Voucher</span>
                 </a>
 
                 <div class="pt-6 px-3 pb-2 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
@@ -256,10 +262,14 @@
             const navProducts = document.getElementById('nav-products');
             const navCategories = document.getElementById('nav-categories');
             const navUsers = document.getElementById('nav-users');
+            const navVouchers = document.getElementById('nav-vouchers');
 
             const activeClass = ['bg-slate-800', 'text-amber-300', 'border', 'border-slate-700/80', 'shadow-inner'];
 
-            if (path.includes('/admin/products')) {
+            if (path.includes('/admin/vouchers')) {
+                navVouchers?.classList.add(...activeClass);
+                navVouchers?.classList.remove('text-slate-300');
+            } else if (path.includes('/admin/products')) {
                 navProducts?.classList.add(...activeClass);
                 navProducts?.classList.remove('text-slate-300');
             } else if (path.includes('/admin/categories')) {

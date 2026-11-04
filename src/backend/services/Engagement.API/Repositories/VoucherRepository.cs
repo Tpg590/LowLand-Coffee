@@ -69,6 +69,19 @@ public class VoucherRepository : IVoucherRepository
             .CountAsync(u => u.VoucherId == voucherId && u.UserId == userId);
     }
 
+    /// <summary>
+    /// Lấy danh sách ID các voucher mà người dùng đã từng sử dụng.
+    /// </summary>
+    public async Task<IEnumerable<Guid>> GetUsedVoucherIdsByUserAsync(Guid userId)
+    {
+        return await _context.PromoVoucherUsages
+            .AsNoTracking()
+            .Where(u => u.UserId == userId)
+            .Select(u => u.VoucherId)
+            .Distinct()
+            .ToListAsync();
+    }
+
     public async Task SaveChangesAsync()
     {
         await _context.SaveChangesAsync();
