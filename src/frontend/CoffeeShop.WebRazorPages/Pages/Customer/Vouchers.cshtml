@@ -2,17 +2,17 @@
 @model CoffeeShop.WebRazorPages.Pages.Customer.VouchersModel
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "Kho Voucher & Ưu Đãi Giảm Giá";
+    ViewData["Title"] = "Kho Voucher & Ưu Đãi - LowLand Coffee";
 }
 
 <!-- Hero Banner Section -->
-<section class="relative bg-gradient-to-r from-red-highland-dark via-red-highland to-red-800 text-white overflow-hidden py-14 sm:py-18 px-4 sm:px-8 lg:px-12 shadow-inner">
+<section class="relative bg-gradient-to-r from-red-highland-dark via-red-highland to-red-800 text-white overflow-hidden py-14 sm:py-20 px-4 sm:px-8 lg:px-12 shadow-inner">
     <div class="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/5 blur-3xl pointer-events-none"></div>
     <div class="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-amber-400/10 blur-3xl pointer-events-none"></div>
 
-    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
-        <div class="space-y-4 max-w-2xl text-center md:text-left">
-            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-300/20 border border-amber-300/40 text-amber-200 text-xs sm:text-sm font-extrabold uppercase tracking-wider backdrop-blur-sm">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-10 relative z-10">
+        <div class="space-y-5 max-w-2xl text-center md:text-left">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-300/20 border border-amber-300/40 text-amber-200 text-xs sm:text-sm font-extrabold uppercase tracking-wider backdrop-blur-sm">
                 <i class="fi fi-sr-badge-percent text-amber-300 text-base"></i>
                 <span>Kho Mã Ưu Đãi Độc Quyền</span>
             </div>
@@ -23,92 +23,100 @@
             <p class="text-white/90 text-sm sm:text-base leading-relaxed font-normal">
                 Khám phá bộ sưu tập mã giảm giá, voucher miễn phí giao hàng và quà tặng chào mừng. Chọn ngay mã ưu đãi phù hợp và tận hưởng mức giảm trực tiếp khi thanh toán đơn hàng.
             </p>
-            <div class="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-2">
-                <a href="#vouchers-grid" class="px-6 py-3 rounded-2xl bg-white text-red-highland hover:bg-amber-100 font-extrabold text-sm shadow-lg transition transform active:scale-95 flex items-center gap-2">
+            <div class="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-3">
+                <a href="#vouchers-grid" class="px-7 py-3.5 rounded-2xl bg-white text-red-highland hover:bg-amber-100 font-extrabold text-sm shadow-lg transition transform active:scale-95 flex items-center gap-2">
                     <i class="fi fi-rr-ticket text-base"></i>
                     <span>Khám Phá Voucher</span>
                 </a>
-                <a href="#test-voucher-section" class="px-6 py-3 rounded-2xl bg-red-800/80 hover:bg-red-800 text-white border border-red-500 font-extrabold text-sm shadow-md transition flex items-center gap-2">
-                    <i class="fi fi-rr-search-alt text-base"></i>
-                    <span>Kiểm Tra Mã Giảm Giá</span>
+                <a href="/Order" class="px-7 py-3.5 rounded-2xl bg-red-800/80 hover:bg-red-800 text-white border border-red-500 font-extrabold text-sm shadow-md transition flex items-center gap-2">
+                    <i class="fi fi-rr-shopping-bag text-base"></i>
+                    <span>Đặt Hàng Áp Mã Ngay</span>
                 </a>
             </div>
         </div>
 
-        <!-- Animated Floating Voucher Ticket Decor -->
-        <div class="hidden lg:block w-80">
-            <div class="relative transform rotate-3 hover:rotate-0 transition-transform duration-500">
-                <div class="bg-gradient-to-r from-amber-100 to-amber-200 text-red-950 p-6 rounded-3xl border-2 border-dashed border-red-800/40 shadow-2xl space-y-4">
-                    <div class="flex items-center justify-between pb-3 border-b border-amber-300">
-                        <div class="flex items-center gap-2">
-                            <img src="~/images/logo.jpg" alt="Logo" class="w-8 h-8 rounded-full border border-red-900" />
-                            <span class="font-black text-sm uppercase tracking-wider">E-VOUCHER</span>
-                        </div>
-                        <span class="px-2 py-0.5 rounded-full bg-red-highland text-white text-[10px] font-black uppercase">HOT DEAL</span>
-                    </div>
+        <!-- Decorative Minimalist Voucher Tickets (Đơn giản hóa, chỉ hiển thị nhãn Voucher) -->
+        <div class="hidden lg:flex flex-col items-center justify-center gap-4 w-72">
+            <!-- Voucher Badge 1 -->
+            <div class="w-full bg-gradient-to-r from-amber-200 to-amber-100 text-red-950 p-4 rounded-2xl border-2 border-dashed border-red-900/30 shadow-xl flex items-center justify-between transform -rotate-3 hover:rotate-0 transition-transform">
+                <div class="flex items-center gap-3">
+                    <span class="w-10 h-10 rounded-xl bg-red-highland text-white flex items-center justify-center text-lg shadow-sm">
+                        <i class="fi fi-sr-ticket"></i>
+                    </span>
                     <div>
-                        <span class="text-xs font-bold text-gray-700">GIẢM ĐẾN</span>
-                        <div class="text-4xl font-black text-red-highland">50.000 VNĐ</div>
-                        <p class="text-[11px] text-gray-600 font-semibold mt-1">Áp dụng cho mọi đồ uống giải nhiệt mùa hè</p>
-                    </div>
-                    <div class="pt-2 flex items-center justify-between text-xs font-bold border-t border-amber-300">
-                        <span class="text-gray-700">Mã: <code class="text-red-900 font-black">LOWLAND50K</code></span>
-                        <span class="text-emerald-700 font-bold">Còn hiệu lực</span>
+                        <span class="block text-sm font-black uppercase tracking-wider text-red-950">VOUCHER</span>
+                        <span class="block text-xs font-semibold text-gray-700">Mã giảm giá đơn hàng</span>
                     </div>
                 </div>
+                <span class="px-2.5 py-1 rounded-full bg-red-highland text-white text-[10px] font-black uppercase">ƯU ĐÃI</span>
+            </div>
+
+            <!-- Voucher Badge 2 -->
+            <div class="w-full bg-white text-gray-800 p-4 rounded-2xl border-2 border-dashed border-amber-400 shadow-md flex items-center justify-between transform rotate-2 hover:rotate-0 transition-transform">
+                <div class="flex items-center gap-3">
+                    <span class="w-10 h-10 rounded-xl bg-amber-400 text-red-950 flex items-center justify-center text-lg shadow-sm">
+                        <i class="fi fi-sr-badge-percent"></i>
+                    </span>
+                    <div>
+                        <span class="block text-sm font-black uppercase tracking-wider text-amber-900">E-VOUCHER</span>
+                        <span class="block text-xs font-semibold text-gray-600">Ưu đãi đồ uống</span>
+                    </div>
+                </div>
+                <span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 text-[10px] font-black uppercase">HOT</span>
             </div>
         </div>
     </div>
 </section>
 
 <!-- Main Body -->
-<div class="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-10 space-y-12">
+<div class="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-12 space-y-12">
 
     <!-- Search & Filter Controls -->
-    <div class="bg-white p-4 sm:p-6 rounded-3xl border border-gray-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
+    <div class="bg-white p-5 sm:p-7 rounded-3xl border border-gray-200 shadow-sm flex flex-col md:flex-row gap-5 items-center justify-between">
         <!-- Search Input -->
         <div class="w-full md:w-96 relative">
-            <input type="text" id="voucher-search-input" onkeyup="filterVouchers()" placeholder="Tìm theo mã hoặc tên voucher (vd: LOWLAND20)..." class="w-full bg-gray-50 border border-gray-300 rounded-2xl pl-11 pr-4 py-3 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland placeholder-gray-400" />
-            <span class="absolute left-3.5 top-3.5 text-gray-400 flex items-center">
+            <input type="text" id="voucher-search-input" onkeyup="filterVouchers()" placeholder="Tìm theo mã hoặc tên voucher (vd: LOWLAND20)..." class="w-full bg-gray-50 border border-gray-300 rounded-2xl pl-12 pr-4 py-3.5 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland placeholder-gray-400" />
+            <span class="absolute left-4 top-4 text-gray-400 flex items-center">
                 <i class="fi fi-rr-search text-base"></i>
             </span>
         </div>
 
         <!-- Filter Chips -->
-        <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
-            <button type="button" onclick="setFilterCategory('ALL')" id="filter-chip-all" class="px-4 py-2.5 rounded-xl text-xs font-black bg-red-highland text-white shadow-sm transition">
+        <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+            <button type="button" onclick="setFilterCategory('ALL')" id="filter-chip-all" class="px-5 py-2.5 rounded-xl text-xs font-black bg-red-highland text-white shadow-sm transition">
                 Tất cả mã
             </button>
-            <button type="button" onclick="setFilterCategory('PERCENTAGE')" id="filter-chip-percentage" class="px-4 py-2.5 rounded-xl text-xs font-black bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+            <button type="button" onclick="setFilterCategory('PERCENTAGE')" id="filter-chip-percentage" class="px-5 py-2.5 rounded-xl text-xs font-black bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
                 Giảm theo %
             </button>
-            <button type="button" onclick="setFilterCategory('FIXED_AMOUNT')" id="filter-chip-fixed_amount" class="px-4 py-2.5 rounded-xl text-xs font-black bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+            <button type="button" onclick="setFilterCategory('FIXED_AMOUNT')" id="filter-chip-fixed_amount" class="px-5 py-2.5 rounded-xl text-xs font-black bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
                 Giảm tiền cố định
             </button>
-            <button type="button" onclick="setFilterCategory('ACTIVE_ONLY')" id="filter-chip-active_only" class="px-4 py-2.5 rounded-xl text-xs font-black bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+            <button type="button" onclick="setFilterCategory('ACTIVE_ONLY')" id="filter-chip-active_only" class="px-5 py-2.5 rounded-xl text-xs font-black bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
                 Còn lượt sử dụng
             </button>
         </div>
     </div>
 
     <!-- Section: Voucher Tickets Grid -->
-    <section id="vouchers-grid" class="space-y-6">
-        <div class="flex items-center justify-between pb-2 border-b border-gray-200">
+    <section id="vouchers-grid" class="space-y-8">
+        <div class="flex items-center justify-between pb-4 border-b border-gray-200">
             <div>
-                <h2 class="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2.5">
-                    <span class="p-2 rounded-xl bg-red-100 text-red-highland">
+                <h2 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+                    <span class="p-2.5 rounded-2xl bg-red-100 text-red-highland flex items-center justify-center">
                         <i class="fi fi-sr-ticket text-xl"></i>
                     </span>
                     <span>Danh Sách Mã Giảm Giá Đang Mở</span>
                 </h2>
-                <p class="text-xs sm:text-sm text-gray-500 mt-1">Nhấn "Sao chép mã" để áp dụng nhanh khi đặt hàng online</p>
+                <p class="text-xs sm:text-sm text-gray-500 mt-1">Nhấn "Sao chép" hoặc "Dùng ngay" để áp dụng voucher vào giỏ hàng</p>
             </div>
-            <span id="voucher-count-badge" class="px-3 py-1 rounded-full bg-red-50 text-red-highland font-black text-xs border border-red-200">
+            <span id="voucher-count-badge" class="px-4 py-1.5 rounded-full bg-red-50 text-red-highland font-black text-xs border border-red-200">
                 Hiển thị @Model.Vouchers.Count() voucher
             </span>
         </div>
 
-        <div id="vouchers-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+        <!-- Grid thẻ Voucher thoáng đãng -->
+        <div id="vouchers-container" class="grid grid-cols-1 md:grid-cols-2 gap-8">
             @foreach (var v in Model.Vouchers)
             {
                 var isPercentage = v.DiscountType.Equals("PERCENTAGE", StringComparison.OrdinalIgnoreCase);
@@ -122,66 +130,73 @@
                      data-type="@v.DiscountType"
                      data-remaining="@remaining">
 
-                    <!-- Left Ticket Header Column (Phong cách cuống vé) -->
-                    <div class="sm:w-44 bg-gradient-to-br from-red-highland-dark to-red-highland text-white p-6 flex flex-col justify-between items-center text-center relative shrink-0">
+                    <!-- Left Ticket Column (Cuống vé thoáng rộng) -->
+                    <div class="sm:w-56 bg-gradient-to-br from-red-highland-dark to-red-highland text-white p-7 flex flex-col justify-between items-center text-center relative shrink-0">
                         <!-- Perforated notch circle top & bottom -->
-                        <div class="hidden sm:block absolute -top-3 -right-3 w-6 h-6 rounded-full bg-[#FBFBFB] border-b border-gray-200"></div>
-                        <div class="hidden sm:block absolute -bottom-3 -right-3 w-6 h-6 rounded-full bg-[#FBFBFB] border-t border-gray-200"></div>
+                        <div class="hidden sm:block absolute -top-3.5 -right-3.5 w-7 h-7 rounded-full bg-[#FBFBFB] border-b border-gray-200"></div>
+                        <div class="hidden sm:block absolute -bottom-3.5 -right-3.5 w-7 h-7 rounded-full bg-[#FBFBFB] border-t border-gray-200"></div>
 
-                        <div class="w-12 h-12 rounded-2xl bg-white/10 text-amber-200 flex items-center justify-center text-2xl mb-2">
-                            <i class="fi fi-sr-badge-percent"></i>
+                        <div class="w-12 h-12 rounded-2xl bg-white/15 text-amber-200 flex items-center justify-center text-2xl mb-2 shadow-inner">
+                            <i class="@(isPercentage ? "fi fi-sr-badge-percent" : "fi fi-sr-coins")"></i>
                         </div>
-                        <div class="my-auto">
-                            <span class="block text-[11px] font-black uppercase tracking-wider text-amber-200">ƯU ĐÃI</span>
-                            <div class="text-xl sm:text-2xl font-black text-white leading-tight">@discountDisplay</div>
+                        <div class="my-auto space-y-1">
+                            <span class="block text-xs font-black uppercase tracking-wider text-amber-200">ƯU ĐÃI</span>
+                            <div class="text-2xl sm:text-3xl font-black text-white leading-tight">@discountDisplay</div>
                             @if (isPercentage && v.MaxDiscountAmount.HasValue)
                             {
-                                <span class="block text-[10px] text-white/80 font-medium mt-0.5">Tối đa @v.MaxDiscountAmount.Value.ToString("N0")đ</span>
+                                <span class="block text-xs text-white/80 font-medium">Tối đa @v.MaxDiscountAmount.Value.ToString("N0")đ</span>
                             }
                         </div>
-                        <span class="text-[10px] uppercase font-bold text-white/70 tracking-wider mt-2">LowLand Coffee</span>
+                        <span class="text-[11px] uppercase font-black text-white/70 tracking-widest mt-2">LOWLAND COFFEE</span>
                     </div>
 
-                    <!-- Right Ticket Details Column -->
-                    <div class="p-6 flex-1 flex flex-col justify-between space-y-4">
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-between gap-2">
-                                <span class="px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-900 text-xs font-black">
+                    <!-- Right Ticket Details Column (Nội dung rộng rãi, không bị dính sát) -->
+                    <div class="p-7 sm:p-8 flex-1 flex flex-col justify-between space-y-5">
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between gap-3">
+                                <span class="px-3 py-1 rounded-xl bg-amber-100 text-amber-900 text-xs font-black">
                                     @(isPercentage ? "Giảm theo %" : "Giảm tiền mặt")
                                 </span>
-                                <span class="text-[11px] text-gray-500 font-semibold flex items-center gap-1">
+                                <span class="text-xs text-gray-500 font-semibold flex items-center gap-1.5">
                                     <i class="fi fi-rr-clock text-xs"></i>
                                     <span>HSD: @v.EndDate.ToString("dd/MM/yyyy")</span>
                                 </span>
                             </div>
-                            <h3 class="text-base sm:text-lg font-black text-gray-900 group-hover:text-red-highland transition">@v.Title</h3>
-                            <p class="text-xs text-gray-600 line-clamp-2">@(v.Description ?? "Áp dụng cho mọi đơn hàng thỏa điều kiện tối thiểu.")</p>
-                            <div class="text-xs font-bold text-gray-700">
+
+                            <h3 class="text-lg sm:text-xl font-black text-gray-900 group-hover:text-red-highland transition leading-snug">
+                                @v.Title
+                            </h3>
+
+                            <p class="text-xs sm:text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                                @(v.Description ?? "Áp dụng cho mọi đơn hàng thỏa điều kiện tối thiểu.")
+                            </p>
+
+                            <div class="text-xs sm:text-sm font-semibold text-gray-700">
                                 Đơn tối thiểu: <span class="text-red-highland font-black">@v.MinOrderValue.ToString("N0") VNĐ</span>
                             </div>
                         </div>
 
                         <!-- Usage progress -->
-                        <div class="space-y-1.5 pt-2 border-t border-gray-100">
-                            <div class="flex justify-between text-[11px] font-semibold text-gray-500">
+                        <div class="space-y-2 pt-3 border-t border-gray-100">
+                            <div class="flex justify-between text-xs font-bold text-gray-500">
                                 <span>Đã dùng: @v.UsedQuantity / @v.TotalQuantity</span>
-                                <span class="text-emerald-700 font-bold">Còn @remaining lượt</span>
+                                <span class="text-emerald-700">Còn @remaining lượt</span>
                             </div>
-                            <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-                                <div class="bg-red-highland h-full rounded-full" style="width: @percentUsed%;"></div>
+                            <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                                <div class="bg-red-highland h-full rounded-full transition-all duration-500" style="width: @percentUsed%;"></div>
                             </div>
                         </div>
 
                         <!-- Ticket Action Bar -->
-                        <div class="flex items-center gap-2 pt-2">
-                            <div class="flex-1 bg-gray-50 border border-dashed border-gray-300 rounded-xl px-3 py-2 flex items-center justify-between">
-                                <code class="text-xs font-black text-red-highland tracking-wider">@v.Code</code>
-                                <button type="button" onclick="copyVoucherCode('@v.Code')" class="text-xs font-bold text-gray-600 hover:text-red-highland flex items-center gap-1 transition" title="Sao chép">
+                        <div class="flex items-center gap-3 pt-2">
+                            <div class="flex-1 bg-gray-50 border border-dashed border-gray-300 rounded-2xl px-4 py-2.5 flex items-center justify-between">
+                                <code class="text-sm font-black text-red-highland tracking-wider">@v.Code</code>
+                                <button type="button" onclick="copyVoucherCode('@v.Code')" class="text-xs font-bold text-gray-600 hover:text-red-highland flex items-center gap-1.5 transition" title="Sao chép">
                                     <i class="fi fi-rr-copy"></i>
                                     <span class="hidden sm:inline">Sao chép</span>
                                 </button>
                             </div>
-                            <a href="/Order?voucher=@v.Code" class="px-4 py-2 rounded-xl bg-red-highland hover:bg-red-700 text-white font-extrabold text-xs shadow-md transition active:scale-95 shrink-0 flex items-center gap-1">
+                            <a href="/Order?voucher=@v.Code" class="px-5 py-2.5 rounded-2xl bg-red-highland hover:bg-red-700 text-white font-extrabold text-xs uppercase tracking-wider shadow-md transition active:scale-95 shrink-0 flex items-center gap-1.5">
                                 <span>Dùng ngay</span>
                                 <i class="fi fi-rr-arrow-right"></i>
                             </a>
@@ -192,93 +207,18 @@
         </div>
     </section>
 
-    <!-- Section: Công Cụ Thử Nghiệm Voucher (Interactive Live Validator) -->
-    <section id="test-voucher-section" class="bg-white rounded-3xl border border-gray-200 shadow-xl p-6 sm:p-10 space-y-6">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-gray-100">
-            <div>
-                <span class="text-xs font-black uppercase tracking-wider text-red-highland bg-red-50 px-3 py-1 rounded-full border border-red-200">Kiểm Tra Nhanh</span>
-                <h3 class="text-2xl font-black text-gray-900 mt-2">Thử Áp Dụng Mã Giảm Giá Trực Tiếp</h3>
-                <p class="text-sm text-gray-500 mt-0.5">Nhập mã ưu đãi và giá trị đơn hàng giả định để xem mức chiết khấu chính xác theo thời gian thực</p>
-            </div>
-            <div class="flex items-center gap-2 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
-                <i class="fi fi-sr-shield-check text-base"></i>
-                <span>Kết nối trực tiếp API Backend Engagement</span>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
-            <!-- Form Input -->
-            <div class="md:col-span-6 space-y-4">
-                <div>
-                    <label class="block text-xs font-bold uppercase text-gray-600 mb-1.5">Mã Voucher Cần Kiểm Tra:</label>
-                    <div class="relative">
-                        <input type="text" id="val-code-input" value="LOWLAND20" placeholder="VD: LOWLAND20, WELCOME50..." class="w-full bg-gray-50 border border-gray-300 rounded-2xl px-4 py-3.5 pl-11 text-base font-black text-red-highland uppercase focus:ring-2 focus:ring-red-highland" />
-                        <span class="absolute left-3.5 top-3.5 text-gray-400 font-bold text-lg"><i class="fi fi-rr-ticket"></i></span>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold uppercase text-gray-600 mb-1.5">Giá trị đơn hàng dự kiến (VNĐ):</label>
-                    <div class="relative">
-                        <input type="number" id="val-subtotal-input" value="120000" step="10000" min="0" class="w-full bg-gray-50 border border-gray-300 rounded-2xl px-4 py-3.5 pl-11 text-base font-black text-gray-900 focus:ring-2 focus:ring-red-highland" />
-                        <span class="absolute left-4 top-3.5 text-gray-400 font-bold text-lg">₫</span>
-                    </div>
-                </div>
-
-                <div class="flex gap-2">
-                    <button type="button" onclick="setValPreset('LOWLAND20', 120000)" class="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-xs font-bold text-gray-700">Mẫu: LOWLAND20 (120k)</button>
-                    <button type="button" onclick="setValPreset('WELCOME50', 200000)" class="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-xs font-bold text-gray-700">Mẫu: WELCOME50 (200k)</button>
-                </div>
-
-                <button type="button" onclick="testValidateVoucher()" id="btn-run-validate" class="w-full py-4 rounded-2xl bg-red-highland hover:bg-red-700 text-white font-extrabold text-sm uppercase tracking-wider shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2">
-                    <i class="fi fi-rr-check-circle text-lg"></i>
-                    <span>Kiểm Tra Điều Kiện Áp Dụng</span>
-                </button>
-            </div>
-
-            <!-- Result Box -->
-            <div class="md:col-span-6 bg-gradient-to-br from-gray-50 to-amber-50/30 rounded-3xl border border-gray-200 p-6 sm:p-8 space-y-4">
-                <div class="flex items-center justify-between pb-3 border-b border-gray-200">
-                    <span class="text-xs font-black uppercase tracking-wider text-gray-500">Trạng Thái Xác Thực</span>
-                    <span id="val-status-badge" class="px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800">
-                        Chờ kiểm tra
-                    </span>
-                </div>
-
-                <div id="val-message" class="text-sm font-semibold text-gray-700">
-                    Nhập mã voucher và bấm nút "Kiểm Tra Điều Kiện Áp Dụng" để kiểm tra tính hợp lệ.
-                </div>
-
-                <div class="space-y-2 pt-2 border-t border-gray-200 text-sm">
-                    <div class="flex justify-between">
-                        <span class="text-gray-500 font-medium">Giá trị đơn ban đầu:</span>
-                        <span class="font-bold text-gray-900" id="val-res-subtotal">120.000 VNĐ</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-500 font-medium">Số tiền được giảm:</span>
-                        <span class="font-black text-red-highland text-base" id="val-res-discount">0 VNĐ</span>
-                    </div>
-                    <div class="flex justify-between pt-2 border-t border-dashed border-gray-300">
-                        <span class="text-gray-900 font-black">Tổng tiền thanh toán cuối:</span>
-                        <span class="font-black text-emerald-700 text-lg" id="val-res-final">120.000 VNĐ</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
 </div>
 
 @section Scripts {
     <script>
-        const API_BASE = window.API_GATEWAY_URL || 'http://localhost:8080';
-        const DIRECT_ENGAGEMENT_API = 'http://localhost:5004';
+        // Kết nối trực tiếp qua API Gateway chuẩn
+        const API_GATEWAY_URL = 'http://localhost:8080';
 
         let currentFilterCat = 'ALL';
 
         function copyVoucherCode(code) {
             navigator.clipboard.writeText(code).then(() => {
-                showToast('Sao chép thành công', `Đã chép mã "${code}" vào clipboard. Hãy áp dụng khi thanh toán nhé!`, 'success');
+                showToast('Sao chép thành công', `Đã chép mã "${code}" vào bộ nhớ tạm. Hãy dùng khi đặt hàng nhé!`, 'success');
             }).catch(() => {
                 showToast('Sao chép', `Mã voucher của bạn: ${code}`, 'info');
             });
@@ -330,93 +270,6 @@
             const countBadge = document.getElementById('voucher-count-badge');
             if (countBadge) {
                 countBadge.innerText = `Hiển thị ${visibleCount} voucher`;
-            }
-        }
-
-        function setValPreset(code, amount) {
-            document.getElementById('val-code-input').value = code;
-            document.getElementById('val-subtotal-input').value = amount;
-            testValidateVoucher();
-        }
-
-        async function testValidateVoucher() {
-            const code = document.getElementById('val-code-input').value.trim();
-            const subtotal = Number(document.getElementById('val-subtotal-input').value) || 0;
-            const btn = document.getElementById('btn-run-validate');
-            const statusBadge = document.getElementById('val-status-badge');
-            const msgEl = document.getElementById('val-message');
-
-            if (!code) {
-                showToast('Lỗi nhập liệu', 'Vui lòng nhập mã voucher cần kiểm tra', 'warning');
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Đang kiểm tra...`;
-
-            const reqBody = {
-                voucherCode: code,
-                orderSubtotal: subtotal
-            };
-
-            const token = localStorage.getItem('auth_token');
-            const headers = {
-                'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-            };
-
-            let data = null;
-            // 1. Try API Gateway
-            try {
-                const res = await fetch(`${API_BASE}/api/vouchers/validate`, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify(reqBody)
-                });
-                data = await res.json().catch(() => null);
-            } catch (e) {
-                console.warn('API Gateway failed, falling back to direct service...', e);
-            }
-
-            // 2. Direct fallback
-            if (!data) {
-                try {
-                    const fallbackRes = await fetch(`${DIRECT_ENGAGEMENT_API}/api/vouchers/validate`, {
-                        method: 'POST',
-                        headers,
-                        body: JSON.stringify(reqBody)
-                    });
-                    data = await fallbackRes.json().catch(() => null);
-                } catch (e2) {
-                    console.error('Direct fallback failed:', e2);
-                }
-            }
-
-            btn.disabled = false;
-            btn.innerHTML = `<i class="fi fi-rr-check-circle text-lg mr-2"></i><span>Kiểm Tra Điều Kiện Áp Dụng</span>`;
-
-            if (data && data.isSuccess && data.data) {
-                const result = data.data;
-                statusBadge.className = 'px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800';
-                statusBadge.innerText = 'HỢP LỆ';
-                msgEl.className = 'text-sm font-semibold text-emerald-700';
-                msgEl.innerText = result.message || `Mã "${code}" áp dụng thành công cho đơn hàng!`;
-
-                document.getElementById('val-res-subtotal').innerText = subtotal.toLocaleString('vi-VN') + ' VNĐ';
-                document.getElementById('val-res-discount').innerText = '-' + Number(result.discountAmount || 0).toLocaleString('vi-VN') + ' VNĐ';
-                document.getElementById('val-res-final').innerText = Number(result.finalTotal || 0).toLocaleString('vi-VN') + ' VNĐ';
-                showToast('Mã hợp lệ', `Mã "${code}" giảm được ${Number(result.discountAmount || 0).toLocaleString('vi-VN')} VNĐ!`, 'success');
-            } else {
-                const errorMsg = (data && data.message) || 'Mã giảm giá không hợp lệ hoặc đơn hàng chưa đạt mức tối thiểu.';
-                statusBadge.className = 'px-3 py-1 rounded-full text-xs font-black bg-red-100 text-red-highland';
-                statusBadge.innerText = 'KHÔNG HỢP LỆ';
-                msgEl.className = 'text-sm font-semibold text-red-highland';
-                msgEl.innerText = errorMsg;
-
-                document.getElementById('val-res-subtotal').innerText = subtotal.toLocaleString('vi-VN') + ' VNĐ';
-                document.getElementById('val-res-discount').innerText = '0 VNĐ';
-                document.getElementById('val-res-final').innerText = subtotal.toLocaleString('vi-VN') + ' VNĐ';
-                showToast('Không áp dụng được', errorMsg, 'error');
             }
         }
     </script>
