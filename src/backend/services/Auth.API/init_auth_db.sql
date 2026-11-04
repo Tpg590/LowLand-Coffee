@@ -17,7 +17,7 @@ IF OBJECT_ID('dbo.auth_roles', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.auth_roles (
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-        name VARCHAR(50) NOT NULL UNIQUE,
+        name NVARCHAR(50) NOT NULL UNIQUE,
         description NVARCHAR(MAX) NULL,
         created_at DATETIME2 NOT NULL DEFAULT GETDATE()
     );
@@ -30,10 +30,10 @@ BEGIN
     CREATE TABLE dbo.auth_users (
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
         role_id UNIQUEIDENTIFIER NOT NULL,
-        email VARCHAR(255) NOT NULL UNIQUE,
-        password_hash VARCHAR(255) NOT NULL,
+        email NVARCHAR(255) NOT NULL UNIQUE,
+        password_hash NVARCHAR(255) NOT NULL,
         full_name NVARCHAR(100) NOT NULL,
-        phone_number VARCHAR(20) NULL,
+        phone_number NVARCHAR(20) NULL,
         avatar_url NVARCHAR(MAX) NULL,
         address NVARCHAR(MAX) NULL,
         is_active BIT NOT NULL DEFAULT 1,
@@ -49,7 +49,7 @@ IF OBJECT_ID('dbo.auth_permissions', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.auth_permissions (
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-        code VARCHAR(100) NOT NULL UNIQUE,
+        code NVARCHAR(100) NOT NULL UNIQUE,
         name NVARCHAR(100) NOT NULL,
         description NVARCHAR(MAX) NULL
     );

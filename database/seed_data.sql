@@ -1,4 +1,4 @@
-﻿-- =========================================================================
+-- =========================================================================
 -- MASTER SEED DATA SCRIPT: LOWLAND COFFEE MICROSERVICES
 -- Khởi tạo toàn bộ dữ liệu mẫu cho 5 cơ sở dữ liệu Microservices (MSSQL / DBML)
 -- =========================================================================
@@ -93,7 +93,7 @@ BEGIN
     (@ProdPhinSua, @CatCoffee, 'Phin Sua Da LowLand', N'Cà phê phin đậm đà hòa quyện sữa đặc béo ngậy ngọt ngào', 29000.00, 'https://placehold.co/300', 1, 0, GETDATE(), GETDATE()),
     (@ProdPhinDen, @CatCoffee, 'Phin Den Da', N'Hương vị cà phê nguyên chất thanh lịch dành cho người sành gu', 25000.00, 'https://placehold.co/300', 1, 0, GETDATE(), GETDATE()),
     (@ProdBacXiu, @CatCoffee, 'Bac Xiu Sua Tuoi', N'Nhiều sữa ít cà phê, béo thơm dịu nhẹ khởi đầu ngày mới', 32000.00, 'https://placehold.co/300', 1, 0, GETDATE(), GETDATE()),
-    (@ProdTraSen, @CatTea, 'Tra Sen Vang Hạt Sen', N'Trà ô long thanh khiết kết hợp hạt sen bùi ngậy và củ năng giòn', 45000.00, 'https://placehold.co/300', 1, 0, GETDATE(), GETDATE()),
+    (@ProdTraSen, @CatTea, N'Tra Sen Vang Hạt Sen', N'Trà ô long thanh khiết kết hợp hạt sen bùi ngậy và củ năng giòn', 45000.00, 'https://placehold.co/300', 1, 0, GETDATE(), GETDATE()),
     (@ProdTraDao, @CatTea, 'Tra Dao Cam Sa', N'Vị đào mọng nước hòa quyện cam tươi mát và hương sả nồng nàn', 45000.00, 'https://placehold.co/300', 1, 0, GETDATE(), GETDATE()),
     (@ProdFreezeMatcha, @CatFreeze, 'Freeze Tra Xanh Matcha', N'Matcha Nhật Bản xay đá nhuyễn kèm thạch matcha mát lạnh', 49000.00, 'https://placehold.co/300', 1, 0, GETDATE(), GETDATE()),
     (@ProdMousse, @CatCake, 'Banh Mousse Cacao', N'Bánh mousse mềm mịn tan ngay trong miệng với vị đắng ngọt dịu', 35000.00, 'https://placehold.co/300', 1, 0, GETDATE(), GETDATE());

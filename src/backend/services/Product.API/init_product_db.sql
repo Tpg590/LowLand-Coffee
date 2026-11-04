@@ -50,7 +50,7 @@ BEGIN
     CREATE TABLE dbo.product_options (
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
         product_id UNIQUEIDENTIFIER NOT NULL,
-        option_type VARCHAR(20) NOT NULL, -- SIZE, TOPPING, ICE_LEVEL, SUGAR_LEVEL
+        option_type NVARCHAR(20) NOT NULL, -- SIZE, TOPPING, ICE_LEVEL, SUGAR_LEVEL
         name NVARCHAR(50) NOT NULL,
         extra_price DECIMAL(12,2) NOT NULL DEFAULT 0.00,
         is_available BIT NOT NULL DEFAULT 1,

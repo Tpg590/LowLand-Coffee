@@ -176,6 +176,14 @@ using (var scope = app.Services.CreateScope())
             BEGIN
                 ALTER TABLE dbo.product_options ALTER COLUMN name NVARCHAR(50) NOT NULL;
             END;
+
+            IF EXISTS (
+                SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_NAME = 'product_options' AND COLUMN_NAME = 'option_type' AND DATA_TYPE = 'varchar'
+            )
+            BEGIN
+                ALTER TABLE dbo.product_options ALTER COLUMN option_type NVARCHAR(20) NOT NULL;
+            END;
         ");
     }
     catch (Exception ex)
