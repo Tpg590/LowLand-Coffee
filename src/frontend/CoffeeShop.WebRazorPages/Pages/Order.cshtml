@@ -326,6 +326,17 @@
             }
 
             renderOrderItems();
+
+            // Nạp mã voucher từ URL query nếu có (ví dụ: /Order?voucher=LOWLAND20)
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const voucherParam = urlParams.get('voucher');
+                if (voucherParam) {
+                    const couponInput = document.getElementById('coupon-input');
+                    if (couponInput) couponInput.value = voucherParam.trim().toUpperCase();
+                    openCouponModal();
+                }
+            } catch (e) {}
         }
 
         /**
@@ -482,8 +493,8 @@
         }
 
         /**
-         * Kiểm tra mã ưu đãi qua Engagement.API (hoặc xóa giảm giá nếu mã rỗng).
-         * Tuyệt đối không dùng dữ liệu giả tự động giảm tiền cho mọi chuỗi bất kỳ.
+         * Kiểm tra và áp dụng mã giảm giá (Voucher) qua Engagement.API.
+         * Tính toán chính xác mức giảm dựa trên giá trị đơn hàng hiện tại.
          */
         async function applyCoupon() {
             const code = document.getElementById('coupon-input').value.trim().toUpperCase();
@@ -492,28 +503,49 @@
                 return;
             }
 
+            const cart = getCart();
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+            const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token') || '';
+            const headers = {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            };
+
+            let data = null;
+            // 1. Gọi xác thực voucher qua API Gateway
             try {
-                const token = localStorage.getItem('auth_token') || '';
-                const res = await fetch(`${API_GATEWAY_URL}/api/vouchers/code/${encodeURIComponent(code)}`, {
-                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                const res = await fetch(`${API_GATEWAY_URL}/api/vouchers/validate`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ voucherCode: code, orderSubtotal: subtotal })
                 });
+                data = await res.json().catch(() => null);
+            } catch (e) {
+                console.warn('API Gateway failed, trying direct Engagement.API...', e);
+            }
 
-                if (res.ok) {
-                    const data = await res.json();
-                    const voucher = data?.data || data;
-                    if (voucher && voucher.discountValue > 0) {
-                        appliedDiscount = Number(voucher.discountValue) || 0;
-                        closeCouponModal();
-                        recalculateTotal();
-                        showToast('Áp dụng thành công', `Đã áp dụng mã "${code}" giảm ${appliedDiscount.toLocaleString('vi-VN')}đ!`, 'success');
-                        return;
-                    }
-                }
+            // 2. Dự phòng gọi trực tiếp cổng Engagement.API (5004) nếu gateway chưa khởi động
+            if (!data) {
+                try {
+                    const fallbackRes = await fetch('http://localhost:5004/api/vouchers/validate', {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({ voucherCode: code, orderSubtotal: subtotal })
+                    });
+                    data = await fallbackRes.json().catch(() => null);
+                } catch (e2) {}
+            }
 
-                showToast('Mã không hợp lệ', `Không tìm thấy mã ưu đãi "${code}" hoặc mã đã hết hạn.`, 'error');
-            } catch (err) {
-                console.warn('Không thể kết nối Engagement.API để kiểm tra voucher:', err);
-                showToast('Không thể kiểm tra mã', 'Dịch vụ kiểm tra mã ưu đãi hiện không phản hồi.', 'warning');
+            if (data && data.isSuccess && data.data) {
+                appliedDiscount = Number(data.data.discountAmount || 0);
+                closeCouponModal();
+                recalculateTotal();
+                showToast('Áp dụng thành công', data.data.message || `Đã áp dụng mã "${code}" giảm ${appliedDiscount.toLocaleString('vi-VN')}đ!`, 'success');
+            } else if (data && !data.isSuccess) {
+                showToast('Mã không hợp lệ', data.message || 'Mã ưu đãi không hợp lệ hoặc đơn hàng chưa đủ điều kiện tối thiểu.', 'error');
+            } else {
+                showToast('Không thể kiểm tra mã', 'Dịch vụ kiểm tra mã ưu đãi hiện không phản hồi. Vui lòng thử lại sau.', 'warning');
             }
         }
 

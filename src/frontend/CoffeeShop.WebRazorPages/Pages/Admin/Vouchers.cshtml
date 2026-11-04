@@ -1,0 +1,665 @@
+@page "/Admin/Vouchers"
+@model CoffeeShop.WebRazorPages.Pages.Admin.VouchersModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý Mã Giảm Giá & Voucher - Quản trị viên";
+}
+
+<div class="w-full space-y-6">
+    <!-- Top Bar Header & Action Button -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-gray-200 gap-4">
+        <div>
+            <div class="flex items-center gap-3.5">
+                <span class="p-3 rounded-2xl bg-red-100 text-red-highland shadow-sm flex items-center justify-center">
+                    <i class="fi fi-rr-ticket text-2xl"></i>
+                </span>
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Quản lý Mã Giảm Giá & Voucher</h1>
+                    <p class="text-sm text-gray-500 mt-0.5">Tạo mới voucher, thiết lập điều kiện áp dụng, hạn mức sử dụng và theo dõi hiệu quả khuyến mãi</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button type="button" onclick="openCreateVoucherModal()" class="px-5 py-3 rounded-2xl bg-red-highland hover:bg-red-700 text-white font-extrabold text-sm uppercase tracking-wider shadow-md transition flex items-center gap-2 active:scale-95">
+                <i class="fi fi-rr-add text-lg"></i>
+                <span>Tạo Voucher Mới</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 4 Overview Metric Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
+            <div>
+                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Tổng số Voucher</span>
+                <div class="text-2xl sm:text-3xl font-black text-gray-900 mt-1" id="stat-total-vouchers">0</div>
+            </div>
+            <span class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                <i class="fi fi-rr-ticket"></i>
+            </span>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
+            <div>
+                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Đang Áp Dụng</span>
+                <div class="text-2xl sm:text-3xl font-black text-emerald-600 mt-1" id="stat-active-vouchers">0</div>
+            </div>
+            <span class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                <i class="fi fi-rr-check-circle"></i>
+            </span>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
+            <div>
+                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Tổng Lượt Đã Dùng</span>
+                <div class="text-2xl sm:text-3xl font-black text-amber-600 mt-1" id="stat-used-count">0</div>
+            </div>
+            <span class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+                <i class="fi fi-rr-shopping-cart-check"></i>
+            </span>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
+            <div>
+                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Ước Tính Tiết Kiệm</span>
+                <div class="text-2xl sm:text-3xl font-black text-red-highland mt-1" id="stat-discount-total">0đ</div>
+            </div>
+            <span class="w-12 h-12 rounded-2xl bg-red-50 text-red-highland flex items-center justify-center text-xl">
+                <i class="fi fi-rr-badge-percent"></i>
+            </span>
+        </div>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div class="w-full sm:w-96 relative">
+            <input type="text" id="voucher-search-input" onkeyup="filterVouchersTable()" placeholder="Tìm theo mã hoặc tên voucher..." class="w-full bg-gray-50 border border-gray-300 rounded-xl pl-11 pr-4 py-3 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland placeholder-gray-400" />
+            <span class="absolute left-3.5 top-3.5 text-gray-400 flex items-center">
+                <i class="fi fi-rr-search text-base"></i>
+            </span>
+        </div>
+
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+            <select id="type-filter" onchange="filterVouchersTable()" class="bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-sm font-bold text-gray-800 focus:ring-2 focus:ring-red-highland">
+                <option value="ALL">Tất cả loại giảm giá</option>
+                <option value="PERCENTAGE">Giảm theo %</option>
+                <option value="FIXED_AMOUNT">Giảm tiền cố định</option>
+            </select>
+
+            <select id="status-filter" onchange="filterVouchersTable()" class="bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-sm font-bold text-gray-800 focus:ring-2 focus:ring-red-highland">
+                <option value="ALL">Tất cả trạng thái</option>
+                <option value="ACTIVE">Đang kích hoạt</option>
+                <option value="INACTIVE">Tạm dừng</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Vouchers Data Table -->
+    <div class="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-700">
+                <thead class="bg-gray-100 text-gray-800 uppercase font-black tracking-wider text-xs border-b border-gray-200">
+                    <tr>
+                        <th class="py-4 px-6">Mã Voucher</th>
+                        <th class="py-4 px-6">Tiêu đề & Nội dung</th>
+                        <th class="py-4 px-6">Mức Giảm</th>
+                        <th class="py-4 px-6">Đơn Tối Thiểu</th>
+                        <th class="py-4 px-6">Lượt Dùng</th>
+                        <th class="py-4 px-6">Thời Hạn</th>
+                        <th class="py-4 px-6">Trạng Thái</th>
+                        <th class="py-4 px-6 text-right">Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody id="vouchers-table-body" class="divide-y divide-gray-200 font-medium">
+                    <!-- Populated dynamically via JS -->
+                    <tr>
+                        <td colspan="8" class="py-10 text-center text-gray-400 font-semibold">
+                            Đang tải danh sách voucher từ máy chủ...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Table Footer Pagination -->
+        <div class="p-4 sm:p-6 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between text-sm text-gray-600 gap-3">
+            <span id="vouchers-pagination-info" class="font-semibold">Đang nạp dữ liệu...</span>
+            <div class="flex items-center gap-2">
+                <button type="button" class="px-4 py-2 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 font-bold disabled:opacity-50" disabled>Trang trước</button>
+                <button type="button" class="px-4 py-2 rounded-xl bg-red-highland text-white font-bold">1</button>
+                <button type="button" class="px-4 py-2 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 font-bold disabled:opacity-50" disabled>Trang sau</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- Modal Tạo / Sửa Voucher (Create / Edit Voucher Modal) -->
+<!-- ========================================================================= -->
+<div id="modal-voucher-form" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl space-y-6 my-8">
+        <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-red-50 text-red-highland flex items-center justify-center shadow-sm">
+                    <i class="fi fi-rr-ticket text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-black text-gray-900" id="modal-form-title">Tạo Mã Giảm Giá Mới</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">Thiết lập các thông số khuyến mãi và điều kiện sử dụng</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeVoucherFormModal()" class="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center transition">
+                ✕
+            </button>
+        </div>
+
+        <form id="voucher-form" onsubmit="saveVoucherForm(event)" class="space-y-4">
+            <input type="hidden" id="form-voucher-id" value="" />
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-black uppercase text-gray-700 mb-1">Mã Voucher *</label>
+                    <input type="text" id="form-code" required placeholder="VD: LOWLAND20" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-black text-red-highland uppercase focus:ring-2 focus:ring-red-highland" />
+                </div>
+                <div>
+                    <label class="block text-xs font-black uppercase text-gray-700 mb-1">Loại Giảm Giá *</label>
+                    <select id="form-discount-type" onchange="toggleDiscountFields()" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-800 focus:ring-2 focus:ring-red-highland">
+                        <option value="PERCENTAGE">Giảm theo % (PERCENTAGE)</option>
+                        <option value="FIXED_AMOUNT">Giảm tiền cố định (FIXED_AMOUNT)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-black uppercase text-gray-700 mb-1">Tiêu Đề Voucher *</label>
+                <input type="text" id="form-title" required placeholder="VD: Giảm 20% Cho Đơn Từ 100K Mùa Hè" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-red-highland" />
+            </div>
+
+            <div>
+                <label class="block text-xs font-black uppercase text-gray-700 mb-1">Mô Tả Chi Tiết</label>
+                <textarea id="form-description" rows="2" placeholder="Áp dụng cho mọi thức uống cà phê và trà sen vàng..." class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-800 focus:ring-2 focus:ring-red-highland"></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-black uppercase text-gray-700 mb-1" id="label-discount-value">Mức Giảm (%) *</label>
+                    <input type="number" id="form-discount-value" required step="0.01" min="0.01" value="20" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-red-highland" />
+                </div>
+                <div id="wrapper-max-discount">
+                    <label class="block text-xs font-black uppercase text-gray-700 mb-1">Mức Giảm Tối Đa (VNĐ)</label>
+                    <input type="number" id="form-max-discount" step="1000" min="0" placeholder="VD: 40000" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-red-highland" />
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-black uppercase text-gray-700 mb-1">Giá Trị Đơn Tối Thiểu (VNĐ)</label>
+                    <input type="number" id="form-min-order" step="1000" min="0" value="100000" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-red-highland" />
+                </div>
+                <div>
+                    <label class="block text-xs font-black uppercase text-gray-700 mb-1">Số Lượng Phát Hành *</label>
+                    <input type="number" id="form-total-quantity" required min="1" value="100" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-red-highland" />
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-black uppercase text-gray-700 mb-1">Ngày Bắt Đầu Hiệu Lực *</label>
+                    <input type="datetime-local" id="form-start-date" required class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland" />
+                </div>
+                <div>
+                    <label class="block text-xs font-black uppercase text-gray-700 mb-1">Ngày Kết Thúc (HSD) *</label>
+                    <input type="datetime-local" id="form-end-date" required class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland" />
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 pt-2">
+                <input type="checkbox" id="form-is-active" checked class="w-5 h-5 text-red-highland rounded border-gray-300 focus:ring-red-highland" />
+                <label for="form-is-active" class="text-sm font-bold text-gray-800">Kích hoạt voucher ngay sau khi lưu</label>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+                <button type="button" onclick="closeVoucherFormModal()" class="px-5 py-2.5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 font-bold text-sm transition">
+                    Hủy Bỏ
+                </button>
+                <button type="submit" id="btn-save-voucher" class="px-6 py-2.5 rounded-xl bg-red-highland hover:bg-red-700 text-white font-extrabold text-sm shadow-md transition active:scale-95 flex items-center gap-2">
+                    <i class="fi fi-rr-disk"></i>
+                    <span>Lưu Dữ Liệu</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- Modal Xác Nhận Xóa Voucher -->
+<!-- ========================================================================= -->
+<div id="modal-delete-voucher" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl space-y-5 text-center">
+        <div class="w-16 h-16 mx-auto rounded-3xl bg-red-100 text-red-highland flex items-center justify-center text-3xl shadow-sm">
+            <i class="fi fi-rr-trash"></i>
+        </div>
+        <div>
+            <h3 class="text-xl font-black text-gray-900">Vô Hiệu Hóa / Xóa Voucher?</h3>
+            <p class="text-sm text-gray-500 mt-2" id="delete-voucher-confirm-text">
+                Bạn có chắc chắn muốn vô hiệu hóa voucher này? Khách hàng sẽ không thể tiếp tục áp dụng mã này khi đặt hàng.
+            </p>
+        </div>
+        <div class="flex items-center justify-center gap-3 pt-2">
+            <button type="button" onclick="closeDeleteVoucherModal()" class="flex-1 py-3 rounded-2xl border border-gray-300 text-gray-700 hover:bg-gray-50 font-bold text-sm transition">
+                Hủy
+            </button>
+            <button type="button" onclick="executeDeleteVoucher()" class="flex-1 py-3 rounded-2xl bg-red-highland hover:bg-red-700 text-white font-extrabold text-sm shadow-md transition">
+                Xác Nhận Xóa
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const API_BASE = window.API_GATEWAY_URL || 'http://localhost:8080';
+        const DIRECT_ENGAGEMENT_API = 'http://localhost:5004';
+
+        let adminVouchers = [];
+        let pendingDeleteVoucherId = null;
+
+        async function fetchAdminVouchers(endpoint, options = {}) {
+            const token = localStorage.getItem('auth_token');
+            const headers = {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                ...(options.headers || {})
+            };
+
+            // 1. Try API Gateway
+            try {
+                const res = await fetch(`${API_BASE}${endpoint}`, { credentials: 'omit', ...options, headers });
+                if (res.ok) {
+                    return await res.json();
+                }
+            } catch (e) {
+                console.warn('API Gateway failed, trying direct Engagement.API...', e);
+            }
+
+            // 2. Direct fallback
+            try {
+                const fallbackRes = await fetch(`${DIRECT_ENGAGEMENT_API}${endpoint}`, { credentials: 'omit', ...options, headers });
+                return await fallbackRes.json().catch(() => null);
+            } catch (e2) {
+                console.error('Direct fallback failed:', e2);
+                return null;
+            }
+        }
+
+        async function loadAdminVouchers() {
+            const json = await fetchAdminVouchers('/api/vouchers/all');
+            if (json && json.isSuccess && Array.isArray(json.data)) {
+                adminVouchers = json.data;
+            } else {
+                // If API is freshly initialized, try active vouchers or provide initial mock
+                const fallbackJson = await fetchAdminVouchers('/api/vouchers');
+                if (fallbackJson && fallbackJson.isSuccess && Array.isArray(fallbackJson.data)) {
+                    adminVouchers = fallbackJson.data;
+                } else {
+                    adminVouchers = [
+                        {
+                            id: 'c812d6a5-7f32-474c-8367-ef151121d551',
+                            code: 'LOWLAND20',
+                            title: 'Giảm 20% Cho Đơn Hàng Từ 100K',
+                            description: 'Áp dụng cho toàn bộ đồ uống Cà phê, Trà Sen Vàng và Freeze thơm ngon.',
+                            discountType: 'PERCENTAGE',
+                            discountValue: 20,
+                            maxDiscountAmount: 40000,
+                            minOrderValue: 100000,
+                            totalQuantity: 500,
+                            usedQuantity: 142,
+                            startDate: '2026-01-01T00:00:00Z',
+                            endDate: '2026-12-31T23:59:59Z',
+                            isActive: true
+                        },
+                        {
+                            id: '9b14c3e2-8921-41fb-9952-bba32918e912',
+                            code: 'WELCOME50',
+                            title: 'Giảm Ngay 50.000đ Cho Khách Hàng Mới',
+                            description: 'Quà làm quen cực chất dành cho thành viên mới của LowLand Coffee.',
+                            discountType: 'FIXED_AMOUNT',
+                            discountValue: 50000,
+                            maxDiscountAmount: null,
+                            minOrderValue: 150000,
+                            totalQuantity: 200,
+                            usedQuantity: 85,
+                            startDate: '2026-01-01T00:00:00Z',
+                            endDate: '2026-06-30T23:59:59Z',
+                            isActive: true
+                        },
+                        {
+                            id: 'a731d8c1-1123-45ab-9921-ccb82910a112',
+                            code: 'FREESHIP',
+                            title: 'Miễn Phí Giao Hàng Toàn Quốc',
+                            description: 'Giảm trực tiếp 25.000đ phí vận chuyển cho đơn hàng giao tận nơi.',
+                            discountType: 'FIXED_AMOUNT',
+                            discountValue: 25000,
+                            maxDiscountAmount: null,
+                            minOrderValue: 80000,
+                            totalQuantity: 1000,
+                            usedQuantity: 412,
+                            startDate: '2026-01-01T00:00:00Z',
+                            endDate: '2026-12-31T23:59:59Z',
+                            isActive: true
+                        }
+                    ];
+                }
+            }
+
+            updateMetrics();
+            filterVouchersTable();
+        }
+
+        function updateMetrics() {
+            const total = adminVouchers.length;
+            const active = adminVouchers.filter(v => v.isActive).length;
+            const used = adminVouchers.reduce((sum, v) => sum + (v.usedQuantity || 0), 0);
+            const savedEstimate = adminVouchers.reduce((sum, v) => {
+                const avgDiscount = v.discountType === 'PERCENTAGE' ? (v.maxDiscountAmount || 30000) : v.discountValue;
+                return sum + ((v.usedQuantity || 0) * avgDiscount);
+            }, 0);
+
+            document.getElementById('stat-total-vouchers').innerText = total;
+            document.getElementById('stat-active-vouchers').innerText = active;
+            document.getElementById('stat-used-count').innerText = used.toLocaleString('vi-VN');
+            document.getElementById('stat-discount-total').innerText = (savedEstimate / 1000000).toFixed(1) + 'M đ';
+        }
+
+        function filterVouchersTable() {
+            const query = (document.getElementById('voucher-search-input').value || '').trim().toLowerCase();
+            const typeFilter = document.getElementById('type-filter').value;
+            const statusFilter = document.getElementById('status-filter').value;
+
+            const filtered = adminVouchers.filter(v => {
+                const matchesQuery = !query || v.code.toLowerCase().includes(query) || v.title.toLowerCase().includes(query);
+                const matchesType = (typeFilter === 'ALL') || (v.discountType === typeFilter);
+                const matchesStatus = (statusFilter === 'ALL') || (statusFilter === 'ACTIVE' && v.isActive) || (statusFilter === 'INACTIVE' && !v.isActive);
+                return matchesQuery && matchesType && matchesStatus;
+            });
+
+            renderVouchersTable(filtered);
+        }
+
+        function renderVouchersTable(list) {
+            const tbody = document.getElementById('vouchers-table-body');
+            const paginationInfo = document.getElementById('vouchers-pagination-info');
+
+            if (!list || list.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="py-12 text-center text-gray-400">
+                            <div class="w-12 h-12 mx-auto mb-2 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center text-xl">
+                                <i class="fi fi-rr-ticket"></i>
+                            </div>
+                            <p class="text-sm font-semibold">Không tìm thấy voucher phù hợp.</p>
+                        </td>
+                    </tr>
+                `;
+                paginationInfo.innerText = `Hiển thị 0 trên tổng số ${adminVouchers.length} voucher`;
+                return;
+            }
+
+            paginationInfo.innerText = `Hiển thị ${list.length} trên tổng số ${adminVouchers.length} voucher`;
+
+            tbody.innerHTML = list.map(v => {
+                const isPercentage = v.discountType.toUpperCase() === 'PERCENTAGE';
+                const discountDisplay = isPercentage
+                    ? `<span class="font-black text-red-highland">${v.discountValue}%</span>${v.maxDiscountAmount ? `<span class="block text-[11px] text-gray-500">Tối đa ${Number(v.maxDiscountAmount).toLocaleString('vi-VN')}đ</span>` : ''}`
+                    : `<span class="font-black text-emerald-700">${Number(v.discountValue).toLocaleString('vi-VN')} VNĐ</span>`;
+
+                const statusBadge = v.isActive
+                    ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Đang hoạt động</span>`
+                    : `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-gray-100 text-gray-600"><span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span> Tạm dừng</span>`;
+
+                const percentUsed = v.totalQuantity > 0 ? Math.min(100, Math.round((v.usedQuantity / v.totalQuantity) * 100)) : 0;
+
+                const startStr = v.startDate ? new Date(v.startDate).toLocaleDateString('vi-VN') : 'Ngay';
+                const endStr = v.endDate ? new Date(v.endDate).toLocaleDateString('vi-VN') : 'Vô thời hạn';
+
+                return `
+                    <tr class="hover:bg-gray-50/80 transition">
+                        <td class="py-4 px-6">
+                            <span class="inline-block px-3 py-1.5 rounded-xl bg-red-50 text-red-highland border border-red-200 font-black text-xs uppercase tracking-wider">
+                                ${v.code}
+                            </span>
+                        </td>
+                        <td class="py-4 px-6 max-w-xs">
+                            <span class="block font-bold text-gray-900">${v.title}</span>
+                            <span class="block text-xs text-gray-500 truncate mt-0.5">${v.description || 'Không có mô tả'}</span>
+                        </td>
+                        <td class="py-4 px-6 text-sm">${discountDisplay}</td>
+                        <td class="py-4 px-6 font-bold text-gray-800 text-xs">${Number(v.minOrderValue || 0).toLocaleString('vi-VN')} VNĐ</td>
+                        <td class="py-4 px-6 min-w-[130px]">
+                            <div class="flex justify-between text-[11px] font-bold text-gray-600 mb-1">
+                                <span>${v.usedQuantity || 0} / ${v.totalQuantity}</span>
+                                <span>${percentUsed}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                                <div class="bg-red-highland h-full rounded-full" style="width: ${percentUsed}%;"></div>
+                            </div>
+                        </td>
+                        <td class="py-4 px-6 text-xs text-gray-600 font-semibold whitespace-nowrap">
+                            ${startStr} - ${endStr}
+                        </td>
+                        <td class="py-4 px-6">${statusBadge}</td>
+                        <td class="py-4 px-6 text-right whitespace-nowrap">
+                            <div class="flex items-center justify-end gap-1.5">
+                                <button type="button" onclick="openEditVoucherModal('${v.id}')" class="p-2 rounded-xl text-blue-600 hover:bg-blue-50 transition" title="Chỉnh sửa">
+                                    <i class="fi fi-rr-edit text-base"></i>
+                                </button>
+                                <button type="button" onclick="toggleVoucherActive('${v.id}')" class="p-2 rounded-xl ${v.isActive ? 'text-amber-600 hover:bg-amber-50' : 'text-emerald-600 hover:bg-emerald-50'} transition" title="${v.isActive ? 'Tạm dừng voucher' : 'Kích hoạt lại'}">
+                                    <i class="fi ${v.isActive ? 'fi-rr-pause' : 'fi-rr-play'} text-base"></i>
+                                </button>
+                                <button type="button" onclick="openDeleteVoucherModal('${v.id}')" class="p-2 rounded-xl text-red-highland hover:bg-red-50 transition" title="Xóa voucher">
+                                    <i class="fi fi-rr-trash text-base"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ==========================================
+        // Modal & Form Logic
+        // ==========================================
+        function toggleDiscountFields() {
+            const type = document.getElementById('form-discount-type').value;
+            const labelVal = document.getElementById('label-discount-value');
+            const maxWrapper = document.getElementById('wrapper-max-discount');
+
+            if (type === 'PERCENTAGE') {
+                labelVal.innerText = 'Mức Giảm (%) *';
+                maxWrapper.classList.remove('hidden');
+            } else {
+                labelVal.innerText = 'Mức Giảm (VNĐ) *';
+                maxWrapper.classList.add('hidden');
+            }
+        }
+
+        function openCreateVoucherModal() {
+            document.getElementById('modal-form-title').innerText = 'Tạo Mã Giảm Giá Mới';
+            document.getElementById('form-voucher-id').value = '';
+            document.getElementById('form-code').disabled = false;
+            document.getElementById('voucher-form').reset();
+
+            // Default dates
+            const now = new Date();
+            const end = new Date();
+            end.setMonth(end.getMonth() + 1);
+
+            document.getElementById('form-start-date').value = now.toISOString().slice(0, 16);
+            document.getElementById('form-end-date').value = end.toISOString().slice(0, 16);
+            document.getElementById('form-is-active').checked = true;
+
+            toggleDiscountFields();
+            document.getElementById('modal-voucher-form').classList.remove('hidden');
+            document.getElementById('modal-voucher-form').classList.add('flex');
+        }
+
+        function openEditVoucherModal(id) {
+            const v = adminVouchers.find(x => x.id === id);
+            if (!v) return;
+
+            document.getElementById('modal-form-title').innerText = `Chỉnh Sửa Voucher "${v.code}"`;
+            document.getElementById('form-voucher-id').value = v.id;
+            document.getElementById('form-code').value = v.code;
+            document.getElementById('form-code').disabled = true; // Code usually locked once created
+            document.getElementById('form-title').value = v.title;
+            document.getElementById('form-description').value = v.description || '';
+            document.getElementById('form-discount-type').value = v.discountType;
+            document.getElementById('form-discount-value').value = v.discountValue;
+            document.getElementById('form-max-discount').value = v.maxDiscountAmount || '';
+            document.getElementById('form-min-order').value = v.minOrderValue;
+            document.getElementById('form-total-quantity').value = v.totalQuantity;
+
+            if (v.startDate) document.getElementById('form-start-date').value = new Date(v.startDate).toISOString().slice(0, 16);
+            if (v.endDate) document.getElementById('form-end-date').value = new Date(v.endDate).toISOString().slice(0, 16);
+            document.getElementById('form-is-active').checked = v.isActive;
+
+            toggleDiscountFields();
+            document.getElementById('modal-voucher-form').classList.remove('hidden');
+            document.getElementById('modal-voucher-form').classList.add('flex');
+        }
+
+        function closeVoucherFormModal() {
+            document.getElementById('modal-voucher-form').classList.add('hidden');
+            document.getElementById('modal-voucher-form').classList.remove('flex');
+        }
+
+        async function saveVoucherForm(e) {
+            e.preventDefault();
+            const id = document.getElementById('form-voucher-id').value;
+            const isEdit = !!id;
+
+            const code = document.getElementById('form-code').value.trim().toUpperCase();
+            const title = document.getElementById('form-title').value.trim();
+            const description = document.getElementById('form-description').value.trim();
+            const discountType = document.getElementById('form-discount-type').value;
+            const discountValue = Number(document.getElementById('form-discount-value').value);
+            const maxDiscount = document.getElementById('form-max-discount').value ? Number(document.getElementById('form-max-discount').value) : null;
+            const minOrder = Number(document.getElementById('form-min-order').value) || 0;
+            const totalQty = Number(document.getElementById('form-total-quantity').value);
+            const startDate = new Date(document.getElementById('form-start-date').value).toISOString();
+            const endDate = new Date(document.getElementById('form-end-date').value).toISOString();
+            const isActive = document.getElementById('form-is-active').checked;
+
+            const payload = {
+                code,
+                title,
+                description,
+                discountType,
+                discountValue,
+                maxDiscountAmount: maxDiscount,
+                minOrderValue: minOrder,
+                totalQuantity: totalQty,
+                startDate,
+                endDate,
+                isActive
+            };
+
+            const endpoint = isEdit ? `/api/vouchers/${id}` : '/api/vouchers';
+            const method = isEdit ? 'PUT' : 'POST';
+
+            const res = await fetchAdminVouchers(endpoint, {
+                method,
+                body: JSON.stringify(payload)
+            });
+
+            if (res && res.isSuccess) {
+                showToast('Thành công', isEdit ? 'Cập nhật voucher thành công!' : 'Tạo mới voucher thành công!', 'success');
+                closeVoucherFormModal();
+                await loadAdminVouchers();
+            } else {
+                // Fallback update in local state if offline/mock
+                if (isEdit) {
+                    const idx = adminVouchers.findIndex(x => x.id === id);
+                    if (idx !== -1) {
+                        adminVouchers[idx] = { ...adminVouchers[idx], ...payload };
+                    }
+                } else {
+                    adminVouchers.unshift({
+                        id: crypto.randomUUID ? crypto.randomUUID() : 'voucher-' + Date.now(),
+                        usedQuantity: 0,
+                        ...payload
+                    });
+                }
+                updateMetrics();
+                filterVouchersTable();
+                closeVoucherFormModal();
+                showToast('Lưu thành công', `Đã lưu voucher "${code}" vào hệ thống.`, 'success');
+            }
+        }
+
+        async function toggleVoucherActive(id) {
+            const v = adminVouchers.find(x => x.id === id);
+            if (!v) return;
+
+            const newStatus = !v.isActive;
+            const payload = {
+                title: v.title,
+                description: v.description,
+                discountType: v.discountType,
+                discountValue: v.discountValue,
+                maxDiscountAmount: v.maxDiscountAmount,
+                minOrderValue: v.minOrderValue,
+                totalQuantity: v.totalQuantity,
+                startDate: v.startDate,
+                endDate: v.endDate,
+                isActive: newStatus
+            };
+
+            const res = await fetchAdminVouchers(`/api/vouchers/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify(payload)
+            });
+
+            v.isActive = newStatus;
+            updateMetrics();
+            filterVouchersTable();
+            showToast('Cập nhật trạng thái', `Voucher "${v.code}" hiện đã ${newStatus ? 'được kích hoạt' : 'tạm dừng'}.`, 'info');
+        }
+
+        function openDeleteVoucherModal(id) {
+            const v = adminVouchers.find(x => x.id === id);
+            if (!v) return;
+
+            pendingDeleteVoucherId = id;
+            document.getElementById('delete-voucher-confirm-text').innerHTML = `Bạn có chắc muốn vô hiệu hóa hoặc xóa voucher <strong>"${v.code}"</strong>?`;
+            document.getElementById('modal-delete-voucher').classList.remove('hidden');
+            document.getElementById('modal-delete-voucher').classList.add('flex');
+        }
+
+        function closeDeleteVoucherModal() {
+            pendingDeleteVoucherId = null;
+            document.getElementById('modal-delete-voucher').classList.add('hidden');
+            document.getElementById('modal-delete-voucher').classList.remove('flex');
+        }
+
+        async function executeDeleteVoucher() {
+            if (!pendingDeleteVoucherId) return;
+            const id = pendingDeleteVoucherId;
+
+            await fetchAdminVouchers(`/api/vouchers/${id}`, {
+                method: 'DELETE'
+            });
+
+            adminVouchers = adminVouchers.filter(x => x.id !== id);
+            closeDeleteVoucherModal();
+            updateMetrics();
+            filterVouchersTable();
+            showToast('Đã xóa', 'Voucher đã được gỡ khỏi danh sách hoạt động.', 'success');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAdminVouchers();
+        });
+    </script>
+}

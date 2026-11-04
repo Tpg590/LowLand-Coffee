@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using CoffeeShop.WebRazorPages.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,9 @@ builder.Services.AddHttpClient("ApiGateway", client =>
     client.BaseAddress = new Uri(apiGatewayBaseUrl);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
+
+// Register Application Services
+builder.Services.AddScoped<IEngagementHttpService, EngagementHttpService>();
 
 // Configure Session
 builder.Services.AddDistributedMemoryCache();
