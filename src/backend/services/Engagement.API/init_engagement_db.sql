@@ -18,10 +18,10 @@ IF OBJECT_ID('dbo.promo_vouchers', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.promo_vouchers (
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-        code VARCHAR(50) NOT NULL UNIQUE,
+        code NVARCHAR(50) NOT NULL UNIQUE,
         title NVARCHAR(200) NOT NULL,
         description NVARCHAR(MAX) NULL,
-        discount_type VARCHAR(20) NOT NULL, -- PERCENTAGE hoặc FIXED_AMOUNT
+        discount_type NVARCHAR(20) NOT NULL, -- PERCENTAGE hoặc FIXED_AMOUNT
         discount_value DECIMAL(12,2) NOT NULL,
         max_discount_amount DECIMAL(12,2) NULL,
         min_order_value DECIMAL(12,2) NOT NULL DEFAULT 0.00,
@@ -56,7 +56,7 @@ IF OBJECT_ID('dbo.loyalty_tiers', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.loyalty_tiers (
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-        tier_code VARCHAR(20) NOT NULL UNIQUE, -- BRONZE, SILVER, GOLD, DIAMOND
+        tier_code NVARCHAR(20) NOT NULL UNIQUE, -- BRONZE, SILVER, GOLD, DIAMOND
         tier_name NVARCHAR(50) NOT NULL,
         min_points INT NOT NULL DEFAULT 0,
         point_multiplier DECIMAL(4,2) NOT NULL DEFAULT 1.00,
@@ -90,7 +90,7 @@ BEGIN
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
         member_id UNIQUEIDENTIFIER NOT NULL,
         order_id UNIQUEIDENTIFIER NULL,  -- Logical Ref -> order_orders.id
-        transaction_type VARCHAR(20) NOT NULL, -- EARN, REDEEM, REFUND, ADJUST
+        transaction_type NVARCHAR(20) NOT NULL, -- EARN, REDEEM, REFUND, ADJUST
         points_changed INT NOT NULL,
         balance_after INT NOT NULL,
         reason NVARCHAR(500) NULL,

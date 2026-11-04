@@ -1,4 +1,4 @@
-﻿-- ====================================================================================
+-- ====================================================================================
 -- SCRIPT TỔNG HỢP: KHỞI TẠO TOÀN BỘ 5 CƠ SỞ DỮ LIỆU MICROSERVICES (PRN232)
 -- Hệ thống: LowLand Coffee Website (Thiết kế theo chuẩn DBML dbdiagram.io - UUIDs)
 -- 1. Coffee_AuthDB (Auth & User - Khang)
@@ -20,7 +20,7 @@ IF OBJECT_ID('dbo.auth_roles', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.auth_roles (
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-        name VARCHAR(50) NOT NULL UNIQUE,
+        name NVARCHAR(50) NOT NULL UNIQUE,
         description NVARCHAR(MAX) NULL,
         created_at DATETIME2 NOT NULL DEFAULT GETDATE()
     );
@@ -32,10 +32,10 @@ BEGIN
     CREATE TABLE dbo.auth_users (
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
         role_id UNIQUEIDENTIFIER NOT NULL,
-        email VARCHAR(255) NOT NULL UNIQUE,
-        password_hash VARCHAR(255) NOT NULL,
+        email NVARCHAR(255) NOT NULL UNIQUE,
+        password_hash NVARCHAR(255) NOT NULL,
         full_name NVARCHAR(100) NOT NULL,
-        phone_number VARCHAR(20) NULL,
+        phone_number NVARCHAR(20) NULL,
         avatar_url NVARCHAR(MAX) NULL,
         address NVARCHAR(MAX) NULL,
         is_active BIT NOT NULL DEFAULT 1,
@@ -50,7 +50,7 @@ IF OBJECT_ID('dbo.auth_permissions', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.auth_permissions (
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-        code VARCHAR(100) NOT NULL UNIQUE,
+        code NVARCHAR(100) NOT NULL UNIQUE,
         name NVARCHAR(100) NOT NULL,
         description NVARCHAR(MAX) NULL
     );
@@ -81,7 +81,7 @@ IF OBJECT_ID('dbo.product_categories', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.product_categories (
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-        name VARCHAR(100) NOT NULL,
+        name NVARCHAR(100) NOT NULL,
         display_order INT NOT NULL DEFAULT 0,
         is_active BIT NOT NULL DEFAULT 1,
         created_at DATETIME2 NOT NULL DEFAULT GETDATE()
@@ -94,7 +94,7 @@ BEGIN
     CREATE TABLE dbo.product_products (
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
         category_id UNIQUEIDENTIFIER NOT NULL,
-        name VARCHAR(150) NOT NULL,
+        name NVARCHAR(150) NOT NULL,
         description NVARCHAR(MAX) NULL,
         base_price DECIMAL(12,2) NOT NULL,
         image_url NVARCHAR(MAX) NULL,
@@ -112,8 +112,8 @@ BEGIN
     CREATE TABLE dbo.product_options (
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
         product_id UNIQUEIDENTIFIER NOT NULL,
-        option_type VARCHAR(20) NOT NULL,
-        name VARCHAR(50) NOT NULL,
+        option_type NVARCHAR(20) NOT NULL,
+        name NVARCHAR(50) NOT NULL,
         extra_price DECIMAL(12,2) NOT NULL DEFAULT 0.00,
         is_available BIT NOT NULL DEFAULT 1,
         CONSTRAINT FK_product_options_products FOREIGN KEY (product_id) REFERENCES dbo.product_products(id) ON DELETE CASCADE
@@ -134,11 +134,11 @@ BEGIN
     CREATE TABLE dbo.order_orders (
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
         user_id UNIQUEIDENTIFIER NOT NULL,
-        order_code VARCHAR(20) NOT NULL UNIQUE,
+        order_code NVARCHAR(20) NOT NULL UNIQUE,
         total_amount DECIMAL(12,2) NOT NULL,
         discount_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
         final_amount DECIMAL(12,2) NOT NULL,
-        status VARCHAR(30) NOT NULL,
+        status NVARCHAR(30) NOT NULL,
         cancel_reason NVARCHAR(MAX) NULL,
         note NVARCHAR(MAX) NULL,
         created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
@@ -153,7 +153,7 @@ BEGIN
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
         order_id UNIQUEIDENTIFIER NOT NULL,
         product_id UNIQUEIDENTIFIER NOT NULL,
-        product_name VARCHAR(150) NOT NULL,
+        product_name NVARCHAR(150) NOT NULL,
         unit_price DECIMAL(12,2) NOT NULL,
         quantity INT NOT NULL,
         options_summary NVARCHAR(MAX) NULL,
@@ -168,10 +168,10 @@ BEGIN
     CREATE TABLE dbo.order_payments (
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
         order_id UNIQUEIDENTIFIER NOT NULL,
-        payment_method VARCHAR(30) NOT NULL,
-        transaction_code VARCHAR(100) NULL,
+        payment_method NVARCHAR(30) NOT NULL,
+        transaction_code NVARCHAR(100) NULL,
         amount DECIMAL(12,2) NOT NULL,
-        payment_status VARCHAR(30) NOT NULL,
+        payment_status NVARCHAR(30) NOT NULL,
         paid_at DATETIME2 NULL,
         created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
         CONSTRAINT FK_order_payments_orders FOREIGN KEY (order_id) REFERENCES dbo.order_orders(id) ON DELETE CASCADE
@@ -191,10 +191,10 @@ IF OBJECT_ID('dbo.promo_vouchers', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.promo_vouchers (
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-        code VARCHAR(50) NOT NULL UNIQUE,
+        code NVARCHAR(50) NOT NULL UNIQUE,
         title NVARCHAR(200) NOT NULL,
         description NVARCHAR(MAX) NULL,
-        discount_type VARCHAR(20) NOT NULL, -- PERCENTAGE hoặc FIXED_AMOUNT
+        discount_type NVARCHAR(20) NOT NULL, -- PERCENTAGE hoặc FIXED_AMOUNT
         discount_value DECIMAL(12,2) NOT NULL,
         max_discount_amount DECIMAL(12,2) NULL,
         min_order_value DECIMAL(12,2) NOT NULL DEFAULT 0.00,
@@ -229,7 +229,7 @@ IF OBJECT_ID('dbo.loyalty_tiers', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.loyalty_tiers (
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-        tier_code VARCHAR(20) NOT NULL UNIQUE, -- BRONZE, SILVER, GOLD, DIAMOND
+        tier_code NVARCHAR(20) NOT NULL UNIQUE, -- BRONZE, SILVER, GOLD, DIAMOND
         tier_name NVARCHAR(50) NOT NULL,
         min_points INT NOT NULL DEFAULT 0,
         point_multiplier DECIMAL(4,2) NOT NULL DEFAULT 1.00,
@@ -263,7 +263,7 @@ BEGIN
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
         member_id UNIQUEIDENTIFIER NOT NULL,
         order_id UNIQUEIDENTIFIER NULL,  -- Logical Ref -> order_orders.id
-        transaction_type VARCHAR(20) NOT NULL, -- EARN, REDEEM, REFUND, ADJUST
+        transaction_type NVARCHAR(20) NOT NULL, -- EARN, REDEEM, REFUND, ADJUST
         points_changed INT NOT NULL,
         balance_after INT NOT NULL,
         reason NVARCHAR(500) NULL,
@@ -286,9 +286,9 @@ BEGIN
     CREATE TABLE dbo.notif_notifications (
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
         user_id UNIQUEIDENTIFIER NOT NULL,
-        title VARCHAR(200) NOT NULL,
+        title NVARCHAR(200) NOT NULL,
         content NVARCHAR(MAX) NOT NULL,
-        type VARCHAR(50) NOT NULL,
+        type NVARCHAR(50) NOT NULL,
         reference_id UNIQUEIDENTIFIER NULL,
         is_read BIT NOT NULL DEFAULT 0,
         created_at DATETIME2 NOT NULL DEFAULT GETDATE()
@@ -301,8 +301,8 @@ BEGIN
     CREATE TABLE dbo.notif_notification_logs (
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
         notification_id UNIQUEIDENTIFIER NULL,
-        channel VARCHAR(30) NOT NULL,
-        status VARCHAR(20) NOT NULL,
+        channel NVARCHAR(30) NOT NULL,
+        status NVARCHAR(20) NOT NULL,
         error_message NVARCHAR(MAX) NULL,
         sent_at DATETIME2 NOT NULL DEFAULT GETDATE(),
         CONSTRAINT FK_notif_notification_logs_notifications FOREIGN KEY (notification_id) REFERENCES dbo.notif_notifications(id) ON DELETE CASCADE

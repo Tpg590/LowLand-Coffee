@@ -17,7 +17,7 @@ IF OBJECT_ID('dbo.product_categories', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.product_categories (
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-        name VARCHAR(100) NOT NULL,
+        name NVARCHAR(100) NOT NULL,
         display_order INT NOT NULL DEFAULT 0,
         is_active BIT NOT NULL DEFAULT 1,
         created_at DATETIME2 NOT NULL DEFAULT GETDATE()
@@ -31,7 +31,7 @@ BEGIN
     CREATE TABLE dbo.product_products (
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
         category_id UNIQUEIDENTIFIER NOT NULL,
-        name VARCHAR(150) NOT NULL,
+        name NVARCHAR(150) NOT NULL,
         description NVARCHAR(MAX) NULL,
         base_price DECIMAL(12,2) NOT NULL,
         image_url NVARCHAR(MAX) NULL,
@@ -50,8 +50,8 @@ BEGIN
     CREATE TABLE dbo.product_options (
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
         product_id UNIQUEIDENTIFIER NOT NULL,
-        option_type VARCHAR(20) NOT NULL, -- SIZE, TOPPING, ICE_LEVEL, SUGAR_LEVEL
-        name VARCHAR(50) NOT NULL,
+        option_type NVARCHAR(20) NOT NULL, -- SIZE, TOPPING, ICE_LEVEL, SUGAR_LEVEL
+        name NVARCHAR(50) NOT NULL,
         extra_price DECIMAL(12,2) NOT NULL DEFAULT 0.00,
         is_available BIT NOT NULL DEFAULT 1,
         CONSTRAINT FK_product_options_products FOREIGN KEY (product_id) REFERENCES dbo.product_products(id) ON DELETE CASCADE

@@ -2,7 +2,7 @@
 @model CoffeeShop.WebRazorPages.Pages.Staff.CategoriesModel
 @{
     Layout = "_StaffLayout";
-    ViewData["Title"] = "Phân loại Danh mục Thực đơn - Nhân viên";
+    ViewData["Title"] = "Danh mục Thực đơn - Nhân viên";
 }
 
 <div class="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -14,10 +14,10 @@
             </span>
             <div>
                 <h1 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
-                    <span>Phân loại Danh mục</span>
-                    <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black uppercase border border-emerald-200">Khu vực Nhân viên</span>
+                    <span>Danh sách Danh mục Sản phẩm</span>
+                    <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black uppercase border border-emerald-200">Quyền Xem (Staff)</span>
                 </h1>
-                <p class="text-sm text-gray-500 font-medium mt-0.5">Theo dõi các nhóm phân loại món, cơ cấu thực đơn và số lượng món theo từng phân loại</p>
+                <p class="text-sm text-gray-500 font-medium mt-0.5">Chức năng 12 (View Category): Xem danh sách danh mục sản phẩm, thứ tự hiển thị và số lượng món trực thuộc</p>
             </div>
         </div>
 
@@ -40,7 +40,7 @@
                 <i class="fi fi-rr-apps"></i>
             </div>
             <div>
-                <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Tổng phân loại</div>
+                <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Tổng danh mục</div>
                 <div class="text-2xl font-black text-gray-900" id="stat-cat-total">0</div>
             </div>
         </div>
@@ -83,16 +83,16 @@
                 <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center text-sm font-black">
                     <i class="fi fi-rr-layers"></i>
                 </span>
-                <h2 class="text-lg font-black text-gray-900">Danh sách Phân loại Thực đơn</h2>
+                <h2 class="text-lg font-black text-gray-900">Danh sách Danh mục Thực đơn</h2>
             </div>
-            <span class="text-xs font-bold text-gray-500">Dữ liệu thời gian thực từ CSDL</span>
+            <span class="text-xs font-bold text-gray-500">Chế độ xem dành cho Nhân viên (Thêm/Sửa/Xóa danh mục do Admin quản lý)</span>
         </div>
 
         <div id="category-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             <!-- Đang tải -->
             <div class="col-span-full py-12 text-center text-gray-400">
                 <i class="fi fi-rr-spinner animate-spin text-3xl mb-3 inline-block"></i>
-                <p class="text-sm font-semibold">Đang tải danh sách phân loại từ máy chủ...</p>
+                <p class="text-sm font-semibold">Đang tải danh sách danh mục từ máy chủ...</p>
             </div>
         </div>
     </div>
@@ -101,8 +101,8 @@
     <div class="bg-white rounded-3xl border border-gray-200 shadow-xs overflow-hidden">
         <div class="p-6 border-b border-gray-200 flex items-center justify-between bg-slate-50/50">
             <div>
-                <h3 class="text-base font-black text-gray-900">Bảng chi tiết thông tin Phân loại</h3>
-                <p class="text-xs text-gray-500 mt-0.5">Chi tiết mã phân loại, tên nhóm, mô tả và số lượng món phục vụ</p>
+                <h3 class="text-base font-black text-gray-900">Bảng chi tiết thông tin Danh mục</h3>
+                <p class="text-xs text-gray-500 mt-0.5">Thứ tự hiển thị, tên nhóm, trạng thái và số lượng món phục vụ</p>
             </div>
         </div>
 
@@ -110,8 +110,8 @@
             <table class="w-full text-left text-sm text-gray-600">
                 <thead class="text-xs font-black text-gray-400 uppercase bg-gray-50 border-b border-gray-200">
                     <tr>
-                        <th class="px-6 py-4">Phân loại danh mục</th>
-                        <th class="px-6 py-4">Mô tả nhóm</th>
+                        <th class="px-6 py-4 text-center w-28">Thứ tự hiển thị</th>
+                        <th class="px-6 py-4">Tên danh mục</th>
                         <th class="px-6 py-4 text-center">Số món trong nhóm</th>
                         <th class="px-6 py-4 text-center">Trạng thái</th>
                         <th class="px-6 py-4 text-center">Hành động</th>
@@ -150,7 +150,7 @@
                 }
 
                 // 2. Tải sản phẩm để đếm số lượng món theo từng phân loại
-                const prodRes = await fetch(`${PRODUCT_API_BASE}/api/products?pageSize=100`);
+                const prodRes = await fetch(`${PRODUCT_API_BASE}/api/products?pageSize=200`);
                 if (prodRes.ok) {
                     const prodJson = await prodRes.json();
                     allProducts = (prodJson.data && prodJson.data.items) ? prodJson.data.items : [];
@@ -163,7 +163,7 @@
             } catch (error) {
                 console.error('Lỗi khi tải dữ liệu phân loại:', error);
                 if (typeof showToast === 'function') {
-                    showToast('Lỗi kết nối', 'Không thể kết nối đến máy chủ Product.API (5002)', 'error');
+                    showToast('Lỗi kết nối', 'Không thể kết nối đến API Gateway (8080)', 'error');
                 }
             }
         }
@@ -177,7 +177,7 @@
 
             allCategories.forEach(c => {
                 const name = (c.name || '').toLowerCase();
-                if (name.includes('bánh') || name.includes('snack') || name.includes('ăn')) {
+                if (name.includes('bánh') || name.includes('banh') || name.includes('snack') || name.includes('ăn')) {
                     foodCount++;
                 } else {
                     bevCount++;
@@ -195,15 +195,18 @@
             if (!container) return;
 
             if (allCategories.length === 0) {
-                container.innerHTML = `<div class="col-span-full py-8 text-center text-gray-400 text-sm">Chưa có phân loại nào trong CSDL.</div>`;
+                container.innerHTML = `<div class="col-span-full py-8 text-center text-gray-400 text-sm">Chưa có danh mục nào trong CSDL.</div>`;
                 return;
             }
 
             const iconsMap = {
                 'cà phê': 'fi-rr-coffee',
+                'ca phe': 'fi-rr-coffee',
                 'trà': 'fi-rr-leaf',
+                'tra': 'fi-rr-leaf',
                 'freeze': 'fi-rr-glass',
-                'bánh': 'fi-rr-cake-birthday'
+                'bánh': 'fi-rr-cake-birthday',
+                'banh': 'fi-rr-cake-birthday'
             };
 
             const colors = [
@@ -238,12 +241,12 @@
                                     <i class="fi ${icon}"></i>
                                 </div>
                                 <span class="px-2.5 py-1 rounded-full ${style.tag} ${style.text} text-xs font-black">
-                                    ${count} món
+                                    Thứ tự #${cat.displayOrder ?? (idx + 1)} • ${count} món
                                 </span>
                             </div>
                             <div>
                                 <h3 class="font-black text-gray-900 text-lg group-hover:text-red-highland transition">${cat.name}</h3>
-                                <p class="text-xs text-gray-500 font-medium mt-1 line-clamp-2">${cat.description || 'Nhóm món thuộc thực đơn tiêu chuẩn LowLand Coffee'}</p>
+                                <p class="text-xs text-gray-500 font-medium mt-1 line-clamp-2">Nhóm món thuộc thực đơn tiêu chuẩn LowLand Coffee</p>
                             </div>
                         </div>
 
@@ -276,19 +279,16 @@
 
                 return `
                     <tr class="hover:bg-slate-50 transition">
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-3">
-                                <span class="w-9 h-9 rounded-xl bg-amber-50 text-amber-800 flex items-center justify-center font-black text-sm">
-                                    ${idx + 1}
-                                </span>
-                                <div>
-                                    <div class="font-extrabold text-gray-900 text-sm">${cat.name}</div>
-                                    <div class="text-[11px] text-gray-400 font-mono mt-0.5">${cat.id}</div>
-                                </div>
-                            </div>
+                        <td class="px-6 py-4 text-center">
+                            <span class="w-9 h-9 mx-auto rounded-xl bg-amber-50 border border-amber-200 text-amber-800 flex items-center justify-center font-black text-sm">
+                                ${cat.displayOrder ?? (idx + 1)}
+                            </span>
                         </td>
-                        <td class="px-6 py-4 text-xs text-gray-600 max-w-xs truncate">
-                            ${cat.description || 'Chưa cập nhật mô tả'}
+                        <td class="px-6 py-4">
+                            <div>
+                                <div class="font-extrabold text-gray-900 text-sm">${cat.name}</div>
+                                <div class="text-[11px] text-gray-400 font-mono mt-0.5">${cat.id}</div>
+                            </div>
                         </td>
                         <td class="px-6 py-4 text-center">
                             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-blue-50 text-blue-800 border border-blue-100">
@@ -296,10 +296,14 @@
                             </span>
                         </td>
                         <td class="px-6 py-4 text-center">
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                Đang hoạt động
-                            </span>
+                            ${cat.isActive !== false
+                                ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Đang hoạt động
+                                   </span>`
+                                : `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600 border border-gray-200">
+                                     <span class="w-2 h-2 rounded-full bg-gray-400"></span> Tạm ẩn
+                                   </span>`
+                            }
                         </td>
                         <td class="px-6 py-4 text-center">
                             <a href="/Staff/Products?category=${cat.id}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-red-highland hover:text-white text-gray-700 text-xs font-bold transition">

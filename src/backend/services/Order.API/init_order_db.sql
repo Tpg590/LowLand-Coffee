@@ -18,11 +18,11 @@ BEGIN
     CREATE TABLE dbo.order_orders (
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
         user_id UNIQUEIDENTIFIER NOT NULL, -- Logical Ref -> auth_users.id
-        order_code VARCHAR(20) NOT NULL UNIQUE,
+        order_code NVARCHAR(20) NOT NULL UNIQUE,
         total_amount DECIMAL(12,2) NOT NULL,
         discount_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
         final_amount DECIMAL(12,2) NOT NULL,
-        status VARCHAR(30) NOT NULL, -- PENDING, PROCESSING, SHIPPING, COMPLETED, CANCELLED
+        status NVARCHAR(30) NOT NULL, -- PENDING, PROCESSING, SHIPPING, COMPLETED, CANCELLED
         cancel_reason NVARCHAR(MAX) NULL,
         note NVARCHAR(MAX) NULL,
         created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
@@ -54,10 +54,10 @@ BEGIN
     CREATE TABLE dbo.order_payments (
         id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
         order_id UNIQUEIDENTIFIER NOT NULL,
-        payment_method VARCHAR(30) NOT NULL, -- VNPAY, PAYOS, CASH
-        transaction_code VARCHAR(100) NULL,
+        payment_method NVARCHAR(30) NOT NULL, -- VNPAY, PAYOS, CASH
+        transaction_code NVARCHAR(100) NULL,
         amount DECIMAL(12,2) NOT NULL,
-        payment_status VARCHAR(30) NOT NULL, -- PENDING, SUCCESS, FAILED
+        payment_status NVARCHAR(30) NOT NULL, -- PENDING, SUCCESS, FAILED
         paid_at DATETIME2 NULL,
         created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
         CONSTRAINT FK_order_payments_orders FOREIGN KEY (order_id) REFERENCES dbo.order_orders(id) ON DELETE CASCADE

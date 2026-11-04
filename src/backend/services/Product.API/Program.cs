@@ -1,9 +1,11 @@
+using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Product.API.Data;
+using Product.API.DTOs;
 using Product.API.Repositories;
 using Product.API.Repositories.Interfaces;
 using Product.API.Services;
@@ -64,7 +66,28 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtIssuer,
         ValidAudience = jwtAudience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey)),
+        RoleClaimType = ClaimTypes.Role,
+        NameClaimType = ClaimTypes.Name
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnChallenge = async context =>
+        {
+            context.HandleResponse();
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            context.Response.ContentType = "application/json";
+            var response = ApiResponse<object>.Fail("Vui lòng đăng nhập tài khoản có quyền hợp lệ để thực hiện chức năng này.", StatusCodes.Status401Unauthorized);
+            await context.Response.WriteAsJsonAsync(response);
+        },
+        OnForbidden = async context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            context.Response.ContentType = "application/json";
+            var response = ApiResponse<object>.Fail("Tài khoản của bạn không có quyền thực hiện chức năng này.", StatusCodes.Status403Forbidden);
+            await context.Response.WriteAsJsonAsync(response);
+        }
     };
 });
 
@@ -122,5 +145,51 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Đảm bảo các cột tên danh mục, sản phẩm, tùy chọn trong Coffee_ProductDB hỗ trợ tiếng Việt có dấu (NVARCHAR)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ProductDbContext>();
+    try
+    {
+        db.Database.ExecuteSqlRaw(@"
+            IF EXISTS (
+                SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_NAME = 'product_categories' AND COLUMN_NAME = 'name' AND DATA_TYPE = 'varchar'
+            )
+            BEGIN
+                ALTER TABLE dbo.product_categories ALTER COLUMN name NVARCHAR(100) NOT NULL;
+            END;
+
+            IF EXISTS (
+                SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_NAME = 'product_products' AND COLUMN_NAME = 'name' AND DATA_TYPE = 'varchar'
+            )
+            BEGIN
+                ALTER TABLE dbo.product_products ALTER COLUMN name NVARCHAR(150) NOT NULL;
+            END;
+
+            IF EXISTS (
+                SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_NAME = 'product_options' AND COLUMN_NAME = 'name' AND DATA_TYPE = 'varchar'
+            )
+            BEGIN
+                ALTER TABLE dbo.product_options ALTER COLUMN name NVARCHAR(50) NOT NULL;
+            END;
+
+            IF EXISTS (
+                SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_NAME = 'product_options' AND COLUMN_NAME = 'option_type' AND DATA_TYPE = 'varchar'
+            )
+            BEGIN
+                ALTER TABLE dbo.product_options ALTER COLUMN option_type NVARCHAR(20) NOT NULL;
+            END;
+        ");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogWarning("Không thể cập nhật NVARCHAR cho Coffee_ProductDB: {Message}", ex.Message);
+    }
+}
 
 app.Run();

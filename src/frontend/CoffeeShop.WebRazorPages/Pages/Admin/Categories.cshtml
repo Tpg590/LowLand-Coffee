@@ -1,0 +1,493 @@
+@page
+@model CoffeeShop.WebRazorPages.Pages.Admin.CategoriesModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý Danh mục Sản phẩm - Quản trị viên";
+}
+
+<div class="w-full space-y-6">
+    <!-- Top Header & Action Buttons -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-gray-200 gap-4">
+        <div class="flex items-center gap-3.5">
+            <span class="p-3 rounded-2xl bg-red-50 text-red-highland shadow-sm flex items-center justify-center">
+                <i class="fi fi-rr-apps text-2xl"></i>
+            </span>
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+                    <span>Quản lý Danh mục Sản phẩm</span>
+                    <span class="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-black uppercase border border-amber-200">Toàn quyền Admin</span>
+                </h1>
+                <p class="text-sm text-gray-500 mt-0.5">Tạo danh mục món ăn / đồ uống mới, đổi tên, thay đổi thứ tự hiển thị và xóa danh mục rỗng</p>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+            <a asp-page="/Admin/Products" class="px-4 py-2.5 rounded-xl bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-bold shadow-xs flex items-center gap-2 transition">
+                <i class="fi fi-rr-box-alt text-red-highland"></i>
+                <span>Quản lý Sản phẩm</span>
+            </a>
+            <button type="button" onclick="loadCategories()" class="px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold flex items-center gap-2 transition">
+                <i class="fi fi-rr-refresh text-sm"></i>
+                <span>Làm mới</span>
+            </button>
+            <button type="button" onclick="openCategoryModal()" class="px-5 py-2.5 rounded-xl bg-red-highland hover:bg-red-700 text-white font-extrabold text-sm shadow-md flex items-center gap-2 transition active:scale-95">
+                <i class="fi fi-rr-plus text-sm"></i>
+                <span>Tạo Danh mục mới</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Flowbite KPI Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-xl shrink-0">
+                <i class="fi fi-rr-apps"></i>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Tổng danh mục</div>
+                <div class="text-2xl font-black text-gray-900" id="kpi-cat-total">0</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-xl shrink-0">
+                <i class="fi fi-rr-check-circle"></i>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Đang hiển thị</div>
+                <div class="text-2xl font-black text-emerald-600" id="kpi-cat-active">0</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-xl shrink-0">
+                <i class="fi fi-rr-box-alt"></i>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Tổng sản phẩm</div>
+                <div class="text-2xl font-black text-blue-600" id="kpi-cat-products">0</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-700 flex items-center justify-center text-xl shrink-0">
+                <i class="fi fi-rr-trash"></i>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Danh mục rỗng (Có thể xóa)</div>
+                <div class="text-2xl font-black text-rose-600" id="kpi-cat-empty">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search & Filter Bar -->
+    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-xs flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div class="relative w-full sm:w-96">
+            <input type="text" id="cat-search" onkeyup="renderCategoriesTable()" placeholder="Tìm kiếm tên danh mục..." class="w-full bg-gray-50 border border-gray-300 rounded-xl pl-10 pr-4 py-2.5 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland placeholder-gray-400" />
+            <span class="absolute left-3.5 top-3 text-gray-400">
+                <i class="fi fi-rr-search text-sm"></i>
+            </span>
+        </div>
+
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+            <select id="cat-status-filter" onchange="renderCategoriesTable()" class="bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-red-highland">
+                <option value="ALL">Tất cả trạng thái</option>
+                <option value="ACTIVE">Đang hiển thị trên Menu</option>
+                <option value="INACTIVE">Đang ẩn</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Categories Table -->
+    <div class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="p-5 sm:p-6 border-b border-gray-200 flex items-center justify-between bg-slate-50/50">
+            <div>
+                <h2 class="text-base font-black text-gray-900">Danh sách Danh mục Sản phẩm (Sắp xếp theo Thứ tự hiển thị)</h2>
+                <p class="text-xs text-gray-500 mt-0.5">Chức năng 12, 13, 14, 15: Xem, Tạo mới, Đổi tên & Thứ tự hiển thị, Xóa danh mục không chứa sản phẩm</p>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-700">
+                <thead class="bg-gray-50 text-gray-500 uppercase font-black tracking-wider text-xs border-b border-gray-200">
+                    <tr>
+                        <th class="py-4 px-6 text-center w-28">Thứ tự hiển thị</th>
+                        <th class="py-4 px-6">Tên danh mục</th>
+                        <th class="py-4 px-6 text-center">Số sản phẩm</th>
+                        <th class="py-4 px-6 text-center">Trạng thái</th>
+                        <th class="py-4 px-6 text-center">Ngày tạo</th>
+                        <th class="py-4 px-6 text-right">Thao tác (Admin)</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-categories-tbody" class="divide-y divide-gray-100 font-medium">
+                    <tr>
+                        <td colspan="6" class="py-12 text-center text-gray-400">
+                            <i class="fi fi-rr-spinner animate-spin text-2xl mb-2 inline-block"></i>
+                            <p class="text-xs font-semibold">Đang tải danh sách danh mục...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL 1: TẠO MỚI / CẬP NHẬT DANH MỤC (Chức năng 13 & 14) -->
+<!-- ========================================================================= -->
+<div id="modal-category-form" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl space-y-5 border border-gray-100">
+        <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center shadow-xs">
+                    <i class="fi fi-rr-apps text-xl"></i>
+                </div>
+                <div>
+                    <h3 id="cat-modal-title" class="text-lg font-black text-gray-900">Tạo Danh mục mới</h3>
+                    <p class="text-xs text-gray-500 font-medium">Thiết lập tên và thứ tự hiển thị trên Menu</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeCategoryModal()" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition">
+                <i class="fi fi-rr-cross-small text-xl"></i>
+            </button>
+        </div>
+
+        <form id="form-category" onsubmit="submitCategoryForm(event)" class="space-y-4">
+            <input type="hidden" id="cat-id" value="" />
+
+            <div>
+                <label class="block text-xs font-black text-gray-700 uppercase tracking-wider mb-1.5">Tên danh mục món ăn / đồ uống *</label>
+                <input type="text" id="cat-name" required maxlength="100" placeholder="Ví dụ: Cà Phê Truyền Thống, Trà Trái Cây..." class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-red-highland focus:bg-white transition" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-black text-gray-700 uppercase tracking-wider mb-1.5">Thứ tự hiển thị *</label>
+                    <input type="number" id="cat-order" required min="0" max="999" value="1" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-red-highland focus:bg-white transition" />
+                    <span class="text-[11px] text-gray-400 mt-1 block">Số nhỏ ưu tiên đứng trước</span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black text-gray-700 uppercase tracking-wider mb-1.5">Trạng thái Menu</label>
+                    <select id="cat-active" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-3.5 py-3 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-red-highland focus:bg-white transition">
+                        <option value="true">Đang hoạt động</option>
+                        <option value="false">Tạm ẩn</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex gap-3 pt-4 border-t border-gray-100">
+                <button type="button" onclick="closeCategoryModal()" class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 font-bold text-sm hover:bg-gray-200 transition">Hủy bỏ</button>
+                <button type="submit" id="btn-save-category" class="flex-1 py-3 rounded-xl bg-red-highland text-white font-extrabold text-sm hover:bg-red-700 shadow-md transition">Lưu Danh mục</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL 2: XÁC NHẬN XÓA DANH MỤC (Chức năng 15) -->
+<!-- ========================================================================= -->
+<div id="modal-delete-category" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl space-y-5 border border-gray-100 text-center">
+        <div class="w-16 h-16 mx-auto rounded-full bg-rose-50 text-rose-600 flex items-center justify-center text-2xl shadow-inner">
+            <i class="fi fi-rr-trash"></i>
+        </div>
+        <div class="space-y-1.5">
+            <h3 class="text-xl font-black text-gray-900">Xác nhận xóa danh mục?</h3>
+            <p class="text-sm text-gray-500 leading-relaxed">
+                Bạn có chắc chắn muốn xóa danh mục <strong id="del-cat-name" class="text-gray-900"></strong> khỏi hệ thống?
+            </p>
+            <p class="text-xs text-amber-700 bg-amber-50 p-2.5 rounded-xl border border-amber-200 font-semibold">
+                Lưu ý: Chỉ danh mục không còn chứa sản phẩm nào mới được phép xóa.
+            </p>
+        </div>
+        <div class="flex gap-3 pt-2">
+            <button type="button" onclick="closeDeleteCategoryModal()" class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 font-bold text-sm hover:bg-gray-200 transition">Không, giữ lại</button>
+            <button type="button" id="btn-confirm-delete-cat" onclick="confirmDeleteCategory()" class="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-sm shadow-md transition">Xóa Danh mục</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const PRODUCT_API_BASE = 'http://localhost:8080';
+    let categoriesList = [];
+    let pendingDeleteCategoryId = null;
+
+    function getAuthHeaders(includeJson = true) {
+        const token = localStorage.getItem('auth_token') || '';
+        const headers = {};
+        if (includeJson) headers['Content-Type'] = 'application/json';
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        return headers;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadCategories();
+    });
+
+    async function loadCategories() {
+        try {
+            const res = await fetch(`${PRODUCT_API_BASE}/api/categories`);
+            if (!res.ok) throw new Error('Không thể tải danh sách danh mục');
+            const json = await res.json();
+            categoriesList = json.data || [];
+
+            updateCategoryKpis();
+            renderCategoriesTable();
+        } catch (err) {
+            console.error(err);
+            showToast('Lỗi tải dữ liệu', err.message || 'Không thể kết nối đến API Gateway (8080)', 'error');
+        }
+    }
+
+    function updateCategoryKpis() {
+        const total = categoriesList.length;
+        const active = categoriesList.filter(c => c.isActive).length;
+        const totalProducts = categoriesList.reduce((sum, c) => sum + (c.productCount || 0), 0);
+        const emptyCount = categoriesList.filter(c => (c.productCount || 0) === 0).length;
+
+        document.getElementById('kpi-cat-total').innerText = total;
+        document.getElementById('kpi-cat-active').innerText = active;
+        document.getElementById('kpi-cat-products').innerText = totalProducts;
+        document.getElementById('kpi-cat-empty').innerText = emptyCount;
+    }
+
+    function renderCategoriesTable() {
+        const tbody = document.getElementById('admin-categories-tbody');
+        if (!tbody) return;
+
+        const keyword = (document.getElementById('cat-search')?.value || '').toLowerCase().trim();
+        const statusFilter = document.getElementById('cat-status-filter')?.value || 'ALL';
+
+        const filtered = categoriesList.filter(c => {
+            if (statusFilter === 'ACTIVE' && !c.isActive) return false;
+            if (statusFilter === 'INACTIVE' && c.isActive) return false;
+            if (keyword && !(c.name || '').toLowerCase().includes(keyword)) return false;
+            return true;
+        });
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="py-12 text-center text-gray-400">
+                        <i class="fi fi-rr-apps text-3xl mb-2 inline-block"></i>
+                        <p class="text-sm font-bold text-gray-600">Không tìm thấy danh mục nào</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = filtered.map(c => {
+            const prodCount = c.productCount || 0;
+            const canDelete = prodCount === 0;
+            const createdDate = c.createdAt ? new Date(c.createdAt).toLocaleDateString('vi-VN') : '--';
+            const safeName = (c.name || '').replace(/'/g, "\\'");
+
+            const statusBadge = c.isActive
+                ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Đang hiển thị
+                   </span>`
+                : `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600 border border-gray-200">
+                     <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span> Đang ẩn
+                   </span>`;
+
+            return `
+                <tr class="hover:bg-slate-50/80 transition">
+                    <td class="py-4 px-6 text-center">
+                        <div class="inline-flex items-center gap-1">
+                            <span class="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 font-black text-sm flex items-center justify-center">
+                                ${c.displayOrder}
+                            </span>
+                            <div class="flex flex-col">
+                                <button type="button" onclick="quickChangeOrder('${c.id}', -1)" title="Tăng ưu tiên (Lên)" class="text-gray-400 hover:text-gray-800 leading-none p-0.5">
+                                    <i class="fi fi-rr-angle-small-up text-sm"></i>
+                                </button>
+                                <button type="button" onclick="quickChangeOrder('${c.id}', 1)" title="Giảm ưu tiên (Xuống)" class="text-gray-400 hover:text-gray-800 leading-none p-0.5">
+                                    <i class="fi fi-rr-angle-small-down text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-4 px-6">
+                        <div class="font-extrabold text-gray-900 text-base">${c.name}</div>
+                        <div class="text-[11px] text-gray-400 font-mono mt-0.5">${c.id}</div>
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <a href="/Admin/Products?category=${c.id}" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black ${prodCount > 0 ? 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100' : 'bg-gray-100 text-gray-500'} transition">
+                            <span>${prodCount} sản phẩm</span>
+                        </a>
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        ${statusBadge}
+                    </td>
+                    <td class="py-4 px-6 text-center text-xs text-gray-500 font-semibold">
+                        ${createdDate}
+                    </td>
+                    <td class="py-4 px-6 text-right">
+                        <div class="inline-flex items-center justify-end gap-2">
+                            <button type="button" onclick="openEditCategoryModal('${c.id}')" class="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-bold flex items-center gap-1.5 transition" title="Đổi tên & Thứ tự hiển thị (Chức năng 14)">
+                                <i class="fi fi-rr-edit text-xs"></i>
+                                <span>Sửa</span>
+                            </button>
+                            <button type="button" onclick="openDeleteCategoryModal('${c.id}', '${safeName}', ${prodCount})" class="px-3 py-1.5 rounded-xl ${canDelete ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200' : 'bg-gray-100 text-gray-400 border border-gray-200'} text-xs font-bold flex items-center gap-1.5 transition" title="${canDelete ? 'Xóa danh mục rỗng (Chức năng 15)' : 'Không thể xóa danh mục đang chứa sản phẩm'}">
+                                <i class="fi fi-rr-trash text-xs"></i>
+                                <span>Xóa</span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function openCategoryModal() {
+        document.getElementById('cat-id').value = '';
+        document.getElementById('cat-name').value = '';
+        const maxOrder = categoriesList.reduce((max, c) => Math.max(max, c.displayOrder || 0), 0);
+        document.getElementById('cat-order').value = maxOrder + 1;
+        document.getElementById('cat-active').value = 'true';
+        document.getElementById('cat-modal-title').innerText = 'Tạo Danh mục mới';
+        document.getElementById('btn-save-category').innerText = 'Tạo Danh mục';
+
+        const modal = document.getElementById('modal-category-form');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function openEditCategoryModal(id) {
+        const cat = categoriesList.find(c => c.id === id);
+        if (!cat) return;
+
+        document.getElementById('cat-id').value = cat.id;
+        document.getElementById('cat-name').value = cat.name || '';
+        document.getElementById('cat-order').value = cat.displayOrder ?? 1;
+        document.getElementById('cat-active').value = cat.isActive ? 'true' : 'false';
+        document.getElementById('cat-modal-title').innerText = 'Cập nhật Danh mục';
+        document.getElementById('btn-save-category').innerText = 'Lưu thay đổi';
+
+        const modal = document.getElementById('modal-category-form');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeCategoryModal() {
+        const modal = document.getElementById('modal-category-form');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    async function submitCategoryForm(e) {
+        e.preventDefault();
+        const id = document.getElementById('cat-id').value.trim();
+        const name = document.getElementById('cat-name').value.trim();
+        const displayOrder = parseInt(document.getElementById('cat-order').value) || 0;
+        const isActive = document.getElementById('cat-active').value === 'true';
+
+        if (!name) {
+            showToast('Thiếu thông tin', 'Vui lòng nhập tên danh mục!', 'warning');
+            return;
+        }
+
+        const btn = document.getElementById('btn-save-category');
+        btn.disabled = true;
+
+        try {
+            const isEdit = !!id;
+            const url = isEdit ? `${PRODUCT_API_BASE}/api/categories/${id}` : `${PRODUCT_API_BASE}/api/categories`;
+            const method = isEdit ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+                method,
+                headers: getAuthHeaders(true),
+                body: JSON.stringify({ name, displayOrder, isActive })
+            });
+
+            const json = await res.json().catch(() => null);
+            if (!res.ok || !(json?.isSuccess ?? json?.success)) {
+                throw new Error(json?.message || (json?.errors && json.errors[0]) || 'Không thể lưu danh mục');
+            }
+
+            showToast('Thành công', isEdit ? `Đã cập nhật danh mục "${name}"!` : `Đã tạo danh mục "${name}" thành công!`, 'success');
+            closeCategoryModal();
+            await loadCategories();
+        } catch (err) {
+            showToast('Lỗi lưu danh mục', err.message, 'error');
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function quickChangeOrder(id, delta) {
+        const cat = categoriesList.find(c => c.id === id);
+        if (!cat) return;
+
+        const newOrder = Math.max(0, (cat.displayOrder || 0) + delta);
+        try {
+            const res = await fetch(`${PRODUCT_API_BASE}/api/categories/${id}`, {
+                method: 'PUT',
+                headers: getAuthHeaders(true),
+                body: JSON.stringify({
+                    name: cat.name,
+                    displayOrder: newOrder,
+                    isActive: cat.isActive
+                })
+            });
+            const json = await res.json().catch(() => null);
+            if (!res.ok || !(json?.isSuccess ?? json?.success)) {
+                throw new Error(json?.message || 'Không thể cập nhật thứ tự hiển thị');
+            }
+            showToast('Thứ tự hiển thị', `Đã cập nhật thứ tự hiển thị của "${cat.name}" thành ${newOrder}`, 'success');
+            await loadCategories();
+        } catch (err) {
+            showToast('Lỗi', err.message, 'error');
+        }
+    }
+
+    function openDeleteCategoryModal(id, name, prodCount) {
+        if (prodCount > 0) {
+            showToast('Không thể xóa danh mục', `Danh mục "${name}" đang chứa ${prodCount} sản phẩm. Chỉ được phép xóa danh mục không còn chứa sản phẩm!`, 'warning', 4500);
+            return;
+        }
+
+        pendingDeleteCategoryId = id;
+        document.getElementById('del-cat-name').innerText = `"${name}"`;
+        const modal = document.getElementById('modal-delete-category');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeDeleteCategoryModal() {
+        pendingDeleteCategoryId = null;
+        const modal = document.getElementById('modal-delete-category');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    async function confirmDeleteCategory() {
+        if (!pendingDeleteCategoryId) return;
+        const btn = document.getElementById('btn-confirm-delete-cat');
+        btn.disabled = true;
+
+        try {
+            const res = await fetch(`${PRODUCT_API_BASE}/api/categories/${pendingDeleteCategoryId}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders(false)
+            });
+            const json = await res.json().catch(() => null);
+            if (!res.ok || !(json?.isSuccess ?? json?.success)) {
+                throw new Error(json?.message || 'Không thể xóa danh mục');
+            }
+
+            showToast('Đã xóa danh mục', 'Xóa danh mục thành công!', 'success');
+            closeDeleteCategoryModal();
+            await loadCategories();
+        } catch (err) {
+            showToast('Không thể xóa', err.message, 'error');
+        } finally {
+            btn.disabled = false;
+        }
+    }
+</script>
+}

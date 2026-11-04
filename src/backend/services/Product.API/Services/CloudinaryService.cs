@@ -59,8 +59,7 @@ public class CloudinaryService : ICloudinaryService
         var uploadParams = new ImageUploadParams
         {
             File = new FileDescription(file.FileName, stream),
-            Folder = folder,
-            Transformation = new Transformation().Quality("auto").FetchFormat("auto")
+            Folder = folder
         };
 
         var uploadResult = await _cloudinary.UploadAsync(uploadParams, cancellationToken);
