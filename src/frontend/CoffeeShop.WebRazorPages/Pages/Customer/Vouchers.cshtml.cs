@@ -1,9 +1,15 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using CoffeeShop.WebRazorPages.Services;
 using CoffeeShop.WebRazorPages.ViewModels.Engagement;
+using System.Security.Claims;
 
 namespace CoffeeShop.WebRazorPages.Pages.Customer;
 
+/// <summary>
+/// PageModel cho trang Kho Voucher Ưu Đãi (Customer Vouchers).
+/// Phân quyền: Dành riêng cho tài khoản Khách hàng (Customer) tra cứu và săn mã giảm giá.
+/// </summary>
 public class VouchersModel : PageModel
 {
     private readonly IEngagementHttpService _engagementService;
@@ -13,10 +19,33 @@ public class VouchersModel : PageModel
         _engagementService = engagementService;
     }
 
+    /// <summary>
+    /// Danh sách mã voucher đang mở công khai.
+    /// </summary>
     public IEnumerable<VoucherViewModel> Vouchers { get; set; } = new List<VoucherViewModel>();
 
-    public async Task OnGetAsync()
+    /// <summary>
+    /// Xử lý HTTP GET: Nạp danh sách voucher và kiểm tra quyền hạn khách hàng.
+    /// </summary>
+    public async Task<IActionResult> OnGetAsync()
     {
+        // Kiểm tra phân quyền: Nếu đã xác thực qua Cookie nhưng không phải Customer
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            var role = User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
+            if (!string.IsNullOrEmpty(role) && !role.Equals("Customer", StringComparison.OrdinalIgnoreCase))
+            {
+                if (role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+                {
+                    return RedirectToPage("/Admin/Vouchers");
+                }
+                if (role.Equals("Staff", StringComparison.OrdinalIgnoreCase))
+                {
+                    return RedirectToPage("/Staff/Orders");
+                }
+            }
+        }
+
         try
         {
             var res = await _engagementService.GetActiveVouchersAsync();
@@ -33,70 +62,60 @@ public class VouchersModel : PageModel
         {
             Vouchers = GetDefaultVouchers();
         }
+
+        return Page();
     }
 
+    /// <summary>
+    /// Danh sách mã voucher dự phòng khi hệ thống đang khởi tạo dịch vụ nền.
+    /// </summary>
     private static List<VoucherViewModel> GetDefaultVouchers()
     {
         return new List<VoucherViewModel>
         {
             new() {
-                Id = Guid.NewGuid(),
-                Code = "LOWLAND20",
-                Title = "Giảm 20% Cho Đơn Hàng Từ 100K",
-                Description = "Áp dụng cho toàn bộ đồ uống Cà phê, Trà Sen Vàng và Freeze thơm ngon.",
+                Id = Guid.Parse("40000000-0000-0000-0000-000000000001"),
+                Code = "BANMOI",
+                Title = "Ưu đãi chào bạn mới 20%",
+                Description = "Giảm 20% tối đa 30.000 VNĐ cho khách hàng mới gia nhập LowLand Coffee.",
                 DiscountType = "PERCENTAGE",
                 DiscountValue = 20,
-                MaxDiscountAmount = 40000,
-                MinOrderValue = 100000,
-                TotalQuantity = 500,
-                UsedQuantity = 142,
-                StartDate = DateTime.UtcNow.AddDays(-10),
-                EndDate = DateTime.UtcNow.AddMonths(2),
-                IsActive = true
-            },
-            new() {
-                Id = Guid.NewGuid(),
-                Code = "WELCOME50",
-                Title = "Giảm Ngay 50.000đ Cho Khách Hàng Mới",
-                Description = "Quà làm quen cực chất dành cho thành viên mới của đại gia đình LowLand Coffee.",
-                DiscountType = "FIXED_AMOUNT",
-                DiscountValue = 50000,
-                MaxDiscountAmount = null,
-                MinOrderValue = 150000,
-                TotalQuantity = 200,
-                UsedQuantity = 85,
-                StartDate = DateTime.UtcNow.AddDays(-5),
-                EndDate = DateTime.UtcNow.AddMonths(1),
-                IsActive = true
-            },
-            new() {
-                Id = Guid.NewGuid(),
-                Code = "FREESHIP",
-                Title = "Miễn Phí Giao Hàng Toàn Quốc",
-                Description = "Giảm trực tiếp 25.000đ phí vận chuyển cho đơn hàng giao tận nơi.",
-                DiscountType = "FIXED_AMOUNT",
-                DiscountValue = 25000,
-                MaxDiscountAmount = null,
-                MinOrderValue = 80000,
+                MaxDiscountAmount = 30000,
+                MinOrderValue = 40000,
                 TotalQuantity = 1000,
-                UsedQuantity = 412,
-                StartDate = DateTime.UtcNow.AddDays(-20),
+                UsedQuantity = 15,
+                StartDate = DateTime.UtcNow.AddDays(-10),
                 EndDate = DateTime.UtcNow.AddMonths(3),
                 IsActive = true
             },
             new() {
-                Id = Guid.NewGuid(),
-                Code = "GOLDVIP15",
-                Title = "Ưu Đãi Đặc Quyền Giảm 15%",
-                Description = "Dành riêng cho khách hàng đạt hạng thẻ Vàng hoặc Kim Cương.",
-                DiscountType = "PERCENTAGE",
-                DiscountValue = 15,
-                MaxDiscountAmount = 60000,
-                MinOrderValue = 120000,
-                TotalQuantity = 300,
-                UsedQuantity = 54,
-                StartDate = DateTime.UtcNow.AddDays(-2),
+                Id = Guid.Parse("40000000-0000-0000-0000-000000000002"),
+                Code = "GIAM10K",
+                Title = "Giảm 10K đơn từ 40K",
+                Description = "Giảm trực tiếp 10.000 VNĐ cho hóa đơn từ 40.000 VNĐ.",
+                DiscountType = "FIXED_AMOUNT",
+                DiscountValue = 10000,
+                MaxDiscountAmount = 10000,
+                MinOrderValue = 40000,
+                TotalQuantity = 500,
+                UsedQuantity = 8,
+                StartDate = DateTime.UtcNow.AddDays(-5),
                 EndDate = DateTime.UtcNow.AddMonths(2),
+                IsActive = true
+            },
+            new() {
+                Id = Guid.Parse("40000000-0000-0000-0000-000000000003"),
+                Code = "FREESHIP",
+                Title = "Mã ưu đãi phí giao hàng 15K",
+                Description = "Giảm 15.000 VNĐ chi phí giao hàng cho đơn từ 60.000 VNĐ.",
+                DiscountType = "FIXED_AMOUNT",
+                DiscountValue = 15000,
+                MaxDiscountAmount = 15000,
+                MinOrderValue = 60000,
+                TotalQuantity = 300,
+                UsedQuantity = 0,
+                StartDate = DateTime.UtcNow.AddDays(-2),
+                EndDate = DateTime.UtcNow.AddMonths(1),
                 IsActive = true
             }
         };

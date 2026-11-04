@@ -75,7 +75,7 @@
     <div class="bg-white p-5 sm:p-7 rounded-3xl border border-gray-200 shadow-sm flex flex-col md:flex-row gap-5 items-center justify-between">
         <!-- Search Input -->
         <div class="w-full md:w-96 relative">
-            <input type="text" id="voucher-search-input" onkeyup="filterVouchers()" placeholder="Tìm theo mã hoặc tên voucher (vd: LOWLAND20)..." class="w-full bg-gray-50 border border-gray-300 rounded-2xl pl-12 pr-4 py-3.5 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland placeholder-gray-400" />
+            <input type="text" id="voucher-search-input" onkeyup="filterVouchers()" placeholder="Tìm theo mã hoặc tên voucher (vd: BANMOI, GIAM10K)..." class="w-full bg-gray-50 border border-gray-300 rounded-2xl pl-12 pr-4 py-3.5 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland placeholder-gray-400" />
             <span class="absolute left-4 top-4 text-gray-400 flex items-center">
                 <i class="fi fi-rr-search text-base"></i>
             </span>
@@ -90,10 +90,10 @@
                 Giảm theo %
             </button>
             <button type="button" onclick="setFilterCategory('FIXED_AMOUNT')" id="filter-chip-fixed_amount" class="px-5 py-2.5 rounded-xl text-xs font-black bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
-                Giảm tiền cố định
+                Giảm tiền mặt
             </button>
             <button type="button" onclick="setFilterCategory('ACTIVE_ONLY')" id="filter-chip-active_only" class="px-5 py-2.5 rounded-xl text-xs font-black bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
-                Còn lượt sử dụng
+                Chưa sử dụng
             </button>
         </div>
     </div>
@@ -108,7 +108,7 @@
                     </span>
                     <span>Danh Sách Mã Giảm Giá Đang Mở</span>
                 </h2>
-                <p class="text-xs sm:text-sm text-gray-500 mt-1">Nhấn "Sao chép" hoặc "Dùng ngay" để áp dụng voucher vào giỏ hàng</p>
+                <p class="text-xs sm:text-sm text-gray-500 mt-1">Nhấn "Sao chép" hoặc "Dùng ngay" để áp dụng voucher vào giỏ hàng của bạn</p>
             </div>
             <span id="voucher-count-badge" class="px-4 py-1.5 rounded-full bg-red-50 text-red-highland font-black text-xs border border-red-200">
                 Hiển thị @Model.Vouchers.Count() voucher
@@ -125,13 +125,15 @@
                 var percentUsed = v.TotalQuantity > 0 ? Math.Min(100, (int)Math.Round((double)v.UsedQuantity / v.TotalQuantity * 100)) : 0;
 
                 <div class="voucher-card bg-white rounded-3xl border border-gray-200 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col sm:flex-row overflow-hidden relative group"
+                     data-id="@v.Id"
                      data-code="@v.Code"
                      data-title="@v.Title"
                      data-type="@v.DiscountType"
-                     data-remaining="@remaining">
+                     data-remaining="@remaining"
+                     data-used="false">
 
                     <!-- Left Ticket Column (Cuống vé thoáng rộng) -->
-                    <div class="sm:w-56 bg-gradient-to-br from-red-highland-dark to-red-highland text-white p-7 flex flex-col justify-between items-center text-center relative shrink-0">
+                    <div class="ticket-left sm:w-56 bg-gradient-to-br from-red-highland-dark to-red-highland text-white p-7 flex flex-col justify-between items-center text-center relative shrink-0">
                         <!-- Perforated notch circle top & bottom -->
                         <div class="hidden sm:block absolute -top-3.5 -right-3.5 w-7 h-7 rounded-full bg-[#FBFBFB] border-b border-gray-200"></div>
                         <div class="hidden sm:block absolute -bottom-3.5 -right-3.5 w-7 h-7 rounded-full bg-[#FBFBFB] border-t border-gray-200"></div>
@@ -140,7 +142,7 @@
                             <i class="@(isPercentage ? "fi fi-sr-badge-percent" : "fi fi-sr-coins")"></i>
                         </div>
                         <div class="my-auto space-y-1">
-                            <span class="block text-xs font-black uppercase tracking-wider text-amber-200">ƯU ĐÃI</span>
+                            <span class="left-badge block text-xs font-black uppercase tracking-wider text-amber-200">ƯU ĐÃI</span>
                             <div class="text-2xl sm:text-3xl font-black text-white leading-tight">@discountDisplay</div>
                             @if (isPercentage && v.MaxDiscountAmount.HasValue)
                             {
@@ -151,10 +153,10 @@
                     </div>
 
                     <!-- Right Ticket Details Column (Nội dung rộng rãi, không bị dính sát) -->
-                    <div class="p-7 sm:p-8 flex-1 flex flex-col justify-between space-y-5">
+                    <div class="ticket-right p-7 sm:p-8 flex-1 flex flex-col justify-between space-y-5">
                         <div class="space-y-3">
                             <div class="flex items-center justify-between gap-3">
-                                <span class="px-3 py-1 rounded-xl bg-amber-100 text-amber-900 text-xs font-black">
+                                <span class="type-tag px-3 py-1 rounded-xl bg-amber-100 text-amber-900 text-xs font-black">
                                     @(isPercentage ? "Giảm theo %" : "Giảm tiền mặt")
                                 </span>
                                 <span class="text-xs text-gray-500 font-semibold flex items-center gap-1.5">
@@ -188,15 +190,15 @@
                         </div>
 
                         <!-- Ticket Action Bar -->
-                        <div class="flex items-center gap-3 pt-2">
+                        <div class="action-bar flex items-center gap-3 pt-2">
                             <div class="flex-1 bg-gray-50 border border-dashed border-gray-300 rounded-2xl px-4 py-2.5 flex items-center justify-between">
                                 <code class="text-sm font-black text-red-highland tracking-wider">@v.Code</code>
-                                <button type="button" onclick="copyVoucherCode('@v.Code')" class="text-xs font-bold text-gray-600 hover:text-red-highland flex items-center gap-1.5 transition" title="Sao chép">
+                                <button type="button" onclick="copyVoucherCode('@v.Code')" class="copy-btn text-xs font-bold text-gray-600 hover:text-red-highland flex items-center gap-1.5 transition" title="Sao chép">
                                     <i class="fi fi-rr-copy"></i>
                                     <span class="hidden sm:inline">Sao chép</span>
                                 </button>
                             </div>
-                            <a href="/Order?voucher=@v.Code" class="px-5 py-2.5 rounded-2xl bg-red-highland hover:bg-red-700 text-white font-extrabold text-xs uppercase tracking-wider shadow-md transition active:scale-95 shrink-0 flex items-center gap-1.5">
+                            <a href="/Order?voucher=@v.Code" class="use-btn px-5 py-2.5 rounded-2xl bg-red-highland hover:bg-red-700 text-white font-extrabold text-xs uppercase tracking-wider shadow-md transition active:scale-95 shrink-0 flex items-center gap-1.5">
                                 <span>Dùng ngay</span>
                                 <i class="fi fi-rr-arrow-right"></i>
                             </a>
@@ -211,10 +213,136 @@
 
 @section Scripts {
     <script>
-        // Kết nối trực tiếp qua API Gateway chuẩn
+        // API Gateway chuẩn
         const API_GATEWAY_URL = 'http://localhost:8080';
 
         let currentFilterCat = 'ALL';
+        let usedVoucherIds = [];
+
+        // AUTH GUARD: Phân quyền bắt buộc Customer
+        function checkCustomerAuthGuard() {
+            const rawUser = localStorage.getItem('current_user');
+            const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
+
+            if (!rawUser || !token) {
+                try {
+                    sessionStorage.setItem('auth_redirect_msg', 'Vui lòng đăng nhập với tài khoản Khách hàng (Customer) để xem kho voucher ưu đãi.');
+                } catch (e) {}
+                window.location.replace('/Auth/Login?returnUrl=' + encodeURIComponent(window.location.pathname));
+                return false;
+            }
+
+            try {
+                const user = JSON.parse(rawUser);
+                const rawRole = (user.role || user.roleName || '').toString().toLowerCase();
+                const isCustomer = (rawRole === 'customer') || (!rawRole.includes('admin') && !rawRole.includes('staff'));
+
+                if (!isCustomer) {
+                    alert('Kho Voucher chỉ dành riêng cho tài khoản Khách hàng (Customer).');
+                    if (rawRole.includes('admin')) {
+                        window.location.replace('/Admin/Vouchers');
+                    } else {
+                        window.location.replace('/Staff/Orders');
+                    }
+                    return false;
+                }
+            } catch (err) {
+                window.location.replace('/Auth/Login?returnUrl=' + encodeURIComponent(window.location.pathname));
+                return false;
+            }
+
+            return true;
+        }
+
+        async function fetchFromGateway(endpoint, options = {}) {
+            const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
+            const headers = {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                ...(options.headers || {})
+            };
+
+            try {
+                const res = await fetch(`${API_GATEWAY_URL}${endpoint}`, { credentials: 'omit', ...options, headers });
+                if (res.ok) {
+                    return await res.json();
+                }
+                return await res.json().catch(() => null);
+            } catch (err) {
+                console.warn('API Gateway request failed:', err);
+                return null;
+            }
+        }
+
+        // Tải danh sách ID voucher mà người dùng hiện tại đã dùng
+        async function loadUserUsedVouchers() {
+            try {
+                const json = await fetchFromGateway('/api/vouchers/my-used-ids');
+                if (json && json.isSuccess && Array.isArray(json.data)) {
+                    usedVoucherIds = json.data.map(id => id.toString().toLowerCase());
+                    applyUsedVouchersUI();
+                }
+            } catch (err) {
+                console.warn('Không thể kiểm tra lịch sử dùng voucher:', err);
+            }
+        }
+
+        // Xử lý xám màu và gắn nhãn "Đã sử dụng" cho các voucher đã dùng
+        function applyUsedVouchersUI() {
+            if (!usedVoucherIds || usedVoucherIds.length === 0) return;
+
+            const cards = document.querySelectorAll('.voucher-card');
+            cards.forEach(card => {
+                const id = (card.dataset.id || '').toLowerCase();
+                if (usedVoucherIds.includes(id)) {
+                    card.dataset.used = 'true';
+
+                    // Thêm style xám mờ
+                    card.classList.add('opacity-60', 'grayscale-[45%]', 'bg-gray-50', 'border-gray-300');
+
+                    // Đổi màu cuống vé bên trái
+                    const ticketLeft = card.querySelector('.ticket-left');
+                    if (ticketLeft) {
+                        ticketLeft.classList.remove('from-red-highland-dark', 'to-red-highland');
+                        ticketLeft.classList.add('from-gray-600', 'to-gray-700');
+                    }
+
+                    // Đổi huy hiệu
+                    const leftBadge = card.querySelector('.left-badge');
+                    if (leftBadge) {
+                        leftBadge.innerText = 'ĐÃ SỬ DỤNG';
+                        leftBadge.classList.remove('text-amber-200');
+                        leftBadge.classList.add('text-gray-300');
+                    }
+
+                    const typeTag = card.querySelector('.type-tag');
+                    if (typeTag) {
+                        typeTag.innerText = '✓ Đã sử dụng mã';
+                        typeTag.classList.remove('bg-amber-100', 'text-amber-900');
+                        typeTag.classList.add('bg-gray-200', 'text-gray-600');
+                    }
+
+                    // Thay thế nút "Dùng ngay" bằng nút xám disabled
+                    const actionBar = card.querySelector('.action-bar');
+                    if (actionBar) {
+                        const useBtn = actionBar.querySelector('.use-btn');
+                        if (useBtn) {
+                            const disabledBadge = document.createElement('span');
+                            disabledBadge.className = 'px-5 py-2.5 rounded-2xl bg-gray-200 text-gray-500 font-extrabold text-xs uppercase cursor-not-allowed select-none flex items-center gap-1.5';
+                            disabledBadge.innerHTML = '<i class="fi fi-rr-check"></i><span>Đã sử dụng</span>';
+                            useBtn.replaceWith(disabledBadge);
+                        }
+
+                        const copyBtn = actionBar.querySelector('.copy-btn');
+                        if (copyBtn) {
+                            copyBtn.classList.add('text-gray-400', 'cursor-not-allowed');
+                        }
+                    }
+                }
+            });
+
+            filterVouchers();
+        }
 
         function copyVoucherCode(code) {
             navigator.clipboard.writeText(code).then(() => {
@@ -251,11 +379,12 @@
                 const title = (card.dataset.title || '').toLowerCase();
                 const type = (card.dataset.type || '').toUpperCase();
                 const remaining = Number(card.dataset.remaining || 0);
+                const isUsed = card.dataset.used === 'true';
 
                 let matchesCat = true;
                 if (currentFilterCat === 'PERCENTAGE') matchesCat = (type === 'PERCENTAGE');
                 else if (currentFilterCat === 'FIXED_AMOUNT') matchesCat = (type === 'FIXED_AMOUNT');
-                else if (currentFilterCat === 'ACTIVE_ONLY') matchesCat = (remaining > 0);
+                else if (currentFilterCat === 'ACTIVE_ONLY') matchesCat = (!isUsed && remaining > 0);
 
                 const matchesQuery = !query || code.includes(query) || title.includes(query);
 
@@ -272,5 +401,11 @@
                 countBadge.innerText = `Hiển thị ${visibleCount} voucher`;
             }
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (checkCustomerAuthGuard()) {
+                loadUserUsedVouchers();
+            }
+        });
     </script>
 }

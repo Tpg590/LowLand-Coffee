@@ -153,5 +153,11 @@ public class EngagementHttpService : IEngagementHttpService
         return await SendAsync<ValidateVoucherResponseViewModel>(req);
     }
 
+    public async Task<ApiResponse<IEnumerable<Guid>>> GetMyUsedVoucherIdsAsync(string? token = null)
+    {
+        var req = CreateRequest(HttpMethod.Get, "/api/vouchers/my-used-ids", token);
+        return await SendAsync<IEnumerable<Guid>>(req);
+    }
+
     #endregion
 }

@@ -166,4 +166,21 @@ public class VouchersController : ControllerBase
 
         return Ok(ApiResponse<bool>.Success(true, "Ghi nhận sử dụng voucher thành công"));
     }
+
+    /// <summary>
+    /// Lấy danh sách ID các voucher mà người dùng hiện tại đã sử dụng.
+    /// </summary>
+    [HttpGet("my-used-ids")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<IEnumerable<Guid>>>> GetMyUsedVoucherIds()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized(ApiResponse<IEnumerable<Guid>>.Failure("Không tìm thấy thông tin định danh người dùng", 401));
+        }
+
+        var usedIds = await _voucherService.GetUsedVoucherIdsByUserAsync(userId);
+        return Ok(ApiResponse<IEnumerable<Guid>>.Success(usedIds, "Lấy danh sách ID voucher đã sử dụng thành công"));
+    }
 }

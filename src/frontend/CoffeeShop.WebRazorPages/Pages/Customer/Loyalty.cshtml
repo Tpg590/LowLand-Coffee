@@ -2,7 +2,7 @@
 @model CoffeeShop.WebRazorPages.Pages.Customer.LoyaltyModel
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "Thành viên & Điểm thưởng - LowLand Coffee";
+    ViewData["Title"] = "Thẻ Hội Viên & Tích Điểm - LowLand Coffee";
 }
 
 <!-- Hero Banner Header -->
@@ -21,7 +21,7 @@
                 <span class="text-amber-200">Đặc Quyền Vượt Bậc</span>
             </h1>
             <p class="text-white/90 text-sm sm:text-base leading-relaxed font-normal">
-                Mỗi tách cà phê bạn thưởng thức tại LowLand Coffee đều là một bước tiến đến những ưu đãi độc quyền. Tích lũy điểm để nâng hạng thẻ và tận hưởng chiết khấu đến 15% cùng cơ hội đổi điểm trừ tiền trực tiếp trên mỗi hóa đơn.
+                Mỗi tách cà phê bạn thưởng thức tại LowLand Coffee đều là một bước tiến đến những ưu đãi độc quyền. Tích lũy điểm để nâng hạng thẻ và tận hưởng chiết khấu tự động đến 3% trực tiếp trên mỗi hóa đơn.
             </p>
             <div class="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-3">
                 <a href="#tiers-section" class="px-7 py-3.5 rounded-2xl bg-white text-red-highland hover:bg-amber-100 font-extrabold text-sm shadow-lg transition transform active:scale-95 flex items-center gap-2">
@@ -64,7 +64,7 @@
                             <span class="text-xs font-bold text-gray-300 uppercase tracking-wider">Điểm khả dụng</span>
                         </div>
                         <p id="card-upgrade-hint" class="text-[12px] text-gray-400 font-medium mt-1">
-                            Còn 500 điểm để lên hạng Bạc (Giảm 5%)
+                            Còn 500 điểm để lên hạng Bạc (Giảm 1%)
                         </p>
                     </div>
 
@@ -87,31 +87,8 @@
 <!-- Main Container -->
 <div class="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-12 space-y-16">
 
-    <!-- Guest / Login Prompt Banner (Chỉ hiện khi chưa đăng nhập) -->
-    <div id="loyalty-guest-notice" class="bg-gradient-to-r from-amber-50 via-amber-100/50 to-orange-50 border border-amber-200 rounded-3xl p-7 sm:p-9 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
-        <div class="flex items-center gap-4">
-            <div class="w-14 h-14 rounded-2xl bg-amber-400/20 text-amber-800 flex items-center justify-center text-3xl shrink-0">
-                <i class="fi fi-rr-sparkles"></i>
-            </div>
-            <div>
-                <h3 class="text-lg sm:text-xl font-black text-gray-900">Bạn chưa đăng nhập tài khoản?</h3>
-                <p class="text-sm text-gray-600 mt-1 leading-relaxed">
-                    Đăng nhập hoặc đăng ký thành viên ngay hôm nay để tự động nhận thẻ hội viên Hạng Đồng, tích điểm đổi thưởng và nhận voucher độc quyền mỗi tuần!
-                </p>
-            </div>
-        </div>
-        <div class="flex items-center gap-3 shrink-0 w-full md:w-auto">
-            <a href="/Auth/Login?returnUrl=/Customer/Loyalty" class="flex-1 md:flex-none text-center px-6 py-3.5 rounded-2xl bg-red-highland hover:bg-red-700 text-white font-extrabold text-sm shadow-md transition active:scale-95">
-                Đăng Nhập
-            </a>
-            <a href="/Auth/Register" class="flex-1 md:flex-none text-center px-6 py-3.5 rounded-2xl bg-white hover:bg-gray-50 border border-gray-300 text-gray-800 font-extrabold text-sm shadow-sm transition">
-                Tạo Tài Khoản
-            </a>
-        </div>
-    </div>
-
-    <!-- Logged In Member Dashboard (Hiện khi đã đăng nhập) -->
-    <div id="loyalty-member-dashboard" class="hidden space-y-8">
+    <!-- Logged In Member Dashboard (Bắt buộc là Customer để hiển thị) -->
+    <div id="loyalty-member-dashboard" class="space-y-8">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-200">
             <div>
                 <h2 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight flex items-center gap-2.5">
@@ -199,7 +176,7 @@
             </div>
             <div class="flex justify-between text-xs text-gray-500 font-semibold">
                 <span id="progress-min-points">0 điểm</span>
-                <span id="progress-target-hint">Tích thêm 500 điểm để mở khóa chiết khấu 5%</span>
+                <span id="progress-target-hint">Tích thêm 500 điểm để mở khóa chiết khấu 1%</span>
                 <span id="progress-max-points">500 điểm</span>
             </div>
         </div>
@@ -210,7 +187,7 @@
         <div class="text-center max-w-2xl mx-auto space-y-3">
             <span class="text-xs font-black uppercase tracking-widest text-red-highland bg-red-50 px-4 py-1.5 rounded-full border border-red-200">Bảng Quyền Lợi Thành Viên</span>
             <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-gray-900 tracking-tight">4 Cấp Bậc Hạng Thẻ Tại LowLand Coffee</h2>
-            <p class="text-sm text-gray-500 leading-relaxed">Mỗi hạng thẻ mang đến những ưu đãi giảm giá độc quyền và hệ số nhân điểm tăng dần theo thời gian gắn bó của bạn.</p>
+            <p class="text-sm text-gray-500 leading-relaxed">Mỗi hạng thẻ mang đến ưu đãi chiết khấu trực tiếp và hệ số tích điểm tăng dần theo thời gian gắn bó của bạn.</p>
         </div>
 
         <!-- 4 Cards Grid với khoảng cách thoáng đãng -->
@@ -231,7 +208,7 @@
                         <p class="text-xs font-semibold text-gray-500 mt-1">Khởi đầu trải nghiệm</p>
                     </div>
 
-                    <!-- Thông số chính gọn gàng, không bị vỡ dòng -->
+                    <!-- Thông số chính -->
                     <div class="bg-gray-50/90 rounded-2xl p-4 space-y-2.5 border border-gray-100">
                         <div class="flex items-center justify-between text-xs sm:text-sm">
                             <span class="text-gray-500 font-medium">Điểm tối thiểu:</span>
@@ -243,11 +220,11 @@
                         </div>
                         <div class="flex items-center justify-between text-xs sm:text-sm">
                             <span class="text-gray-500 font-medium">Chiết khấu đơn:</span>
-                            <span class="font-extrabold text-gray-400">0%</span>
+                            <span class="font-extrabold text-gray-500">0%</span>
                         </div>
                     </div>
 
-                    <!-- Danh sách quyền lợi thoáng đãng -->
+                    <!-- Danh sách quyền lợi (Chỉ chiết khấu & tích điểm) -->
                     <div class="space-y-3 pt-1">
                         <span class="block text-[11px] font-black uppercase tracking-wider text-gray-400">Đặc quyền hội viên:</span>
                         <ul class="text-xs sm:text-[13px] text-gray-600 space-y-3 font-medium">
@@ -255,19 +232,13 @@
                                 <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
                                     <i class="fi fi-rr-check text-xs"></i>
                                 </span>
-                                <span class="leading-relaxed">Tự động cấp khi đăng ký tài khoản</span>
+                                <span class="leading-relaxed">Tích điểm chuẩn hệ số x1.0 (10.000 VNĐ = 1 điểm)</span>
                             </li>
                             <li class="flex items-start gap-2.5">
                                 <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
                                     <i class="fi fi-rr-check text-xs"></i>
                                 </span>
-                                <span class="leading-relaxed">Tích 1 điểm cho mỗi 10.000 VNĐ</span>
-                            </li>
-                            <li class="flex items-start gap-2.5">
-                                <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
-                                    <i class="fi fi-rr-check text-xs"></i>
-                                </span>
-                                <span class="leading-relaxed">Đổi điểm trừ tiền (1 điểm = 1.000đ)</span>
+                                <span class="leading-relaxed">Chiết khấu giảm giá đơn hàng: 0%</span>
                             </li>
                         </ul>
                     </div>
@@ -297,15 +268,15 @@
                         </div>
                         <div class="flex items-center justify-between text-xs sm:text-sm">
                             <span class="text-gray-500 font-medium">Tích điểm:</span>
-                            <span class="font-extrabold text-amber-700">x1.2 lần</span>
+                            <span class="font-extrabold text-amber-700">x1.1 lần (+10%)</span>
                         </div>
                         <div class="flex items-center justify-between text-xs sm:text-sm">
                             <span class="text-gray-500 font-medium">Chiết khấu đơn:</span>
-                            <span class="font-extrabold text-red-highland">Giảm 5%</span>
+                            <span class="font-extrabold text-red-highland">Giảm 1%</span>
                         </div>
                     </div>
 
-                    <!-- Danh sách quyền lợi -->
+                    <!-- Danh sách quyền lợi (Chỉ chiết khấu & tích điểm) -->
                     <div class="space-y-3 pt-1">
                         <span class="block text-[11px] font-black uppercase tracking-wider text-gray-400">Đặc quyền hội viên:</span>
                         <ul class="text-xs sm:text-[13px] text-gray-600 space-y-3 font-medium">
@@ -313,29 +284,22 @@
                                 <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
                                     <i class="fi fi-rr-check text-xs"></i>
                                 </span>
-                                <span class="leading-relaxed">Chiết khấu 5% tự động mỗi đơn hàng</span>
+                                <span class="leading-relaxed">Hệ số tích điểm x1.1 (+10% điểm tích lũy mỗi đơn)</span>
                             </li>
                             <li class="flex items-start gap-2.5">
                                 <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
                                     <i class="fi fi-rr-check text-xs"></i>
                                 </span>
-                                <span class="leading-relaxed">Tích điểm nhanh hơn 20% mỗi lần uống</span>
-                            </li>
-                            <li class="flex items-start gap-2.5">
-                                <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
-                                    <i class="fi fi-rr-check text-xs"></i>
-                                </span>
-                                <span class="leading-relaxed">Quà tặng bất ngờ vào dịp sinh nhật</span>
+                                <span class="leading-relaxed">Chiết khấu 1% trực tiếp trên mỗi đơn hàng</span>
                             </li>
                         </ul>
                     </div>
                 </div>
             </div>
 
-            <!-- Hạng Vàng (Nổi bật, Không bị đè chữ) -->
+            <!-- Hạng Vàng (Phổ biến) -->
             <div class="bg-gradient-to-b from-amber-50/70 via-white to-white rounded-3xl border-2 border-amber-400 p-7 sm:p-8 shadow-md hover:shadow-2xl transition-all duration-300 flex flex-col justify-between space-y-6 relative group">
                 <div class="space-y-5">
-                    <!-- Badge Phổ biến đặt gọn gàng ở đầu -->
                     <div class="flex items-center justify-between">
                         <span class="w-14 h-14 rounded-2xl bg-amber-500 text-white flex items-center justify-center text-2xl group-hover:scale-110 transition-transform shadow-md">
                             <i class="fi fi-sr-trophy-star"></i>
@@ -363,15 +327,15 @@
                         </div>
                         <div class="flex items-center justify-between text-xs sm:text-sm">
                             <span class="text-gray-600 font-medium">Tích điểm:</span>
-                            <span class="font-extrabold text-amber-800">x1.5 lần</span>
+                            <span class="font-extrabold text-amber-800">x1.2 lần (+20%)</span>
                         </div>
                         <div class="flex items-center justify-between text-xs sm:text-sm">
                             <span class="text-gray-600 font-medium">Chiết khấu đơn:</span>
-                            <span class="font-extrabold text-red-highland">Giảm 10%</span>
+                            <span class="font-extrabold text-red-highland">Giảm 2%</span>
                         </div>
                     </div>
 
-                    <!-- Danh sách quyền lợi -->
+                    <!-- Danh sách quyền lợi (Chỉ chiết khấu & tích điểm) -->
                     <div class="space-y-3 pt-1">
                         <span class="block text-[11px] font-black uppercase tracking-wider text-amber-800">Đặc quyền hội viên:</span>
                         <ul class="text-xs sm:text-[13px] text-gray-700 space-y-3 font-medium">
@@ -379,19 +343,13 @@
                                 <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
                                     <i class="fi fi-rr-check text-xs"></i>
                                 </span>
-                                <span class="leading-relaxed">Chiết khấu 10% trực tiếp mọi đồ uống</span>
+                                <span class="leading-relaxed">Hệ số tích điểm x1.2 (+20% điểm tích lũy mỗi đơn)</span>
                             </li>
                             <li class="flex items-start gap-2.5">
                                 <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
                                     <i class="fi fi-rr-check text-xs"></i>
                                 </span>
-                                <span class="leading-relaxed">Hệ số tích điểm nhân 1.5 lần (+50%)</span>
-                            </li>
-                            <li class="flex items-start gap-2.5">
-                                <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
-                                    <i class="fi fi-rr-check text-xs"></i>
-                                </span>
-                                <span class="leading-relaxed">Nhận trọn bộ voucher độc quyền mỗi tháng</span>
+                                <span class="leading-relaxed">Chiết khấu 2% trực tiếp trên mỗi đơn hàng</span>
                             </li>
                         </ul>
                     </div>
@@ -421,15 +379,15 @@
                         </div>
                         <div class="flex items-center justify-between text-xs sm:text-sm">
                             <span class="text-gray-600 font-medium">Tích điểm:</span>
-                            <span class="font-extrabold text-sky-800">x2.0 lần (Gấp đôi)</span>
+                            <span class="font-extrabold text-sky-800">x1.3 lần (+30%)</span>
                         </div>
                         <div class="flex items-center justify-between text-xs sm:text-sm">
                             <span class="text-gray-600 font-medium">Chiết khấu đơn:</span>
-                            <span class="font-extrabold text-red-highland">Giảm 15% VIP</span>
+                            <span class="font-extrabold text-red-highland">Giảm 3%</span>
                         </div>
                     </div>
 
-                    <!-- Danh sách quyền lợi -->
+                    <!-- Danh sách quyền lợi (Chỉ chiết khấu & tích điểm) -->
                     <div class="space-y-3 pt-1">
                         <span class="block text-[11px] font-black uppercase tracking-wider text-sky-800">Đặc quyền hội viên:</span>
                         <ul class="text-xs sm:text-[13px] text-gray-700 space-y-3 font-medium">
@@ -437,19 +395,13 @@
                                 <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
                                     <i class="fi fi-rr-check text-xs"></i>
                                 </span>
-                                <span class="leading-relaxed">Giảm 15% toàn bộ menu không giới hạn</span>
+                                <span class="leading-relaxed">Hệ số tích điểm x1.3 (+30% điểm tích lũy mỗi đơn)</span>
                             </li>
                             <li class="flex items-start gap-2.5">
                                 <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
                                     <i class="fi fi-rr-check text-xs"></i>
                                 </span>
-                                <span class="leading-relaxed">Nhân đôi số điểm trên từng đơn hàng</span>
-                            </li>
-                            <li class="flex items-start gap-2.5">
-                                <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
-                                    <i class="fi fi-rr-check text-xs"></i>
-                                </span>
-                                <span class="leading-relaxed">Ưu tiên phục vụ và giao hàng hỏa tốc</span>
+                                <span class="leading-relaxed">Chiết khấu 3% trực tiếp trên mỗi đơn hàng</span>
                             </li>
                         </ul>
                     </div>
@@ -492,10 +444,10 @@
                 <div>
                     <label class="block text-xs font-bold uppercase text-gray-600 mb-1.5">Hạng thẻ áp dụng:</label>
                     <select id="calc-tier-select" onchange="calculateEarnedPoints()" class="w-full bg-gray-50 border border-gray-300 rounded-2xl px-4 py-3.5 text-sm font-bold text-gray-800 focus:ring-2 focus:ring-red-highland">
-                        <option value="1.0">Hạng Đồng (Hệ số x1.0)</option>
-                        <option value="1.2">Hạng Bạc (Hệ số x1.2)</option>
-                        <option value="1.5" selected>Hạng Vàng (Hệ số x1.5)</option>
-                        <option value="2.0">Hạng Kim Cương (Hệ số x2.0)</option>
+                        <option value="1.0">Hạng Đồng (Hệ số x1.0 - Giảm 0%)</option>
+                        <option value="1.1">Hạng Bạc (Hệ số x1.1 - Giảm 1%)</option>
+                        <option value="1.2" selected>Hạng Vàng (Hệ số x1.2 - Giảm 2%)</option>
+                        <option value="1.3">Hạng Kim Cương (Hệ số x1.3 - Giảm 3%)</option>
                     </select>
                 </div>
 
@@ -515,13 +467,13 @@
                 <div>
                     <span class="block text-xs font-semibold text-gray-500">Số điểm tích lũy nhận được:</span>
                     <div class="flex items-baseline gap-2 mt-1">
-                        <span id="calc-result-points" class="text-4xl sm:text-5xl font-black text-red-highland">15</span>
+                        <span id="calc-result-points" class="text-4xl sm:text-5xl font-black text-red-highland">12</span>
                         <span class="text-lg font-bold text-gray-700">điểm thưởng</span>
                     </div>
                 </div>
                 <div class="pt-4 border-t border-amber-200/60 text-xs text-gray-600 space-y-1.5 leading-relaxed">
                     <p>• Điểm này sẽ tự động cộng vào tài khoản sau khi đơn hàng được hoàn tất.</p>
-                    <p>• Tương đương giá trị quy đổi: <strong class="text-emerald-700 font-black" id="calc-result-vnd">15.000 VNĐ</strong> giảm trừ vào các đơn tiếp theo.</p>
+                    <p>• Tương đương giá trị quy đổi: <strong class="text-emerald-700 font-black" id="calc-result-vnd">12.000 VNĐ</strong> giảm trừ vào các đơn tiếp theo.</p>
                 </div>
             </div>
         </div>
@@ -616,14 +568,49 @@
 
 @section Scripts {
     <script>
-        // Sử dụng trực tiếp API Gateway chuẩn cho toàn bộ hệ thống
+        // API Gateway chuẩn
         const API_GATEWAY_URL = 'http://localhost:8080';
 
         let transactionsData = [];
         let memberProfile = null;
 
+        // AUTH GUARD: Phân quyền bắt buộc Customer
+        function checkCustomerAuthGuard() {
+            const rawUser = localStorage.getItem('current_user');
+            const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
+
+            if (!rawUser || !token) {
+                try {
+                    sessionStorage.setItem('auth_redirect_msg', 'Vui lòng đăng nhập với tài khoản Khách hàng (Customer) để xem thông tin hội viên.');
+                } catch (e) {}
+                window.location.replace('/Auth/Login?returnUrl=' + encodeURIComponent(window.location.pathname));
+                return false;
+            }
+
+            try {
+                const user = JSON.parse(rawUser);
+                const rawRole = (user.role || user.roleName || '').toString().toLowerCase();
+                const isCustomer = (rawRole === 'customer') || (!rawRole.includes('admin') && !rawRole.includes('staff'));
+
+                if (!isCustomer) {
+                    alert('Trang Thẻ Hội Viên & Tích Điểm chỉ dành riêng cho Khách hàng (Customer).');
+                    if (rawRole.includes('admin')) {
+                        window.location.replace('/Admin/Users');
+                    } else {
+                        window.location.replace('/Staff/Orders');
+                    }
+                    return false;
+                }
+            } catch (err) {
+                window.location.replace('/Auth/Login?returnUrl=' + encodeURIComponent(window.location.pathname));
+                return false;
+            }
+
+            return true;
+        }
+
         async function fetchFromGateway(endpoint, options = {}) {
-            const token = localStorage.getItem('auth_token');
+            const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
             const headers = {
                 'Content-Type': 'application/json',
                 ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
@@ -643,22 +630,15 @@
         }
 
         async function initLoyaltyPage() {
+            if (!checkCustomerAuthGuard()) return;
+
             const userStr = localStorage.getItem('current_user');
-            const guestNotice = document.getElementById('loyalty-guest-notice');
-            const memberDashboard = document.getElementById('loyalty-member-dashboard');
-
-            if (!userStr) {
-                if (guestNotice) guestNotice.classList.remove('hidden');
-                if (memberDashboard) memberDashboard.classList.add('hidden');
-                renderEmptyTransactions('Vui lòng đăng nhập để xem lịch sử tích điểm của bạn.');
-                return;
-            }
-
             const user = JSON.parse(userStr);
-            if (guestNotice) guestNotice.classList.add('hidden');
-            if (memberDashboard) memberDashboard.classList.remove('hidden');
 
-            document.getElementById('card-user-name').innerText = user.fullName || user.email || 'Hội viên LowLand';
+            const cardUserName = document.getElementById('card-user-name');
+            if (cardUserName) {
+                cardUserName.innerText = user.fullName || user.email || 'Khách hàng thành viên';
+            }
 
             await loadMemberProfile();
             await loadPointTransactions();
@@ -686,12 +666,12 @@
 
         function renderMemberProfile(profile) {
             // Digital Card
-            document.getElementById('card-tier-badge').innerText = profile.tierName.toUpperCase();
+            document.getElementById('card-tier-badge').innerText = (profile.tierName || 'Đồng').toUpperCase();
             document.getElementById('card-points').innerText = Number(profile.currentPoints || 0).toLocaleString('vi-VN');
             document.getElementById('card-discount-rate').innerText = `${profile.discountPercent || 0}%`;
 
             if (profile.pointsNeededForNextTier && profile.pointsNeededForNextTier > 0) {
-                document.getElementById('card-upgrade-hint').innerText = `Còn ${profile.pointsNeededForNextTier} điểm để lên hạng ${profile.nextTierName || 'Bạc'}`;
+                document.getElementById('card-upgrade-hint').innerText = `Còn ${profile.pointsNeededForNextTier} điểm để lên hạng ${profile.nextTierName || 'Bạc'} (Giảm 1%)`;
             } else {
                 document.getElementById('card-upgrade-hint').innerText = 'Chúc mừng! Bạn đã đạt hạng thẻ cao nhất.';
             }
@@ -708,7 +688,7 @@
                 document.getElementById('dash-next-tier').innerText = `Hạng ${profile.nextTierName}`;
                 document.getElementById('dash-points-needed').innerText = `Còn thiếu ${profile.pointsNeededForNextTier} điểm`;
                 document.getElementById('progress-next-tier-name').innerText = `Hạng ${profile.nextTierName}`;
-                document.getElementById('progress-target-hint').innerText = `Tích thêm ${profile.pointsNeededForNextTier} điểm để mở khóa quyền lợi mới`;
+                document.getElementById('progress-target-hint').innerText = `Tích thêm ${profile.pointsNeededForNextTier} điểm để nâng hạng`;
 
                 // Calculate progress %
                 const targetPoints = (profile.totalAccumulatedPoints || 0) + (profile.pointsNeededForNextTier || 0);

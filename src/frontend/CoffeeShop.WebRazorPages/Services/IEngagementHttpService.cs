@@ -22,4 +22,5 @@ public interface IEngagementHttpService
     Task<ApiResponse<VoucherViewModel>> UpdateVoucherAsync(Guid id, UpdateVoucherRequestViewModel request, string? token = null);
     Task<ApiResponse<bool>> DeleteVoucherAsync(Guid id, string? token = null);
     Task<ApiResponse<ValidateVoucherResponseViewModel>> ValidateVoucherAsync(ValidateVoucherRequestViewModel request, string? token = null);
+    Task<ApiResponse<IEnumerable<Guid>>> GetMyUsedVoucherIdsAsync(string? token = null);
 }

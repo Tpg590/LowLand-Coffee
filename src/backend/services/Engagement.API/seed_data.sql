@@ -28,10 +28,17 @@ IF NOT EXISTS (SELECT 1 FROM dbo.loyalty_tiers WHERE id = @TierBronze)
 BEGIN
     INSERT INTO dbo.loyalty_tiers (id, tier_code, tier_name, min_points, point_multiplier, discount_percent, benefits_description, created_at)
     VALUES
-    (@TierBronze, 'BRONZE', N'Hạng Đồng (Member)', 0, 1.00, 0.00, N'Tích điểm chuẩn 10.000đ = 1đ', GETDATE()),
-    (@TierSilver, 'SILVER', N'Hạng Bạc (Silver)', 100, 1.10, 5.00, N'Tích điểm x1.1, giảm 5% trực tiếp cho mọi đơn hàng', GETDATE()),
-    (@TierGold, 'GOLD', N'Hạng Vàng (Gold)', 300, 1.25, 10.00, N'Tích điểm x1.25, giảm 10% trực tiếp cho mọi đơn hàng', GETDATE()),
-    (@TierDiamond, 'DIAMOND', N'Hạng Kim Cương (Diamond)', 600, 1.50, 15.00, N'Tích điểm x1.5, giảm 15% trực tiếp cho mọi đơn hàng', GETDATE());
+    (@TierBronze, 'BRONZE', N'Hạng Đồng (Member)', 0, 1.00, 0.00, N'Tích điểm chuẩn 10.000đ = 1đ. Chiết khấu 0%', GETDATE()),
+    (@TierSilver, 'SILVER', N'Hạng Bạc (Silver)', 500, 1.10, 1.00, N'Tích điểm x1.1 (+10%). Chiết khấu 1% trực tiếp mỗi đơn hàng', GETDATE()),
+    (@TierGold, 'GOLD', N'Hạng Vàng (Gold)', 1500, 1.20, 2.00, N'Tích điểm x1.2 (+20%). Chiết khấu 2% trực tiếp mỗi đơn hàng', GETDATE()),
+    (@TierDiamond, 'DIAMOND', N'Hạng Kim Cương (Diamond)', 3500, 1.30, 3.00, N'Tích điểm x1.3 (+30%). Chiết khấu 3% trực tiếp mỗi đơn hàng', GETDATE());
+END
+ELSE
+BEGIN
+    UPDATE dbo.loyalty_tiers SET min_points = 0, point_multiplier = 1.00, discount_percent = 0.00, benefits_description = N'Tích điểm chuẩn 10.000đ = 1đ. Chiết khấu 0%' WHERE id = @TierBronze;
+    UPDATE dbo.loyalty_tiers SET min_points = 500, point_multiplier = 1.10, discount_percent = 1.00, benefits_description = N'Tích điểm x1.1 (+10%). Chiết khấu 1% trực tiếp mỗi đơn hàng' WHERE id = @TierSilver;
+    UPDATE dbo.loyalty_tiers SET min_points = 1500, point_multiplier = 1.20, discount_percent = 2.00, benefits_description = N'Tích điểm x1.2 (+20%). Chiết khấu 2% trực tiếp mỗi đơn hàng' WHERE id = @TierGold;
+    UPDATE dbo.loyalty_tiers SET min_points = 3500, point_multiplier = 1.30, discount_percent = 3.00, benefits_description = N'Tích điểm x1.3 (+30%). Chiết khấu 3% trực tiếp mỗi đơn hàng' WHERE id = @TierDiamond;
 END
 
 -- 2. Nạp Danh sách Voucher khuyến mãi

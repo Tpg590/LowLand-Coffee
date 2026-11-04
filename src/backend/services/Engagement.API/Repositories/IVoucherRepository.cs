@@ -12,5 +12,9 @@ public interface IVoucherRepository
     Task DeleteVoucherAsync(PromoVouchers voucher);
     Task AddUsageAsync(PromoVoucherUsages usage);
     Task<int> GetUserUsageCountAsync(Guid voucherId, Guid userId);
+    /// <summary>
+    /// Lấy danh sách ID các voucher mà người dùng đã từng sử dụng.
+    /// </summary>
+    Task<IEnumerable<Guid>> GetUsedVoucherIdsByUserAsync(Guid userId);
     Task SaveChangesAsync();
 }
