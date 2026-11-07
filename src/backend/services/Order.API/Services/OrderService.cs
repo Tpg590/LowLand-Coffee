@@ -17,7 +17,7 @@ public class OrderService : IOrderService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IMapper _mapper;
     private readonly ILogger<OrderService> _logger;
-
+    private readonly INotificationClient _notificationClient;
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true
@@ -28,13 +28,15 @@ public class OrderService : IOrderService
         IPaymentService paymentService,
         IHttpClientFactory httpClientFactory,
         IMapper mapper,
-        ILogger<OrderService> logger)
+        ILogger<OrderService> logger,
+         INotificationClient notificationClient)
     {
         _orderRepository = orderRepository;
         _paymentService = paymentService;
         _httpClientFactory = httpClientFactory;
         _mapper = mapper;
         _logger = logger;
+        _notificationClient = notificationClient;
     }
 
     /// <summary>
@@ -266,36 +268,55 @@ public class OrderService : IOrderService
     /// Phân quyền: Chỉ Staff.
     /// </summary>
     public async Task<ApiResponse<OrderDetailDto>> UpdateOrderStatusAsync(
-        Guid orderId, UpdateOrderStatusRequest request, Guid currentUserId, string currentUserRole, CancellationToken cancellationToken = default)
+     Guid orderId,
+     UpdateOrderStatusRequest request,
+     Guid currentUserId,
+     string currentUserRole,
+     CancellationToken cancellationToken = default)
     {
-        var isStaff = string.Equals(currentUserRole, "Staff", StringComparison.OrdinalIgnoreCase);
+        var isStaff = string.Equals(
+            currentUserRole,
+            "Staff",
+            StringComparison.OrdinalIgnoreCase);
 
         if (!isStaff)
         {
-            return ApiResponse<OrderDetailDto>.Fail("Chỉ nhân viên (Staff) mới có quyền cập nhật trạng thái đơn hàng.", 403);
+            return ApiResponse<OrderDetailDto>.Fail(
+                "Chỉ nhân viên (Staff) mới có quyền cập nhật trạng thái đơn hàng.",
+                403);
         }
 
         var nextStatus = OrderStatus.Normalize(request.Status);
+
         if (!OrderStatus.IsValid(nextStatus))
         {
-            return ApiResponse<OrderDetailDto>.Fail($"Trạng thái '{request.Status}' không hợp lệ. Hỗ trợ: PENDING, PROCESSING, SHIPPING, COMPLETED, CANCELLED.", 400);
+            return ApiResponse<OrderDetailDto>.Fail(
+                $"Trạng thái '{request.Status}' không hợp lệ. Hỗ trợ: PENDING, PROCESSING, SHIPPING, COMPLETED, CANCELLED.",
+                400);
         }
 
-        var order = await _orderRepository.GetByIdWithDetailsAsync(orderId, asNoTracking: false, cancellationToken);
+        var order = await _orderRepository.GetByIdWithDetailsAsync(
+            orderId,
+            asNoTracking: false,
+            cancellationToken);
 
         if (order == null)
         {
-            return ApiResponse<OrderDetailDto>.Fail("Không tìm thấy đơn hàng.", 404);
+            return ApiResponse<OrderDetailDto>.Fail(
+                "Không tìm thấy đơn hàng.",
+                404);
         }
 
-        // Kiểm tra quy tắc chuyển trạng thái tuần tự: PENDING -> PROCESSING -> SHIPPING -> COMPLETED
         if (!OrderStatus.CanTransition(order.Status, nextStatus))
         {
             return ApiResponse<OrderDetailDto>.Fail(
-                $"Không thể chuyển trạng thái từ '{order.Status}' sang '{nextStatus}'. Quy trình bắt buộc: Pending -> Processing -> Shipping -> Completed.", 400);
+                $"Không thể chuyển trạng thái từ '{order.Status}' sang '{nextStatus}'. Quy trình bắt buộc: Pending -> Processing -> Shipping -> Completed.",
+                400);
         }
 
+        // Cập nhật trạng thái đơn hàng
         order.Status = nextStatus;
+
         if (!string.IsNullOrWhiteSpace(request.Note))
         {
             order.Note = string.IsNullOrWhiteSpace(order.Note)
@@ -303,12 +324,28 @@ public class OrderService : IOrderService
                 : $"{order.Note} | {request.Note}";
         }
 
+        // Lưu database trước khi gọi Notification API
         await _orderRepository.UpdateAsync(order, cancellationToken);
 
-        _logger.LogInformation("Cập nhật trạng thái đơn {OrderCode} -> {Status} bởi Staff {UserId}",
-            order.OrderCode, nextStatus, currentUserId);
+        _logger.LogInformation(
+            "Cập nhật trạng thái đơn {OrderCode} -> {Status} bởi Staff {UserId}",
+            order.OrderCode,
+            nextStatus,
+            currentUserId);
 
-        return ApiResponse<OrderDetailDto>.Success(_mapper.Map<OrderDetailDto>(order), $"Cập nhật trạng thái sang '{nextStatus}' thành công.");
+        // Gọi Notification API để thông báo cho khách hàng
+        await _notificationClient.SendOrderNotificationAsync(
+            new SendOrderNotificationRequest
+            {
+                UserId = order.UserId, // ID khách hàng sở hữu đơn hàng
+                OrderId = order.Id,
+                OrderStatus = nextStatus
+            },
+            cancellationToken);
+
+        return ApiResponse<OrderDetailDto>.Success(
+            _mapper.Map<OrderDetailDto>(order),
+            $"Cập nhật trạng thái sang '{nextStatus}' thành công.");
     }
 
     /// <summary>

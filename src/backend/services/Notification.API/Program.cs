@@ -1,59 +1,121 @@
-using System.Text;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Notification.API.Hub;
+using Notification.API.Model;
+using Notification.API.Repository;
+using Notification.API.Service;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add Controllers
-builder.Services.AddControllers();
+// 1. Database
+builder.Services.AddDbContext<CoffeeNotificationDbContext>(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("NotificationConnection")));
 
-// Add CORS Policy
+// 2. Repository + Service
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
+// 3. Controllers + SignalR
+builder.Services.AddControllers();
+builder.Services.AddSignalR();
+
+// 4. CORS: cho phép frontend truy cập SignalR
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        policy
+            .WithOrigins(
+                "http://localhost:5000",
+                "http://localhost:5173",
+                "http://localhost:8080")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
-// Configure JWT Authentication
-var jwtSecretKey = builder.Configuration["JwtSettings:SecretKey"] ?? "LowLandCoffee_Super_Secret_Key_For_PRN232_Assignment_2026_Key";
-var jwtIssuer = builder.Configuration["JwtSettings:Issuer"] ?? "LowLandCoffee.Auth";
-var jwtAudience = builder.Configuration["JwtSettings:Audience"] ?? "LowLandCoffee.Clients";
+// 5. JWT: các giá trị phải khớp với Auth Service
+var jwtSecretKey = builder.Configuration["JwtSettings:SecretKey"]
+    ?? "LowLandCoffee_Super_Secret_Key_For_PRN232_Assignment_2026_Key";
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+var jwtIssuer = builder.Configuration["JwtSettings:Issuer"]
+    ?? "LowLandCoffee.Auth";
+
+var jwtAudience = builder.Configuration["JwtSettings:Audience"]
+    ?? "LowLandCoffee.Clients";
+
+builder.Services
+    .AddAuthentication(options =>
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtIssuer,
-        ValidAudience = jwtAudience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey))
-    };
+        options.DefaultAuthenticateScheme =
+            JwtBearerDefaults.AuthenticationScheme;
+
+        options.DefaultChallengeScheme =
+            JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
+
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtSecretKey))
+        };
+
+        // SignalR WebSocket có thể truyền JWT qua query access_token.
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken =
+                    context.Request.Query["access_token"];
+
+                var requestPath = context.HttpContext.Request.Path;
+
+                if (!string.IsNullOrEmpty(accessToken) &&
+                    requestPath.StartsWithSegments(
+                        "/hubs/notifications"))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
+    });
+
+// 6. Authorization: đăng ký một lần duy nhất
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("InternalService", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+    });
 });
 
-builder.Services.AddAuthorization();
-
-// Configure Swagger with JWT Bearer Support
+// 7. Swagger + JWT
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "LowLand Coffee - Notification API",
         Version = "v1",
-        Description = "Microservice quản lý Thông báo & Logs"
+        Description = "Microservice quản lý thông báo"
     });
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -63,7 +125,7 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Nhập JWT Bearer token vào ô bên dưới (Ví dụ: Bearer {token})"
+        Description = "Nhập JWT token"
     });
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -84,18 +146,17 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-// Configure HTTP request pipeline
-if (app.Environment.IsDevelopment() || true)
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Notification.API v1"));
-}
+// 8. Middleware
+app.UseSwagger();
+app.UseSwaggerUI();
 
-app.UseCors("AllowAll");
-
+app.UseRouting();
+app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
+// 9. Endpoints
 app.MapControllers();
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.Run();

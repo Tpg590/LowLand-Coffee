@@ -52,7 +52,15 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddHttpClient<INotificationClient, NotificationClient>(
+    client =>
+    {
+        var notificationUrl =
+            builder.Configuration["Services:NotificationApi"];
 
+        client.BaseAddress = new Uri(notificationUrl!);
+        client.Timeout = TimeSpan.FromSeconds(10);
+    });
 var productApiUrl = builder.Configuration["Services:ProductApiUrl"] ?? "http://localhost:5002";
 builder.Services.AddHttpClient("ProductApi", client =>
 {
