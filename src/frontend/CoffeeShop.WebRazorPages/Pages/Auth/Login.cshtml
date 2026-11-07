@@ -1,53 +1,100 @@
-﻿@page
+@page
 @model CoffeeShop.WebRazorPages.Pages.Auth.LoginModel
 @{
     ViewData["Title"] = "Đăng nhập - LowLand Coffee";
+    var statusMsg = TempData["StatusMessage"] as string;
+    var registeredEmail = TempData["RegisteredEmail"] as string;
 }
 
 <div class="w-full min-h-[calc(100vh-160px)] flex items-center justify-center px-4 sm:px-8 py-10">
-    <div class="w-full max-w-md bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden">
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden transform transition duration-300">
         <!-- Header Banner with Brand Red -->
         <div class="bg-gradient-to-r from-red-highland via-[#B32028] to-red-highland-dark text-white p-8 text-center relative overflow-hidden">
             <div class="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-white/10 blur-xl pointer-events-none"></div>
-            <img src="~/images/logo.jpg" alt="LowLand Coffee" class="w-16 h-16 mx-auto rounded-full object-contain bg-amber-50 shadow-md border-2 border-amber-200 mb-3" />
+            <div class="absolute -bottom-8 -left-8 w-28 h-28 rounded-full bg-amber-300/10 blur-lg pointer-events-none"></div>
+            
+            <a asp-page="/Index" class="inline-block group mb-3">
+                <img src="~/images/logo.jpg" alt="LowLand Coffee" class="w-16 h-16 mx-auto rounded-full object-contain bg-amber-50 shadow-md border-2 border-amber-200 group-hover:scale-105 transition-transform" />
+            </a>
             <h2 class="text-2xl sm:text-3xl font-black tracking-tight uppercase">Đăng nhập</h2>
             <p class="text-sm text-amber-200 mt-1 font-medium">Chào mừng bạn quay lại với LowLand Coffee</p>
         </div>
 
         <!-- Form Body -->
         <div class="p-6 sm:p-8 space-y-6">
-            <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
+            <!-- Alert TempData (Đăng ký thành công chuyển qua) -->
+            @if (!string.IsNullOrEmpty(statusMsg))
+            {
+                <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-start gap-3">
+                    <i class="fi fi-rr-check-circle text-emerald-600 text-lg mt-0.5 flex-shrink-0"></i>
+                    <div class="flex-1 text-xs sm:text-sm font-semibold">@statusMsg</div>
+                </div>
+            }
+
+            <!-- Server Error Alert -->
+            @if (!ViewData.ModelState.IsValid && ViewData.ModelState[string.Empty]?.Errors.Count > 0)
+            {
+                <div class="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-start gap-3">
+                    <i class="fi fi-rr-cross-circle text-red-600 text-lg mt-0.5 flex-shrink-0"></i>
+                    <div class="flex-1 text-xs sm:text-sm font-semibold">
+                        @foreach (var error in ViewData.ModelState[string.Empty]!.Errors)
+                        {
+                            <p>@error.ErrorMessage</p>
+                        }
+                    </div>
+                </div>
+            }
+
+            <form method="post" asp-route-returnUrl="@Model.ReturnUrl" class="space-y-5" novalidate>
+                @Html.AntiForgeryToken()
+
+                <!-- Email/Phone Input -->
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Email hoặc Số điện thoại</label>
+                    <label asp-for="Input.EmailOrPhone" class="block text-xs sm:text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">
+                        Email hoặc Số điện thoại <span class="text-red-highland">*</span>
+                    </label>
                     <div class="relative">
-                        <input type="text" id="login-identifier" required class="w-full bg-[#F3F4F6] border border-gray-200 rounded-xl px-4 py-3.5 text-base font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland focus:bg-white placeholder-gray-400 transition" placeholder="Nhập email hoặc số điện thoại của bạn" />
-                        <span class="absolute right-3.5 top-3.5 text-gray-400 flex items-center">
-                            <i class="fi fi-rr-user text-base"></i>
+                        <input asp-for="Input.EmailOrPhone" id="login-identifier" value="@(string.IsNullOrEmpty(Model.Input.EmailOrPhone) ? registeredEmail : Model.Input.EmailOrPhone)" autocomplete="username"
+                               class="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl pl-4 pr-11 py-3.5 text-base font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland focus:bg-white placeholder-gray-400 transition outline-none"
+                               placeholder="Nhập email hoặc số điện thoại" />
+                        <span class="absolute right-3.5 top-3.5 text-gray-400 flex items-center pointer-events-none">
+                            <i class="fi fi-rr-user text-lg"></i>
                         </span>
                     </div>
+                    <span asp-validation-for="Input.EmailOrPhone" class="text-xs text-red-600 font-semibold mt-1 block min-h-[1.25rem] leading-tight"></span>
                 </div>
 
+                <!-- Password Input -->
                 <div>
                     <div class="flex items-center justify-between mb-2">
-                        <label class="block text-sm font-bold text-gray-700 uppercase tracking-wider">Mật khẩu</label>
-                        <a href="#" onclick="showToast('Quên mật khẩu', 'Vui lòng liên hệ nhân viên quản trị để được hỗ trợ cấp lại mật khẩu.', 'info')" class="text-xs text-red-highland font-bold hover:underline">Quên mật khẩu?</a>
+                        <label asp-for="Input.Password" class="block text-xs sm:text-sm font-bold text-gray-700 uppercase tracking-wider">
+                            Mật khẩu <span class="text-red-highland">*</span>
+                        </label>
+                        <a href="javascript:void(0)" onclick="handleForgotPasswordNotice()" class="text-xs text-red-highland font-bold hover:underline transition">Quên mật khẩu?</a>
                     </div>
                     <div class="relative">
-                        <input type="password" id="login-password" required class="w-full bg-[#F3F4F6] border border-gray-200 rounded-xl px-4 py-3.5 text-base font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland focus:bg-white placeholder-gray-400 transition" placeholder="Nhập mật khẩu" />
-                        <button type="button" onclick="togglePasswordVisibility('login-password')" class="absolute right-3.5 top-3.5 text-gray-400 hover:text-gray-600 flex items-center">
-                            <i class="fi fi-rr-eye text-base"></i>
+                        <input asp-for="Input.Password" id="login-password" autocomplete="current-password"
+                               class="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl pl-4 pr-11 py-3.5 text-base font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland focus:bg-white placeholder-gray-400 transition outline-none"
+                               placeholder="Nhập mật khẩu của bạn" />
+                        <button type="button" onclick="togglePasswordVisibility('login-password', 'toggle-eye-icon')" 
+                                class="absolute right-3.5 top-3.5 text-gray-400 hover:text-gray-700 flex items-center focus:outline-none" title="Hiện/Ẩn mật khẩu">
+                            <i id="toggle-eye-icon" class="fi fi-rr-eye text-lg"></i>
                         </button>
                     </div>
+                    <span asp-validation-for="Input.Password" class="text-xs text-red-600 font-semibold mt-1 block min-h-[1.25rem] leading-tight"></span>
                 </div>
 
+                <!-- Remember Me -->
                 <div class="flex items-center justify-between pt-1">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" id="remember-me" checked class="w-4 h-4 rounded text-red-highland focus:ring-red-highland" />
-                        <span class="text-xs text-gray-600 font-semibold">Ghi nhớ đăng nhập trên thiết bị này</span>
+                    <label class="flex items-center gap-2.5 cursor-pointer select-none">
+                        <input asp-for="Input.RememberMe" class="w-4 h-4 rounded text-red-highland focus:ring-red-highland accent-red-600 cursor-pointer" />
+                        <span class="text-xs text-gray-600 font-medium">Ghi nhớ đăng nhập trên trình duyệt</span>
                     </label>
                 </div>
 
-                <button type="submit" id="btn-login-submit" class="w-full py-4 rounded-xl bg-red-highland hover:bg-red-700 text-white font-black text-base uppercase tracking-wider shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-2">
+                <!-- Submit Button -->
+                <button type="submit" id="btn-login-submit" 
+                        class="w-full py-4 rounded-xl bg-red-highland hover:bg-red-700 text-white font-black text-base uppercase tracking-wider shadow-lg hover:shadow-red-900/20 transition-all transform active:scale-[0.98] flex items-center justify-center gap-2">
                     <i class="fi fi-rr-sign-in-alt text-lg"></i>
                     <span>Đăng nhập ngay</span>
                 </button>
@@ -62,103 +109,109 @@
 </div>
 
 @section Scripts {
+    <partial name="_ValidationScriptsPartial" />
     <script>
-        function togglePasswordVisibility(fieldId) {
+        function togglePasswordVisibility(fieldId, iconId) {
             const input = document.getElementById(fieldId);
-            input.type = input.type === 'password' ? 'text' : 'password';
-        }
+            const icon = document.getElementById(iconId);
+            if (!input) return;
 
-        async function handleLogin(e) {
-            e.preventDefault();
-            const btn = document.getElementById('btn-login-submit');
-            const identifier = document.getElementById('login-identifier').value.trim();
-            const password = document.getElementById('login-password').value.trim();
-
-            btn.disabled = true;
-            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Đang đăng nhập...`;
-
-            try {
-                // Gọi trực tiếp Auth.API (Cổng 5001) kết nối 100% CSDL SQL Server thật
-                const res = await fetch('http://localhost:8080/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ emailOrPhone: identifier, password: password })
-                });
-
-                const data = await res.json().catch(() => null);
-
-                // Kiểm tra kết quả từ CSDL backend (ApiResponse có trường isSuccess)
-                const isSuccessful = res.ok && data && (data.isSuccess === true || data.success === true || data.data?.accessToken);
-                if (!isSuccessful) {
-                    btn.disabled = false;
-                    btn.innerHTML = `<span>Đăng nhập ngay</span>`;
-                    const errMsg = data?.message || (data?.errors && data.errors[0]) || 'Email/Số điện thoại hoặc mật khẩu không chính xác.';
-                    showToast('Đăng nhập thất bại', errMsg, 'error');
-                    return;
+            if (input.type === 'password') {
+                input.type = 'text';
+                if (icon) {
+                    icon.classList.remove('fi-rr-eye');
+                    icon.classList.add('fi-rr-eye-crossed');
                 }
-
-                // Đăng nhập thành công từ CSDL thật
-                const authData = data.data || {};
-                const apiUser = authData.user || {};
-                const role = apiUser.role || apiUser.roleName || (apiUser.roles && apiUser.roles[0]) || 'Customer';
-
-                const userObj = {
-                    ...apiUser,
-                    role: role,
-                    roleName: role
-                };
-
-                localStorage.setItem('auth_token', authData.accessToken || '');
-                localStorage.setItem('current_user', JSON.stringify(userObj));
-                showToast('Đăng nhập thành công', `Xin chào ${userObj.fullName}! Đang chuyển hướng...`, 'success');
-
-                setTimeout(() => {
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const returnUrl = urlParams.get('returnUrl');
-                    const finalRole = (userObj.role || userObj.roleName || '').toLowerCase();
-
-                    if (finalRole === 'admin') {
-                        if (returnUrl && returnUrl.toLowerCase().startsWith('/admin')) {
-                            window.location.href = returnUrl;
-                        } else {
-                            window.location.href = '/Admin/Users';
-                        }
-                    } else if (finalRole === 'staff') {
-                        if (returnUrl && returnUrl.toLowerCase().startsWith('/staff')) {
-                            window.location.href = returnUrl;
-                        } else {
-                            window.location.href = '/Staff/Orders';
-                        }
-                    } else {
-                        if (returnUrl && !returnUrl.toLowerCase().startsWith('/admin') && !returnUrl.toLowerCase().startsWith('/staff')) {
-                            window.location.href = returnUrl;
-                        } else {
-                            window.location.href = '/Index';
-                        }
-                    }
-                }, 900);
-
-            } catch (err) {
-                btn.disabled = false;
-                btn.innerHTML = `<span>Đăng nhập ngay</span>`;
-                showToast('Lỗi kết nối CSDL', 'Không thể kết nối đến máy chủ Auth.API (Cổng 5001). Vui lòng thử lại sau.', 'error');
+            } else {
+                input.type = 'password';
+                if (icon) {
+                    icon.classList.remove('fi-rr-eye-crossed');
+                    icon.classList.add('fi-rr-eye');
+                }
             }
         }
 
-        // Tự động điền tài khoản vừa đăng ký nếu có
-        document.addEventListener('DOMContentLoaded', () => {
-            try {
-                const lastAcc = sessionStorage.getItem('last_registered_account');
-                if (lastAcc) {
-                    const idInput = document.getElementById('login-identifier');
-                    if (idInput) {
-                        idInput.value = lastAcc;
-                        const passInput = document.getElementById('login-password');
-                        if (passInput) passInput.focus();
-                    }
-                    sessionStorage.removeItem('last_registered_account');
+        function handleForgotPasswordNotice() {
+            if (typeof showToast === 'function') {
+                showToast('Quên mật khẩu', 'Vui lòng liên hệ Hotline 1900 1755 hoặc nhân viên quản trị để được hỗ trợ cấp lại mật khẩu.', 'info', 5000);
+            }
+        }
+
+        $(function () {
+            const $form = $('form');
+            const validator = $form.data('validator');
+
+            function setFieldVisual(element, state) {
+                if (element.type === 'checkbox') return;
+                const $el = $(element);
+                $el.removeClass('border-gray-200 border-emerald-500 border-red-500 focus:ring-emerald-500 focus:ring-red-500 focus:ring-red-highland');
+                if (state === 'valid') {
+                    $el.addClass('border-emerald-500 focus:ring-emerald-500');
+                } else if (state === 'invalid') {
+                    $el.addClass('border-red-500 focus:ring-red-500');
+                } else {
+                    $el.addClass('border-gray-200 focus:ring-red-highland');
                 }
-            } catch (e) {}
+            }
+
+            if (validator) {
+                validator.settings.highlight = function (element) {
+                    setFieldVisual(element, 'invalid');
+                };
+                validator.settings.unhighlight = function (element) {
+                    const val = $(element).val() ? $(element).val().trim() : '';
+                    if (val !== '') {
+                        setFieldVisual(element, 'valid');
+                    } else {
+                        setFieldVisual(element, 'neutral');
+                    }
+                };
+            }
+
+            const debounceTimers = {};
+            $form.find('input:not([type="checkbox"])').on('input', function () {
+                const input = this;
+                const fieldName = input.name;
+                const val = $(input).val() ? $(input).val().trim() : '';
+
+                clearTimeout(debounceTimers[fieldName]);
+
+                // Nếu không nhập gì: không báo lỗi, xóa lỗi cũ nếu có, reset border về bình thường
+                if (val === '') {
+                    if (validator) {
+                        $form.find(`[data-valmsg-for="${fieldName}"]`)
+                            .empty()
+                            .removeClass('field-validation-error')
+                            .addClass('field-validation-valid');
+                    }
+                    setFieldVisual(input, 'neutral');
+                    return;
+                }
+
+                // Có nhập thì debounce 400ms kiểm tra tính hợp lệ
+                debounceTimers[fieldName] = setTimeout(() => {
+                    if (validator) {
+                        const isValid = validator.element(input);
+                        setFieldVisual(input, isValid ? 'valid' : 'invalid');
+                    }
+                }, 400);
+            });
+
+            $form.on('submit', function (e) {
+                if (validator) {
+                    const isValid = $form.valid();
+                    if (!isValid) {
+                        e.preventDefault();
+                        $form.find('input[data-val-required]').each(function () {
+                            const val = $(this).val() ? $(this).val().trim() : '';
+                            if (!val) {
+                                setFieldVisual(this, 'invalid');
+                            }
+                        });
+                        return false;
+                    }
+                }
+            });
         });
     </script>
 }

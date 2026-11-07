@@ -9,9 +9,16 @@ builder.Services.AddRazorPages();
 // Add HttpContextAccessor
 builder.Services.AddHttpContextAccessor();
 
-// Configure HttpClient pointing to API Gateway
-var apiGatewayBaseUrl = builder.Configuration["ApiGateway:BaseUrl"] ?? "http://localhost:8080";
+// Configure HttpClients pointing to API Gateway
+var apiGatewayBaseUrl = builder.Configuration["ApiGateway:BaseUrl"];
+
 builder.Services.AddHttpClient("ApiGateway", client =>
+{
+    client.BaseAddress = new Uri(apiGatewayBaseUrl);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
+builder.Services.AddHttpClient<IAuthHttpService, AuthHttpService>(client =>
 {
     client.BaseAddress = new Uri(apiGatewayBaseUrl);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
