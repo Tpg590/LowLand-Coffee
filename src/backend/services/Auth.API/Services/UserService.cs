@@ -78,6 +78,14 @@ public class UserService : IUserService
         var staffRole = await _roleRepository.GetByNameAsync("Staff", cancellationToken);
         if (staffRole == null)
         {
+            var allRoles = await _roleRepository.GetAllAsync(cancellationToken);
+            staffRole = allRoles.FirstOrDefault(r =>
+                string.Equals(r.Name, "Staff", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(r.Name, "Nhân viên", StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (staffRole == null)
+        {
             return ApiResponse<UserDto>.Fail("Không tìm thấy vai trò Staff trong hệ thống", 500);
         }
 
@@ -88,6 +96,7 @@ public class UserService : IUserService
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password.Trim());
 
         var created = await _userRepository.AddAsync(user, cancellationToken);
+        created.Role = staffRole;
         return ApiResponse<UserDto>.Success(_mapper.Map<UserDto>(created), "Tạo tài khoản nhân viên thành công", 201);
     }
 
@@ -118,6 +127,16 @@ public class UserService : IUserService
         if (user == null)
         {
             return ApiResponse<UserDto>.Fail("Không tìm thấy người dùng", 404);
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.PhoneNumber))
+        {
+            var cleanPhone = request.PhoneNumber.Trim();
+            var phoneExists = await _userRepository.ExistsByPhoneAsync(cleanPhone, id, cancellationToken);
+            if (phoneExists)
+            {
+                return ApiResponse<UserDto>.Fail("Số điện thoại đã được sử dụng bởi tài khoản khác", 400);
+            }
         }
 
         _mapper.Map(request, user);

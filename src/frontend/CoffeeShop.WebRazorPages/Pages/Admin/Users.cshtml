@@ -167,7 +167,12 @@
                                     <div class="flex items-center justify-end gap-1.5">
                                         <!-- Chỉnh sửa -->
                                         <button type="button"
-                                                onclick="openEditUserModal('@user.Id', '@Html.Raw(Html.Encode(user.FullName))', '@user.Email', '@user.PhoneNumber', '@Html.Raw(Html.Encode(user.Address ?? ""))')"
+                                                data-id="@user.Id"
+                                                data-fullname="@user.FullName"
+                                                data-email="@user.Email"
+                                                data-phone="@(user.PhoneNumber ?? "")"
+                                                data-address="@(user.Address ?? "")"
+                                                onclick="openEditUserModal(this)"
                                                 class="p-2 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition" title="Chỉnh sửa thông tin">
                                             <i class="fi fi-rr-edit text-base"></i>
                                         </button>
@@ -188,7 +193,10 @@
 
                                             <!-- Xóa -->
                                             <button type="button"
-                                                    onclick="openDeleteModal('@user.Id', '@Html.Raw(Html.Encode(user.FullName))', '@user.Email')"
+                                                    data-id="@user.Id"
+                                                    data-fullname="@user.FullName"
+                                                    data-email="@user.Email"
+                                                    onclick="openDeleteModal(this)"
                                                     class="p-2 rounded-xl text-gray-400 hover:text-red-highland hover:bg-red-50 transition" title="Xóa tài khoản">
                                                 <i class="fi fi-rr-trash text-base"></i>
                                             </button>
@@ -350,7 +358,8 @@
 
         <form method="post" asp-page-handler="UpdateUser" class="space-y-4">
             @Html.AntiForgeryToken()
-            <input type="hidden" name="id" id="edit-user-id" />
+            <input type="hidden" asp-for="EditUserId" id="edit-user-id" />
+            <input type="hidden" name="id" id="edit-user-id-param" />
 
             <div>
                 <label asp-for="UpdateUserInput.FullName" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Họ và tên *</label>
@@ -425,8 +434,18 @@
             m.classList.remove('flex');
         }
 
-        function openEditUserModal(id, fullName, email, phone, address) {
+        function openEditUserModal(btn) {
+            const id = btn.getAttribute('data-id') || '';
+            const fullName = btn.getAttribute('data-fullname') || '';
+            const email = btn.getAttribute('data-email') || '';
+            const phone = btn.getAttribute('data-phone') || '';
+            const address = btn.getAttribute('data-address') || '';
+
             document.getElementById('edit-user-id').value = id;
+            const paramEl = document.getElementById('edit-user-id-param');
+            if (paramEl) {
+                paramEl.value = id;
+            }
             document.getElementById('edit-fullname').value = fullName;
             document.getElementById('edit-email').value = email;
             document.getElementById('edit-phone').value = (phone && phone !== '---') ? phone : '';
@@ -443,7 +462,11 @@
             m.classList.remove('flex');
         }
 
-        function openDeleteModal(id, fullName, email) {
+        function openDeleteModal(btn) {
+            const id = btn.getAttribute('data-id') || '';
+            const fullName = btn.getAttribute('data-fullname') || '';
+            const email = btn.getAttribute('data-email') || '';
+
             document.getElementById('delete-user-id').value = id;
             const textEl = document.getElementById('delete-confirm-text');
             if (textEl) {

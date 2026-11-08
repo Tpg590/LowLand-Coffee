@@ -15,6 +15,13 @@
           "Path": "/api/users/{**catch-all}"
         }
       },
+      "users-root-route": {
+        "ClusterId": "auth-cluster",
+        "CorsPolicy": "GatewayCorsPolicy",
+        "Match": {
+          "Path": "/api/users"
+        }
+      },
       "product-route": {
         "ClusterId": "product-cluster",
         "CorsPolicy": "GatewayCorsPolicy",
