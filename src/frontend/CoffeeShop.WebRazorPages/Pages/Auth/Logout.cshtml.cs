@@ -33,9 +33,10 @@ public class LogoutModel : PageModel
         try
         {
             var accessToken = User.FindFirst(AuthConstants.AccessTokenClaimType)?.Value
-                              ?? HttpContext.Session.GetString(AuthConstants.JwtSessionKey);
+                              ?? HttpContext.Session.GetString(AuthConstants.JwtSessionKey)
+                              ?? Request.Cookies["access_token"];
 
-            if (!string.IsNullOrEmpty(accessToken))
+            if (!string.IsNullOrWhiteSpace(accessToken))
             {
                 await _authHttpService.LogoutAsync(accessToken);
             }
@@ -45,10 +46,29 @@ public class LogoutModel : PageModel
             _logger.LogWarning(ex, "Lỗi khi gọi API đăng xuất qua Gateway.");
         }
 
+        // 1. Xóa Cookie Authentication phía Server
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        HttpContext.Session.Clear();
-        Response.Cookies.Delete("access_token");
 
+        // 2. Xóa toàn bộ Session lưu trữ JWT Token
+        HttpContext.Session.Remove(AuthConstants.JwtSessionKey);
+        HttpContext.Session.Clear();
+
+        // 3. Xóa triệt để toàn bộ Cookie liên quan đến Token và Phiên đăng nhập
+        var deleteCookieOptions = new CookieOptions
+        {
+            Path = "/",
+            HttpOnly = false,
+            SameSite = SameSiteMode.Lax,
+            Expires = DateTimeOffset.UnixEpoch
+        };
+        Response.Cookies.Delete("access_token", deleteCookieOptions);
+        Response.Cookies.Delete("refresh_token", deleteCookieOptions);
+        Response.Cookies.Delete("access_token");
+        Response.Cookies.Delete("refresh_token");
+        Response.Cookies.Delete(".AspNetCore.Cookies");
+        Response.Cookies.Delete(".AspNetCore.Session");
+
+        TempData["LoggedOut"] = "true";
         TempData["StatusMessage"] = "Bạn đã đăng xuất khỏi hệ thống thành công.";
         return RedirectToPage(AuthConstants.LoginRoute);
     }

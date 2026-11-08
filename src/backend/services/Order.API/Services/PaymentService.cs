@@ -459,6 +459,11 @@ public class PaymentService : IPaymentService
             return ApiResponse<OrderPaymentDto>.Fail("Đơn hàng đã bị hủy, không thể xác nhận thu tiền mặt.", 400);
         }
 
+        if (order.OrderPayments.Any(p => p.PaymentStatus == PaymentStatus.SUCCESS))
+        {
+            return ApiResponse<OrderPaymentDto>.Fail("Đơn hàng đã được xác nhận thanh toán trước đó.", 400);
+        }
+
         var cashPayment = order.OrderPayments.FirstOrDefault(p => p.PaymentMethod == PaymentMethod.CASH);
         var isNewPayment = false;
         if (cashPayment == null)

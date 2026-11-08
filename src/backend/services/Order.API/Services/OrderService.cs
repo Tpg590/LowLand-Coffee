@@ -314,6 +314,18 @@ public class OrderService : IOrderService
                 400);
         }
 
+        // Nghiệp vụ: Phải thu tiền (trạng thái thanh toán SUCCESS) trước khi bấm Hoàn thành (COMPLETED)
+        if (nextStatus == OrderStatus.COMPLETED)
+        {
+            var isPaid = order.OrderPayments.Any(p => p.PaymentStatus == PaymentStatus.SUCCESS);
+            if (!isPaid)
+            {
+                return ApiResponse<OrderDetailDto>.Fail(
+                    "Đơn hàng chưa được thanh toán. Vui lòng thu tiền (xác nhận thanh toán thành công) trước khi chuyển sang trạng thái Hoàn thành.",
+                    400);
+            }
+        }
+
         // Cập nhật trạng thái đơn hàng
         order.Status = nextStatus;
 

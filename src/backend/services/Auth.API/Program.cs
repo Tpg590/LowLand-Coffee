@@ -72,6 +72,46 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtAudience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey))
     };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnTokenValidated = context =>
+        {
+            var tokenStore = context.HttpContext.RequestServices.GetRequiredService<ITokenStore>();
+            var authHeader = context.Request.Headers.Authorization.ToString();
+            if (!string.IsNullOrWhiteSpace(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                var rawToken = authHeader["Bearer ".Length..].Trim();
+                if (!string.IsNullOrEmpty(rawToken) && tokenStore.IsAccessTokenBlacklisted(rawToken))
+                {
+                    context.Fail("Token đã nằm trong danh sách đen (đã đăng xuất). Vui lòng đăng nhập lại.");
+                    return Task.CompletedTask;
+                }
+            }
+
+            var jti = context.Principal?.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Jti)?.Value;
+            if (!string.IsNullOrEmpty(jti) && tokenStore.IsAccessTokenBlacklisted(jti))
+            {
+                context.Fail("Token đã nằm trong danh sách đen (đã đăng xuất). Vui lòng đăng nhập lại.");
+                return Task.CompletedTask;
+            }
+
+            return Task.CompletedTask;
+        },
+        OnChallenge = async context =>
+        {
+            context.HandleResponse();
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            context.Response.ContentType = "application/json";
+            var message = context.AuthenticateFailure?.Message
+                ?? "Phiên đăng nhập không hợp lệ, đã hết hạn hoặc đã nằm trong danh sách đen.";
+            var response = Auth.API.DTOs.ApiResponse<object>.Fail(
+                message,
+                StatusCodes.Status401Unauthorized,
+                new List<string> { "Unauthorized" });
+            await context.Response.WriteAsJsonAsync(response);
+        }
+    };
 });
 
 builder.Services.AddAuthorization();

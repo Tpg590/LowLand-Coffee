@@ -236,7 +236,7 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Chức năng: Đăng xuất người dùng & thu hồi Refresh Token
+    /// Chức năng: Đăng xuất người dùng, đưa Access Token vào danh sách đen (Blacklist) & thu hồi Refresh Token
     /// </summary>
     [HttpPost("logout")]
     [Authorize]
@@ -250,14 +250,36 @@ public class AuthController : ControllerBase
             return Unauthorized(ApiResponse<bool>.Fail("Không xác định được danh tính người dùng", 401));
         }
 
-        var result = await _authService.LogoutAsync(userId.Value, cancellationToken);
+        string? rawToken = null;
+        if (Request.Headers.TryGetValue("Authorization", out var authHeader))
+        {
+            var headerVal = authHeader.ToString().Trim();
+            if (headerVal.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                rawToken = headerVal["Bearer ".Length..].Trim();
+            }
+        }
+
+        var result = await _authService.LogoutAsync(userId.Value, rawToken, cancellationToken);
         return StatusCode(result.StatusCode, result);
+    }
+
+    /// <summary>
+    /// Chức năng nội bộ: Kiểm tra Access Token / JTI có nằm trong danh sách đen (Blacklist) hay không
+    /// </summary>
+    [HttpGet("blacklist/check")]
+    [AllowAnonymous]
+    public IActionResult CheckBlacklist([FromQuery] string? token, [FromQuery] string? jti)
+    {
+        var isBlacklisted = _authService.IsTokenBlacklisted(token, jti);
+        return Ok(new { isBlacklisted });
     }
 
     private Guid? GetCurrentUserId()
     {
         var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                     ?? User.FindFirst("sub")?.Value;
+                     ?? User.FindFirst("sub")?.Value
+                     ?? Request.Headers["X-User-Id"].FirstOrDefault();
 
         return Guid.TryParse(userIdStr, out var id) ? id : null;
     }

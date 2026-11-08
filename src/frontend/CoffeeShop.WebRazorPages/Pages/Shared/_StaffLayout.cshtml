@@ -92,6 +92,23 @@
             })();
         </script>
     }
+    else
+    {
+        <script>
+            (function() {
+                try {
+                    localStorage.removeItem('auth_token');
+                    localStorage.removeItem('refresh_token');
+                    localStorage.removeItem('current_user');
+                    sessionStorage.removeItem('auth_token');
+                    sessionStorage.removeItem('refresh_token');
+                    sessionStorage.removeItem('current_user');
+                    document.cookie = 'access_token=; Max-Age=0; path=/; SameSite=Lax';
+                    document.cookie = 'refresh_token=; Max-Age=0; path=/; SameSite=Lax';
+                } catch(e) {}
+            })();
+        </script>
+    }
 
     <!-- Custom Global CSS -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -258,8 +275,16 @@
         } catch (e) {}
 
         function logoutStaff() {
-            localStorage.removeItem('current_user');
-            localStorage.removeItem('auth_token');
+            try {
+                localStorage.removeItem('current_user');
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('refresh_token');
+                sessionStorage.removeItem('current_user');
+                sessionStorage.removeItem('auth_token');
+                sessionStorage.removeItem('refresh_token');
+                document.cookie = 'access_token=; Max-Age=0; path=/; SameSite=Lax';
+                document.cookie = 'refresh_token=; Max-Age=0; path=/; SameSite=Lax';
+            } catch (e) {}
             window.location.href = '/Auth/Logout';
         }
     </script>
