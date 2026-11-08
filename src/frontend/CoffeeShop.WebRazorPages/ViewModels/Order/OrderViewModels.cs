@@ -68,9 +68,13 @@ public class OrderDtoViewModel
     public bool IsShipping => NormalizedStatus == "SHIPPING";
 
     /// <summary>
-    /// Khách hàng được phép bấm nút Thanh toán khi đơn chưa thanh toán thành công và chưa bị hủy / hoàn thành
+    /// Khách hàng chỉ được phép bấm nút Thanh toán lại qua cổng VNPay khi đơn chọn phương thức VNPAY, chưa thanh toán và chưa bị hủy / hoàn thành.
+    /// Đơn chọn Tiền mặt (CASH/COD) sẽ thanh toán khi nhận hàng/tại quầy, không hiển thị nút thanh toán VNPay.
     /// </summary>
-    public bool CanRetryPayment => !IsPaid && !IsCancelled && !IsCompleted;
+    public bool CanRetryPayment => !IsPaid && !IsCancelled && !IsCompleted && NormalizedPaymentMethod == "VNPAY";
+
+    public bool IsCash => NormalizedPaymentMethod == "CASH";
+    public bool IsVnPay => NormalizedPaymentMethod == "VNPAY";
 
     /// <summary>
     /// Khách hàng chỉ được phép hủy khi đơn đang ở trạng thái PENDING

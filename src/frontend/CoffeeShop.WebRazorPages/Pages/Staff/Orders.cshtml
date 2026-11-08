@@ -444,7 +444,7 @@
                                             @order.PaymentMethodDisplayName • @order.PaymentStatusDisplayName
                                         </span>
 
-                                        <!-- Nghiệp vụ 2 & 3: Nếu chưa thanh toán và chưa hủy, luôn hiện nút Thu tiền mặt & QR VNPay -->
+                                        <!-- Nếu chưa thanh toán và chưa hủy: Staff có thể thu tiền mặt, hoặc mở VNPay nếu đơn chọn VNPay -->
                                         @if (!order.IsPaid && !order.IsCancelled)
                                         {
                                             <div class="flex flex-wrap gap-1.5 mt-1.5">
@@ -459,16 +459,19 @@
                                                     </button>
                                                 </form>
 
-                                                <form method="post" asp-page-handler="GenerateQr" class="inline">
-                                                    <input type="hidden" name="orderId" value="@order.Id" />
-                                                    <input type="hidden" name="returnStatus" value="@Model.Status" />
-                                                    <input type="hidden" name="returnSearch" value="@Model.Search" />
-                                                    <button type="submit"
-                                                            class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-extrabold shadow-sm transition flex items-center gap-1">
-                                                        <i class="fi fi-rr-credit-card"></i>
-                                                        <span>Thanh toán VNPay</span>
-                                                    </button>
-                                                </form>
+                                                @if (order.NormalizedPaymentMethod == "VNPAY")
+                                                {
+                                                    <form method="post" asp-page-handler="GenerateQr" class="inline">
+                                                        <input type="hidden" name="orderId" value="@order.Id" />
+                                                        <input type="hidden" name="returnStatus" value="@Model.Status" />
+                                                        <input type="hidden" name="returnSearch" value="@Model.Search" />
+                                                        <button type="submit"
+                                                                class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-extrabold shadow-sm transition flex items-center gap-1">
+                                                            <i class="fi fi-rr-credit-card"></i>
+                                                            <span>Thanh toán VNPay</span>
+                                                        </button>
+                                                    </form>
+                                                }
                                             </div>
                                         }
                                     </td>
@@ -612,18 +615,23 @@
                                     <input type="hidden" name="orderId" value="@detail.Id" />
                                     <input type="hidden" name="returnStatus" value="@Model.Status" />
                                     <input type="hidden" name="returnSearch" value="@Model.Search" />
-                                    <button type="submit" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold">
-                                        Thu tiền mặt
+                                    <button type="submit" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold flex items-center gap-1.5">
+                                        <i class="fi fi-rr-money-bill-wave"></i>
+                                        <span>Thu tiền mặt</span>
                                     </button>
                                 </form>
-                                <form method="post" asp-page-handler="GenerateQr" class="inline">
-                                    <input type="hidden" name="orderId" value="@detail.Id" />
-                                    <input type="hidden" name="returnStatus" value="@Model.Status" />
-                                    <input type="hidden" name="returnSearch" value="@Model.Search" />
-                                    <button type="submit" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold">
-                                        Thanh toán VNPay
-                                    </button>
-                                </form>
+                                @if (detail.NormalizedPaymentMethod == "VNPAY")
+                                {
+                                    <form method="post" asp-page-handler="GenerateQr" class="inline">
+                                        <input type="hidden" name="orderId" value="@detail.Id" />
+                                        <input type="hidden" name="returnStatus" value="@Model.Status" />
+                                        <input type="hidden" name="returnSearch" value="@Model.Search" />
+                                        <button type="submit" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold flex items-center gap-1.5">
+                                            <i class="fi fi-rr-credit-card"></i>
+                                            <span>Thanh toán VNPay</span>
+                                        </button>
+                                    </form>
+                                }
                             </div>
                         }
                     </div>
@@ -1047,7 +1055,7 @@
                 if (posCurrentCustomer && subtotal > 0) {
                     const mult = parseFloat(posCurrentCustomer.pointMultiplier || 1.0);
                     const estEarn = Math.max(1, Math.round((finalAmt / 10000) * mult));
-                    earnLabel.textContent = `+${estEarn} điểm (x${mult})`;
+                    earnLabel.textContent = `+${estEarn.toLocaleString('vi-VN')} điểm`;
                     earnBox.classList.remove('hidden');
                 } else {
                     earnBox.classList.add('hidden');
