@@ -66,6 +66,13 @@ services:
       - "CloudinarySettings__CloudName=${CLOUDINARY_CLOUD_NAME:?CLOUDINARY_CLOUD_NAME must be defined in .env}"
       - "CloudinarySettings__ApiKey=${CLOUDINARY_API_KEY:?CLOUDINARY_API_KEY must be defined in .env}"
       - "CloudinarySettings__ApiSecret=${CLOUDINARY_API_SECRET:?CLOUDINARY_API_SECRET must be defined in .env}"
+      - "SmtpSettings__Host=${SMTP_HOST:-smtp.gmail.com}"
+      - "SmtpSettings__Port=${SMTP_PORT:-587}"
+      - "SmtpSettings__UserName=${SMTP_USER:-}"
+      - "SmtpSettings__Password=${SMTP_PASSWORD:-}"
+      - "SmtpSettings__FromEmail=${SMTP_FROM_EMAIL:-}"
+      - "SmtpSettings__FromName=${SMTP_FROM_NAME:-LowLand Coffee Support}"
+      - "SmtpSettings__EnableSsl=${SMTP_ENABLE_SSL:-true}"
     depends_on:
       db-init:
         condition: service_completed_successfully
