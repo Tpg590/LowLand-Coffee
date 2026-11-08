@@ -65,6 +65,7 @@ builder.Services.AddReverseProxy()
 
 // Register Application Services
 builder.Services.AddScoped<IEngagementHttpService, EngagementHttpService>();
+builder.Services.AddScoped<IOrderHttpService, OrderHttpService>();
 
 // Configure Session
 builder.Services.AddDistributedMemoryCache();

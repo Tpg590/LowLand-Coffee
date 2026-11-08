@@ -1,11 +1,13 @@
 
- using System.Text;
+ using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text.Encodings.Web;
 using FluentValidation;
 using FluentValidation.AspNetCore;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Order.API.Data;
 using Order.API.DTOs;
@@ -79,39 +81,13 @@ builder.Services.AddCors(options =>
     });
 });
 
-// 5. Configure JWT Authentication
-var jwtSecretKey = !string.IsNullOrWhiteSpace(builder.Configuration["JwtSettings:SecretKey"])
-    ? builder.Configuration["JwtSettings:SecretKey"]!
-    : (Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? "LowLandCoffee_Super_Secret_Key_For_PRN232_Assignment_2026_Key");
-var jwtIssuer = builder.Configuration["JwtSettings:Issuer"]
-    ?? Environment.GetEnvironmentVariable("JWT_ISSUER")
-    ?? "LowLandCoffee.Auth";
-var jwtAudience = builder.Configuration["JwtSettings:Audience"]
-    ?? Environment.GetEnvironmentVariable("JWT_AUDIENCE")
-    ?? "LowLandCoffee.Clients";
-
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtIssuer,
-        ValidAudience = jwtAudience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey))
-    };
-});
+// 5. Xác thực thông qua API Gateway (Gateway đã xử lý JWT Validation và truyền X-User-Id, X-User-Role, X-User-Email)
+builder.Services.AddAuthentication("GatewayHeader")
+    .AddScheme<AuthenticationSchemeOptions, GatewayHeaderAuthenticationHandler>("GatewayHeader", null);
 
 builder.Services.AddAuthorization();
 
-// 6. Configure Swagger with JWT Bearer Support
+// 6. Configure Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -129,7 +105,7 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Nhập JWT Bearer token vào ô bên dưới (Ví dụ: Bearer {token})"
+        Description = "Nhập JWT Bearer token (hoặc truyền qua API Gateway)"
     });
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -161,7 +137,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// 8. Đảm bảo cột product_name (NVARCHAR) và customer_name tồn tại trong CSDL
+// 8. Đảm bảo tất cả các cột văn bản trong Coffee_OrderDB đều là NVARCHAR để hiển thị đúng Tiếng Việt có dấu
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
@@ -176,12 +152,43 @@ using (var scope = app.Services.CreateScope())
                 ALTER TABLE dbo.order_items ALTER COLUMN product_name NVARCHAR(150) NOT NULL;
             END;
 
+            IF EXISTS (
+                SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_NAME = 'order_items' AND COLUMN_NAME = 'options_summary' AND DATA_TYPE = 'varchar'
+            )
+            BEGIN
+                ALTER TABLE dbo.order_items ALTER COLUMN options_summary NVARCHAR(MAX) NULL;
+            END;
+
             IF NOT EXISTS (
                 SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
                 WHERE TABLE_NAME = 'order_orders' AND COLUMN_NAME = 'customer_name'
             )
             BEGIN
                 ALTER TABLE dbo.order_orders ADD customer_name NVARCHAR(150) NULL;
+            END
+            ELSE IF EXISTS (
+                SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_NAME = 'order_orders' AND COLUMN_NAME = 'customer_name' AND DATA_TYPE = 'varchar'
+            )
+            BEGIN
+                ALTER TABLE dbo.order_orders ALTER COLUMN customer_name NVARCHAR(150) NULL;
+            END;
+
+            IF EXISTS (
+                SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_NAME = 'order_orders' AND COLUMN_NAME = 'note' AND DATA_TYPE = 'varchar'
+            )
+            BEGIN
+                ALTER TABLE dbo.order_orders ALTER COLUMN note NVARCHAR(MAX) NULL;
+            END;
+
+            IF EXISTS (
+                SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_NAME = 'order_orders' AND COLUMN_NAME = 'cancel_reason' AND DATA_TYPE = 'varchar'
+            )
+            BEGIN
+                ALTER TABLE dbo.order_orders ALTER COLUMN cancel_reason NVARCHAR(MAX) NULL;
             END;
         ");
     }
@@ -192,3 +199,93 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+/// <summary>
+/// Handler đọc thông tin định danh người dùng do API Gateway đã xác thực JWT và gắn vào Header (X-User-Id, X-User-Role, X-User-Email).
+/// Hỗ trợ fallback đọc claims từ Bearer token nếu gọi trực tiếp trên Swagger nội bộ.
+/// </summary>
+public class GatewayHeaderAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
+{
+    public GatewayHeaderAuthenticationHandler(
+        IOptionsMonitor<AuthenticationSchemeOptions> options,
+        ILoggerFactory logger,
+        UrlEncoder encoder)
+        : base(options, logger, encoder)
+    {
+    }
+
+    protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+    {
+        var userId = Request.Headers["X-User-Id"].FirstOrDefault();
+        var userRole = Request.Headers["X-User-Role"].FirstOrDefault();
+        var userEmail = Request.Headers["X-User-Email"].FirstOrDefault();
+
+        // Fallback: Nếu gọi trực tiếp vào port của Order.API qua Swagger mà không đi qua Gateway,
+        // đọc payload từ Bearer token (không cần cấu hình JwtBearer validation vì Gateway đã đảm nhiệm).
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            var authHeader = Request.Headers.Authorization.FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                var token = authHeader["Bearer ".Length..].Trim();
+                try
+                {
+                    var handler = new JwtSecurityTokenHandler();
+                    if (handler.CanReadToken(token))
+                    {
+                        var jwt = handler.ReadJwtToken(token);
+                        userId = jwt.Claims.FirstOrDefault(c =>
+                            c.Type == ClaimTypes.NameIdentifier || c.Type == "sub" || c.Type == "nameid" || c.Type == "uid" || c.Type == "userId")?.Value;
+                        userRole = jwt.Claims.FirstOrDefault(c =>
+                            c.Type == ClaimTypes.Role || c.Type == "role")?.Value;
+                        userEmail = jwt.Claims.FirstOrDefault(c =>
+                            c.Type == ClaimTypes.Email || c.Type == "email")?.Value;
+                    }
+                }
+                catch
+                {
+                    return Task.FromResult(AuthenticateResult.Fail("Token không hợp lệ."));
+                }
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Task.FromResult(AuthenticateResult.NoResult());
+        }
+
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, userId),
+            new("sub", userId),
+            new(ClaimTypes.Role, string.IsNullOrWhiteSpace(userRole) ? "Customer" : userRole)
+        };
+
+        if (!string.IsNullOrWhiteSpace(userEmail))
+        {
+            claims.Add(new Claim(ClaimTypes.Email, userEmail));
+        }
+
+        var identity = new ClaimsIdentity(claims, Scheme.Name);
+        var principal = new ClaimsPrincipal(identity);
+        var ticket = new AuthenticationTicket(principal, Scheme.Name);
+
+        return Task.FromResult(AuthenticateResult.Success(ticket));
+    }
+
+    protected override async Task HandleChallengeAsync(AuthenticationProperties properties)
+    {
+        Response.StatusCode = StatusCodes.Status401Unauthorized;
+        Response.ContentType = "application/json; charset=utf-8";
+        var response = ApiResponse<object>.Fail("Vui lòng đăng nhập để thực hiện thao tác này.", StatusCodes.Status401Unauthorized);
+        await Response.WriteAsJsonAsync(response);
+    }
+
+    protected override async Task HandleForbiddenAsync(AuthenticationProperties properties)
+    {
+        Response.StatusCode = StatusCodes.Status403Forbidden;
+        Response.ContentType = "application/json; charset=utf-8";
+        var response = ApiResponse<object>.Fail("Tài khoản của bạn không có quyền thực hiện thao tác này.", StatusCodes.Status403Forbidden);
+        await Response.WriteAsJsonAsync(response);
+    }
+}

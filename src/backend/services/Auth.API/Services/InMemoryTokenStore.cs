@@ -8,6 +8,7 @@ public class InMemoryTokenStore : ITokenStore
     private record OtpRecord(string OtpCode, DateTime ExpiresAt, bool IsUsed);
 
     private readonly ConcurrentDictionary<string, RefreshTokenRecord> _refreshTokens = new();
+    private readonly ConcurrentDictionary<string, DateTime> _blacklistedAccessTokens = new();
     private readonly ConcurrentDictionary<string, OtpRecord> _otps = new(StringComparer.OrdinalIgnoreCase);
 
     public void SaveRefreshToken(string token, Guid userId, DateTime expiresAt)
@@ -41,6 +42,46 @@ public class InMemoryTokenStore : ITokenStore
                 _refreshTokens[kvp.Key] = kvp.Value with { IsRevoked = true };
             }
         }
+    }
+
+    public void BlacklistAccessToken(string token, DateTime expiresAt)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        foreach (var kvp in _blacklistedAccessTokens)
+        {
+            if (kvp.Value <= now)
+            {
+                _blacklistedAccessTokens.TryRemove(kvp.Key, out _);
+            }
+        }
+
+        _blacklistedAccessTokens[token.Trim()] = expiresAt > now ? expiresAt : now.AddHours(1);
+    }
+
+    public bool IsAccessTokenBlacklisted(string token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return false;
+        }
+
+        var key = token.Trim();
+        if (_blacklistedAccessTokens.TryGetValue(key, out var expiresAt))
+        {
+            if (expiresAt > DateTime.UtcNow)
+            {
+                return true;
+            }
+
+            _blacklistedAccessTokens.TryRemove(key, out _);
+        }
+
+        return false;
     }
 
     public void SaveOtp(string email, string otpCode, DateTime expiresAt)

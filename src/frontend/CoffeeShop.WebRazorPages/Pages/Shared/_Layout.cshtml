@@ -158,7 +158,7 @@
                                         <i class="fi fi-rr-user-pen text-gray-500"></i>
                                         <span>Hồ sơ cá nhân</span>
                                     </a>
-                                    <a href="/Auth/Logout" class="block px-5 py-2.5 text-sm font-bold text-red-highland hover:bg-red-50 flex items-center gap-2">
+                                    <a href="/Auth/Logout" onclick="logoutCustomer(); return false;" class="block px-5 py-2.5 text-sm font-bold text-red-highland hover:bg-red-50 flex items-center gap-2">
                                         <i class="fi fi-rr-sign-out-alt"></i>
                                         <span>Đăng xuất</span>
                                     </a>
@@ -283,12 +283,6 @@
     <div id="toast-container"></div>
 
     <!-- Scripts -->
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-
     @if (User.Identity?.IsAuthenticated == true)
     {
         var currentToken = User.FindFirst(CoffeeShop.WebRazorPages.Constants.AuthConstants.AccessTokenClaimType)?.Value
@@ -315,6 +309,29 @@
             })();
         </script>
     }
+    else
+    {
+        <script>
+            (function() {
+                try {
+                    localStorage.removeItem('auth_token');
+                    localStorage.removeItem('refresh_token');
+                    localStorage.removeItem('current_user');
+                    sessionStorage.removeItem('auth_token');
+                    sessionStorage.removeItem('refresh_token');
+                    sessionStorage.removeItem('current_user');
+                    document.cookie = 'access_token=; Max-Age=0; path=/; SameSite=Lax';
+                    document.cookie = 'refresh_token=; Max-Age=0; path=/; SameSite=Lax';
+                } catch(e) {}
+            })();
+        </script>
+    }
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
 
     <script>
         function checkNavAuth() {
@@ -952,8 +969,16 @@
         })();
 
         function logoutCustomer() {
-            localStorage.removeItem('current_user');
-            localStorage.removeItem('auth_token');
+            try {
+                localStorage.removeItem('current_user');
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('refresh_token');
+                sessionStorage.removeItem('current_user');
+                sessionStorage.removeItem('auth_token');
+                sessionStorage.removeItem('refresh_token');
+                document.cookie = 'access_token=; Max-Age=0; path=/; SameSite=Lax';
+                document.cookie = 'refresh_token=; Max-Age=0; path=/; SameSite=Lax';
+            } catch (e) {}
 
             if (typeof updateCartBadge === 'function') {
                 updateCartBadge();

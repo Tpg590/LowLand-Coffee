@@ -9,6 +9,9 @@ public interface ITokenStore
     void RevokeRefreshToken(string token);
     void RevokeUserTokens(Guid userId);
 
+    void BlacklistAccessToken(string token, DateTime expiresAt);
+    bool IsAccessTokenBlacklisted(string token);
+
     void SaveOtp(string email, string otpCode, DateTime expiresAt);
     bool ValidateAndConsumeOtp(string email, string otpCode);
 }

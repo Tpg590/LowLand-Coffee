@@ -49,7 +49,7 @@ public static class OrderStatus
         return current switch
         {
             PENDING => next == PROCESSING || next == CANCELLED,
-            PROCESSING => next == SHIPPING || next == COMPLETED || next == CANCELLED,
+            PROCESSING => next == SHIPPING || next == CANCELLED,
             SHIPPING => next == COMPLETED || next == CANCELLED,
             COMPLETED => false,
             CANCELLED => false,

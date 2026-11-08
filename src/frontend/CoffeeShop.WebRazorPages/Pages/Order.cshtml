@@ -1,741 +1,394 @@
-@page
-@model OrderModel
+@page "/Order"
+@model CoffeeShop.WebRazorPages.Pages.OrderModel
 @{
-    ViewData["Title"] = "Xác nhận đơn hàng - LowLand Coffee";
+    Layout = "_Layout";
+    ViewData["Title"] = "Xác Nhận & Thanh Toán Đơn Hàng - LowLand Coffee";
 }
 
-<!-- ========================================================================= -->
-<!-- GIAO DIỆN KHÁCH HÀNG (CUSTOMER UI) - TRANG ĐẶT HÀNG & THANH TOÁN          -->
-<!-- Đáp ứng Mục 22 (Create Order - Customer đặt hàng online)                  -->
-<!-- và Mục 28 (Generate VNPay QR - Tạo mã QR / URL thanh toán VNPay)          -->
-<!-- ========================================================================= -->
-<div class="w-full px-4 sm:px-8 lg:px-12 xl:px-16 py-6 sm:py-8">
-    <!-- Thanh điều hướng Breadcrumb -->
-    <nav class="flex text-xs text-gray-500 mb-6 gap-2 items-center">
-        <a asp-page="/Index" class="hover:text-red-highland">Trang chủ</a>
-        <span>/</span>
-        <a href="/Index#menu" class="hover:text-red-highland">Thực đơn</a>
-        <span>/</span>
-        <span class="text-gray-900 font-semibold">Xác nhận đặt hàng</span>
-    </nav>
+<!-- Hero Header -->
+<section class="relative bg-gradient-to-r from-red-highland-dark via-red-highland to-red-800 text-white py-10 px-4 sm:px-8 lg:px-12 shadow-inner">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="space-y-1.5">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-300/20 border border-amber-300/40 text-amber-200 text-xs font-extrabold uppercase tracking-wider">
+                <i class="fi fi-rr-shopping-bag"></i>
+                <span>Thanh Toán Đơn Hàng</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-black tracking-tight">Xác Nhận &amp; Đặt Hàng</h1>
+            <p class="text-white/85 text-sm">Hoàn tất thông tin giao nhận, áp dụng mã giảm giá và chọn hình thức thanh toán.</p>
+        </div>
 
-    <!-- ========================================================================= -->
-    <!-- TRẠNG THÁI 1: CHƯA ĐĂNG NHẬP (Yêu cầu đăng nhập tài khoản Customer/Staff) -->
-    <!-- ========================================================================= -->
-    <div id="auth-required-state" class="hidden max-w-lg mx-auto my-12 bg-white rounded-3xl p-8 sm:p-12 text-center shadow-xl border border-gray-200 space-y-6">
-        <div class="w-20 h-20 mx-auto rounded-full bg-red-50 text-red-highland flex items-center justify-center text-4xl shadow-inner">
-            <i class="fi fi-rr-lock"></i>
-        </div>
-        <div class="space-y-2">
-            <h2 class="text-2xl sm:text-3xl font-black text-gray-900">Vui lòng đăng nhập</h2>
-            <p class="text-gray-500 text-sm sm:text-base leading-relaxed">
-                Bạn cần đăng nhập tài khoản thành viên để xem giỏ hàng, đặt đơn trực tuyến và thanh toán.
-            </p>
-        </div>
-        <div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a asp-page="/Auth/Login" class="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-red-highland hover:bg-red-700 text-white font-extrabold text-sm uppercase tracking-wider shadow-lg transition active:scale-95 flex items-center justify-center gap-2">
-                <i class="fi fi-rr-sign-in-alt text-base"></i>
-                <span>Đăng nhập ngay</span>
+        <div class="flex items-center gap-3">
+            <a asp-page="/Products" class="px-4 py-2.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white border border-white/30 text-xs font-extrabold transition flex items-center gap-2">
+                <i class="fi fi-rr-arrow-left"></i>
+                <span>Chọn thêm món</span>
             </a>
-            <a asp-page="/Index" class="w-full sm:w-auto px-6 py-3.5 rounded-2xl border border-gray-300 text-gray-700 font-bold text-sm hover:bg-gray-50 transition">
-                Về trang chủ
+            <a asp-page="/MyOrders" class="px-4 py-2.5 rounded-2xl bg-amber-300 hover:bg-amber-200 text-red-950 text-xs font-extrabold shadow-md transition flex items-center gap-2">
+                <i class="fi fi-rr-receipt"></i>
+                <span>Đơn hàng của tôi</span>
             </a>
         </div>
     </div>
+</section>
 
-    <!-- ========================================================================= -->
-    <!-- TRẠNG THÁI 2: ĐÃ ĐĂNG NHẬP (Hiển thị Form Giao hàng & Giỏ hàng thực tế)  -->
-    <!-- ========================================================================= -->
-    <div id="order-main-state" class="hidden">
-        <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight mb-8">
-            Xác nhận đặt hàng
-        </h1>
+<div class="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-8">
+    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+        <div class="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800 flex items-center gap-3 shadow-sm">
+            <span class="w-8 h-8 rounded-xl bg-red-600 text-white flex items-center justify-center shrink-0">
+                <i class="fi fi-rr-exclamation"></i>
+            </span>
+            <span class="text-sm font-bold">@Model.ErrorMessage</span>
+        </div>
+    }
+
+    <form method="post" asp-page-handler="PlaceOrder" id="checkoutRazorForm">
+        <input type="hidden" asp-for="CheckoutInput.CartJson" id="cartJsonInput" />
+        <input type="hidden" asp-for="CheckoutInput.DiscountAmount" id="discountAmountInput" />
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            <!-- CỘT TRÁI: Thông tin người nhận & Phương thức thanh toán -->
-            <div class="lg:col-span-7 space-y-8">
-                <!-- 1. Thông tin địa chỉ & người nhận -->
-                <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100 space-y-6">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-xl font-bold text-gray-900">Thông tin giao hàng</h3>
-                        <button type="button" onclick="editAddress()" class="px-5 py-2 rounded-full bg-red-highland hover:bg-red-700 text-white font-bold text-xs shadow-sm transition flex items-center gap-1.5">
-                            <i class="fi fi-rr-edit text-xs"></i>
-                            <span>Cập nhật địa chỉ</span>
-                        </button>
-                    </div>
-
-                    <!-- Khung hiển thị địa chỉ nhận hàng (Nạp từ hồ sơ người dùng, không fix cứng dữ liệu giả) -->
-                    <div class="flex items-center gap-5 p-4 rounded-xl bg-gray-50 border border-gray-100">
-                        <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 relative overflow-hidden border-2 border-white shadow-sm">
-                            <i class="fi fi-rr-motorcycle text-3xl text-red-highland"></i>
-                        </div>
-
-                        <div class="flex-1">
-                            <div class="flex items-center justify-between">
-                                <h4 id="display-address-title" class="font-extrabold text-gray-900 text-base leading-tight">Chưa cập nhật địa chỉ giao hàng</h4>
-                                <i class="fi fi-rr-angle-small-right text-gray-400 text-lg"></i>
-                            </div>
-                            <p id="display-address-subtitle" class="text-xs text-gray-500 mt-1 leading-relaxed">
-                                Vui lòng nhấn "Cập nhật địa chỉ" để nhập địa chỉ nhận đồ uống của bạn
-                            </p>
+            <!-- Cột Trái (7 cols): Thông tin người nhận & Phương thức thanh toán -->
+            <div class="lg:col-span-7 space-y-6">
+                <!-- Bước 1: Thông tin người nhận -->
+                <div class="bg-white rounded-3xl border border-gray-200 p-6 sm:p-8 shadow-sm space-y-5">
+                    <div class="flex items-center gap-3 pb-3 border-b border-gray-100">
+                        <span class="w-9 h-9 rounded-2xl bg-red-50 text-red-highland flex items-center justify-center font-black">1</span>
+                        <div>
+                            <h2 class="text-lg font-black text-gray-900">Thông tin giao nhận</h2>
+                            <p class="text-xs text-gray-500">Vui lòng cung cấp chính xác thông tin để LowLand phục vụ nhanh nhất</p>
                         </div>
                     </div>
 
-                    <!-- Các trường nhập thông tin liên hệ & ghi chú đơn hàng -->
-                    <div class="space-y-4 pt-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-semibold text-gray-700 mb-1.5">Họ và tên người nhận <span class="text-red-500">*</span></label>
-                            <input type="text" id="cust-name" class="w-full bg-[#F3F4F6] border-0 rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:ring-red-highland placeholder-gray-400 font-medium" placeholder="Nhập họ tên người nhận" />
+                            <label asp-for="CheckoutInput.FullName" class="block text-xs font-extrabold uppercase text-gray-600 mb-1.5">
+                                Họ và tên người nhận <span class="text-red-500">*</span>
+                            </label>
+                            <input asp-for="CheckoutInput.FullName"
+                                   required
+                                   placeholder="Nguyễn Văn A"
+                                   class="w-full bg-gray-50 border border-gray-300 rounded-2xl px-4 py-3 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland" />
                         </div>
 
                         <div>
-                            <label class="block text-xs font-semibold text-gray-700 mb-1.5">Số điện thoại liên hệ <span class="text-red-500">*</span></label>
-                            <input type="tel" id="cust-phone" class="w-full bg-[#F3F4F6] border-0 rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:ring-red-highland placeholder-gray-400 font-medium" placeholder="Nhập số điện thoại nhận hàng" />
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 mb-1.5">Ghi chú đơn hàng / giao hàng</label>
-                            <input type="text" id="cust-note" class="w-full bg-[#F3F4F6] border-0 rounded-xl px-4 py-3 text-sm text-gray-900 focus:ring-2 focus:ring-red-highland placeholder-gray-400" placeholder="Ví dụ: Ít đá, giao giờ hành chính, gọi trước khi đến..." />
+                            <label asp-for="CheckoutInput.Phone" class="block text-xs font-extrabold uppercase text-gray-600 mb-1.5">
+                                Số điện thoại liên hệ <span class="text-red-500">*</span>
+                            </label>
+                            <input asp-for="CheckoutInput.Phone"
+                                   required
+                                   placeholder="0901234567"
+                                   class="w-full bg-gray-50 border border-gray-300 rounded-2xl px-4 py-3 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland" />
                         </div>
                     </div>
-                </div>
 
-                <!-- 2. Chọn phương thức thanh toán (VNPay QR hoặc Tiền mặt COD) -->
-                <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100 space-y-6">
                     <div>
-                        <h3 class="text-xl font-bold text-gray-900">Phương thức thanh toán</h3>
-                        <p class="text-xs text-gray-500 mt-1">Hỗ trợ tạo mã QR thanh toán trực tuyến VNPay hoặc thanh toán tiền mặt khi nhận hàng</p>
+                        <label class="block text-xs font-extrabold uppercase text-gray-600 mb-2">Hình thức nhận đơn</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <label class="flex items-center gap-3 p-3.5 rounded-2xl border border-gray-200 bg-gray-50 hover:border-red-highland cursor-pointer transition">
+                                <input type="radio" asp-for="CheckoutInput.OrderType" id="typeDelivery" value="delivery" checked onchange="toggleDeliveryType()" class="text-red-highland focus:ring-red-highland" />
+                                <div>
+                                    <div class="text-sm font-extrabold text-gray-900 flex items-center gap-1.5">
+                                        <i class="fi fi-rr-Biking text-red-highland"></i>
+                                        <span>Giao hàng tận nơi</span>
+                                    </div>
+                                    <span class="text-xs text-gray-500">Giao nhanh trong 20 - 30 phút</span>
+                                </div>
+                            </label>
+
+                            <label class="flex items-center gap-3 p-3.5 rounded-2xl border border-gray-200 bg-gray-50 hover:border-red-highland cursor-pointer transition">
+                                <input type="radio" asp-for="CheckoutInput.OrderType" id="typePickup" value="pickup" onchange="toggleDeliveryType()" class="text-red-highland focus:ring-red-highland" />
+                                <div>
+                                    <div class="text-sm font-extrabold text-gray-900 flex items-center gap-1.5">
+                                        <i class="fi fi-rr-shop text-amber-600"></i>
+                                        <span>Đến lấy tại quán</span>
+                                    </div>
+                                    <span class="text-xs text-gray-500">Nhận đồ uống trực tiếp tại quầy</span>
+                                </div>
+                            </label>
+                        </div>
                     </div>
 
-                    <div class="space-y-3" id="payment-options">
-                        <!-- Lựa chọn 1: Thanh toán qua cổng VNPay / Quét mã QR -->
-                        <label class="payment-card flex items-center justify-between p-4 sm:p-5 rounded-2xl border-2 border-red-highland bg-red-50/20 cursor-pointer transition shadow-sm" onclick="selectPaymentMethodOption(this)">
-                            <div class="flex items-center gap-3.5">
-                                <input type="radio" name="paymentMethod" value="VNPAY" checked class="w-4 h-4 text-red-highland focus:ring-red-highland" />
-                                <div class="w-12 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-black text-xs shadow-sm uppercase tracking-wider">
-                                    VNPAY
+                    <div id="deliveryAddressGroup">
+                        <label asp-for="CheckoutInput.Address" class="block text-xs font-extrabold uppercase text-gray-600 mb-1.5">
+                            Địa chỉ giao hàng chi tiết <span class="text-red-500">*</span>
+                        </label>
+                        <input asp-for="CheckoutInput.Address"
+                               id="addressInput"
+                               placeholder="Số nhà, tên đường, phường/xã, quận/huyện..."
+                               class="w-full bg-gray-50 border border-gray-300 rounded-2xl px-4 py-3 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland" />
+                    </div>
+
+                    <div id="pickupStoreGroup" class="hidden">
+                        <label asp-for="CheckoutInput.StoreName" class="block text-xs font-extrabold uppercase text-gray-600 mb-1.5">
+                            Chọn chi nhánh LowLand Coffee
+                        </label>
+                        <select asp-for="CheckoutInput.StoreName"
+                                class="w-full bg-gray-50 border border-gray-300 rounded-2xl px-4 py-3 text-sm font-semibold text-gray-900">
+                            <option value="LowLand Nguyễn Huệ (Quận 1)">LowLand Nguyễn Huệ - 125 Nguyễn Huệ, Quận 1, TP.HCM</option>
+                            <option value="LowLand Thảo Điền (TP. Thủ Đức)">LowLand Thảo Điền - 42 Xuân Thủy, Thảo Điền, TP. Thủ Đức</option>
+                            <option value="LowLand Phú Mỹ Hưng (Quận 7)">LowLand Phú Mỹ Hưng - Crescent Mall, Quận 7, TP.HCM</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label asp-for="CheckoutInput.Note" class="block text-xs font-extrabold uppercase text-gray-600 mb-1.5">
+                            Ghi chú cho Barista / Tài xế
+                        </label>
+                        <textarea asp-for="CheckoutInput.Note"
+                                  rows="2"
+                                  placeholder="Ví dụ: Ít đá, giảm ngọt 50%, gọi điện khi tới sảnh..."
+                                  class="w-full bg-gray-50 border border-gray-300 rounded-2xl p-3.5 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland"></textarea>
+                    </div>
+                </div>
+
+                <!-- Bước 2: Phương thức thanh toán -->
+                <div class="bg-white rounded-3xl border border-gray-200 p-6 sm:p-8 shadow-sm space-y-5">
+                    <div class="flex items-center gap-3 pb-3 border-b border-gray-100">
+                        <span class="w-9 h-9 rounded-2xl bg-red-50 text-red-highland flex items-center justify-center font-black">2</span>
+                        <div>
+                            <h2 class="text-lg font-black text-gray-900">Phương thức thanh toán</h2>
+                            <p class="text-xs text-gray-500">Hỗ trợ thanh toán tiền mặt khi nhận hàng hoặc quét mã QR VNPay</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <label class="flex items-start gap-3.5 p-4 rounded-2xl border-2 border-gray-200 hover:border-red-highland bg-gray-50/70 cursor-pointer transition">
+                            <input type="radio" asp-for="CheckoutInput.PaymentMethod" value="CASH" checked class="mt-1 text-red-highland focus:ring-red-highland" />
+                            <div>
+                                <div class="text-sm font-black text-gray-900 flex items-center gap-2">
+                                    <i class="fi fi-rr-money-bill-wave text-emerald-600"></i>
+                                    <span>Tiền mặt (COD)</span>
                                 </div>
-                                <div>
-                                    <span class="font-extrabold text-sm sm:text-base text-gray-900">Quét mã QR / Cổng thanh toán VNPay</span>
-                                    <span class="block text-xs text-gray-500 mt-0.5">Tạo mã QR VNPay hoặc thanh toán bằng thẻ ATM nội địa, Visa / Mastercard</span>
-                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Thanh toán trực tiếp bằng tiền mặt khi nhận đồ uống.</p>
                             </div>
-                            <span class="payment-check w-6 h-6 rounded-full bg-red-highland text-white flex items-center justify-center text-xs font-bold shadow-sm">✓</span>
                         </label>
 
-                        <!-- Lựa chọn 2: Thanh toán tiền mặt khi nhận hàng (CASH) -->
-                        <label class="payment-card flex items-center justify-between p-4 sm:p-5 rounded-2xl border border-gray-200 hover:border-red-highland cursor-pointer transition" onclick="selectPaymentMethodOption(this)">
-                            <div class="flex items-center gap-3.5">
-                                <input type="radio" name="paymentMethod" value="CASH" class="w-4 h-4 text-red-highland focus:ring-red-highland" />
-                                <div class="w-12 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-black text-xs shadow-sm uppercase tracking-wider">
-                                    TIỀN MẶT
+                        <label class="flex items-start gap-3.5 p-4 rounded-2xl border-2 border-gray-200 hover:border-blue-600 bg-gray-50/70 cursor-pointer transition">
+                            <input type="radio" asp-for="CheckoutInput.PaymentMethod" value="VNPAY" class="mt-1 text-blue-600 focus:ring-blue-600" />
+                            <div>
+                                <div class="text-sm font-black text-gray-900 flex items-center gap-2">
+                                    <i class="fi fi-rr-qrcode text-blue-600"></i>
+                                    <span>VNPay QR / Ngân hàng</span>
                                 </div>
-                                <div>
-                                    <span class="font-extrabold text-sm sm:text-base text-gray-900">Tiền mặt khi nhận hàng (COD)</span>
-                                    <span class="block text-xs text-gray-500 mt-0.5">Thanh toán trực tiếp cho nhân viên khi nhận đồ uống</span>
-                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Tạo mã QR VNPay hoặc thanh toán qua ứng dụng Ngân hàng / Thẻ ATM.</p>
                             </div>
-                            <span class="payment-check w-6 h-6 rounded-full bg-gray-200 text-gray-500 hidden items-center justify-center text-xs font-bold">✓</span>
                         </label>
                     </div>
                 </div>
             </div>
 
-            <!-- CỘT PHẢI: Tóm tắt giỏ hàng & Tổng tiền thực tế -->
-            <div class="lg:col-span-5 sticky top-24">
-                <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-gray-100 space-y-6">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-2xl font-black text-gray-900 flex items-center gap-2">
-                            <i class="fi fi-rr-shopping-bag text-red-highland text-xl"></i>
-                            <span>Đơn hàng của bạn</span>
-                        </h3>
-                        <a href="/Index#menu" class="px-5 py-2 rounded-full bg-red-highland hover:bg-red-700 text-white font-bold text-xs shadow-sm transition flex items-center gap-1">
-                            <i class="fi fi-rr-plus text-xs"></i>
-                            <span>Thêm món</span>
-                        </a>
-                    </div>
-
-                    <!-- Danh sách các món trong giỏ hàng (Render động từ localStorage cart) -->
-                    <div id="order-items-container" class="space-y-4 divide-y divide-gray-100">
-                    </div>
-
-                    <!-- Chi tiết tính tiền (Đồng bộ 100% với công thức FinalAmount = TotalAmount - DiscountAmount của Order.API) -->
-                    <div class="space-y-3 pt-4 border-t border-gray-100 text-sm" id="price-breakdown-section">
-                        <div class="flex justify-between text-gray-600">
-                            <span>Tạm tính</span>
-                            <span id="subtotal-display" class="font-bold text-gray-900">0 đ</span>
-                        </div>
-                        <div class="flex justify-between text-gray-600">
-                            <span>Phí giao hàng</span>
-                            <span id="shipping-display" class="font-bold text-emerald-600">Miễn phí (0 đ)</span>
-                        </div>
-                        <div class="flex justify-between text-red-highland font-medium">
-                            <span>Giảm giá ưu đãi</span>
-                            <span id="discount-display" class="font-bold">0 đ</span>
-                        </div>
-                    </div>
-
-                    <!-- Tổng tiền thanh toán cuối cùng -->
-                    <div class="pt-4 border-t-2 border-gray-100 flex items-baseline justify-between">
-                        <span class="text-xl font-bold text-gray-900">Tổng thanh toán</span>
-                        <span id="total-display" class="text-2xl font-black text-red-highland">0 đ</span>
-                    </div>
-
-                    <!-- Các nút thao tác: Nhập mã ưu đãi & Đặt đơn hàng -->
-                    <div class="grid grid-cols-12 gap-3 pt-2">
-                        <button type="button" onclick="openCouponModal()" class="col-span-5 flex items-center justify-center gap-1.5 py-3.5 px-3 rounded-2xl border-2 border-red-highland text-red-highland hover:bg-red-50 font-bold text-sm transition">
-                            <span>Mã ưu đãi</span>
-                            <i class="fi fi-rr-badge-percent text-base"></i>
-                        </button>
-
-                        <button type="button" id="btn-submit-order" onclick="placeOrder()" class="col-span-7 py-3.5 px-4 rounded-2xl bg-red-highland hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-extrabold text-sm uppercase tracking-wider shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-2">
-                            <i class="fi fi-rr-credit-card text-base"></i>
-                            <span>Đặt đơn hàng</span>
+            <!-- Cột Phải (5 cols): Giỏ hàng, Voucher & Tổng tiền -->
+            <div class="lg:col-span-5">
+                <div class="bg-white rounded-3xl border border-gray-200 p-6 sm:p-8 shadow-sm space-y-5 sticky top-28">
+                    <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+                        <h2 class="text-lg font-black text-gray-900 flex items-center gap-2">
+                            <i class="fi fi-rr-mug-hot-alt text-red-highland"></i>
+                            <span>Giỏ hàng của bạn</span>
+                        </h2>
+                        <button type="button" onclick="clearCheckoutCart()" class="text-xs font-extrabold text-red-600 hover:underline flex items-center gap-1">
+                            <i class="fi fi-rr-trash"></i>
+                            <span>Xóa giỏ</span>
                         </button>
                     </div>
+
+                    <div id="checkoutItemsContainer" class="divide-y divide-gray-100 max-h-80 overflow-y-auto pr-1">
+                        <!-- Các món trong giỏ hàng -->
+                    </div>
+
+                    <!-- Mã khuyến mãi (Voucher) -->
+                    <div class="pt-3 border-t border-gray-100 space-y-2">
+                        <label class="block text-xs font-extrabold uppercase text-gray-600">Mã khuyến mãi (Voucher)</label>
+                        <div class="flex gap-2">
+                            <input asp-for="CheckoutInput.VoucherCode"
+                                   id="voucherCodeInput"
+                                   placeholder="Nhập mã voucher (VD: WELCOME50)..."
+                                   class="flex-1 bg-gray-50 border border-gray-300 rounded-2xl px-4 py-2.5 text-sm font-bold text-gray-900 uppercase" />
+                            <button type="button"
+                                    onclick="applyVoucherViaPageHandler()"
+                                    class="px-5 py-2.5 rounded-2xl bg-gray-900 hover:bg-black text-white text-xs font-extrabold transition">
+                                Áp dụng
+                            </button>
+                        </div>
+                        <div id="voucherFeedback" class="text-xs"></div>
+
+                        @if (Model.AvailableVouchers.Count > 0)
+                        {
+                            <div class="flex flex-wrap gap-1.5 pt-1">
+                                @foreach (var v in Model.AvailableVouchers)
+                                {
+                                    <button type="button"
+                                            onclick="selectSuggestedVoucher('@v.Code')"
+                                            class="px-3 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 text-xs font-extrabold transition flex items-center gap-1">
+                                        <i class="fi fi-rr-ticket text-amber-600"></i>
+                                        <span>@v.Code (-@(v.DiscountType == "PERCENTAGE" ? $"{v.DiscountValue:N0}%" : $"{v.DiscountValue:N0}đ"))</span>
+                                    </button>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Bảng tổng kết tiền -->
+                    <div class="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-2 text-sm">
+                        <div class="flex justify-between text-gray-600">
+                            <span>Tạm tính:</span>
+                            <span id="subtotalDisplay" class="font-bold text-gray-900">0 đ</span>
+                        </div>
+                        <div class="flex justify-between text-emerald-700">
+                            <span>Giảm giá Voucher:</span>
+                            <span id="discountDisplay" class="font-bold">-0 đ</span>
+                        </div>
+                        <div class="flex justify-between pt-2 border-t border-amber-200 text-base font-black text-red-highland">
+                            <span>Tổng thanh toán:</span>
+                            <span id="finalTotalDisplay" class="text-xl">0 đ</span>
+                        </div>
+                    </div>
+
+                    <button type="submit"
+                            id="btnPlaceOrder"
+                            class="w-full py-4 px-6 rounded-2xl bg-red-highland hover:bg-red-highland-dark disabled:bg-gray-300 text-white font-black text-sm shadow-lg transition flex items-center justify-center gap-2">
+                        <i class="fi fi-rr-check-circle text-base"></i>
+                        <span>Xác Nhận Đặt Hàng</span>
+                    </button>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-
-<!-- ========================================================================= -->
-<!-- MODAL 1: NHẬP MÃ ƯU ĐÃI (Kiểm tra trực tiếp qua Engagement.API)           -->
-<!-- ========================================================================= -->
-<div id="coupon-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-gray-100">
-            <h3 class="text-lg font-bold text-gray-900">Nhập mã ưu đãi</h3>
-            <button type="button" onclick="closeCouponModal()" class="text-gray-400 hover:text-gray-600">✕</button>
-        </div>
-        <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Mã giảm giá của bạn</label>
-            <input type="text" id="coupon-input" placeholder="Nhập mã voucher..." class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold uppercase text-red-highland" />
-        </div>
-        <div class="flex gap-3 pt-2">
-            <button type="button" onclick="closeCouponModal()" class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 font-bold text-sm hover:bg-gray-200">Hủy</button>
-            <button type="button" onclick="applyCoupon()" class="flex-1 py-3 rounded-xl bg-red-highland text-white font-bold text-sm hover:bg-red-700">Áp dụng</button>
-        </div>
-    </div>
-</div>
-
-<!-- ========================================================================= -->
-<!-- MODAL 2: CẬP NHẬT ĐỊA CHỈ NHẬN HÀNG                                      -->
-<!-- ========================================================================= -->
-<div id="address-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-gray-100">
-            <h3 class="text-lg font-bold text-gray-900">Cập nhật địa chỉ nhận hàng</h3>
-            <button type="button" onclick="closeAddressModal()" class="text-gray-400 hover:text-gray-600">✕</button>
-        </div>
-        <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Địa chỉ giao hàng chi tiết</label>
-            <input type="text" id="address-input" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold text-gray-900" placeholder="Số nhà, tên đường, phường/xã, quận/huyện..." />
-        </div>
-        <div class="flex gap-3 pt-2">
-            <button type="button" onclick="closeAddressModal()" class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 font-bold text-sm hover:bg-gray-200">Hủy</button>
-            <button type="button" onclick="saveNewAddress()" class="flex-1 py-3 rounded-xl bg-red-highland text-white font-bold text-sm hover:bg-red-700">Lưu địa chỉ</button>
-        </div>
-    </div>
-</div>
-
-<!-- ========================================================================= -->
-<!-- MODAL 3: HIỂN THỊ MÃ QR VNPAY (Mục 28 - Generate VNPay QR cho Customer)   -->
-<!-- ========================================================================= -->
-<div id="customer-vnpay-qr-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl text-center space-y-5 border border-gray-100">
-        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
-            <div class="flex items-center gap-2">
-                <span class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-black text-xs">VNPAY-QR</span>
-                <h3 class="text-lg font-black text-gray-900">Thanh toán đơn hàng</h3>
-            </div>
-            <button type="button" onclick="window.location.href='/MyOrders'" class="text-gray-400 hover:text-gray-600 font-bold">✕</button>
-        </div>
-
-        <div class="space-y-1">
-            <p class="text-xs text-gray-500">Mã đơn hàng: <strong id="qr-modal-order-code" class="text-gray-900">#ORD</strong></p>
-            <p class="text-2xl font-black text-red-highland" id="qr-modal-amount">0 đ</p>
-        </div>
-
-        <!-- Hình ảnh mã QR sinh từ PaymentUrl của Order.API -->
-        <div class="p-4 bg-white rounded-2xl border-2 border-dashed border-blue-200 inline-block mx-auto shadow-inner">
-            <img id="qr-modal-img" src="" alt="VNPay QR Code" class="w-52 h-52 object-contain mx-auto" />
-        </div>
-
-        <p class="text-xs text-gray-500 leading-relaxed">
-            Quét mã QR bằng ứng dụng Ngân hàng / Ví VNPay hoặc nhấn nút bên dưới để chuyển sang cổng thanh toán VNPay Sandbox.
-        </p>
-
-        <div class="flex flex-col sm:flex-row gap-3 pt-2">
-            <a id="qr-modal-pay-link" href="#" class="flex-1 py-3.5 px-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg transition flex items-center justify-center gap-2">
-                <i class="fi fi-rr-credit-card"></i>
-                <span>Mở cổng VNPay</span>
-            </a>
-            <button type="button" onclick="window.location.href='/MyOrders'" class="py-3.5 px-4 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs transition">
-                Xem đơn hàng
-            </button>
-        </div>
-    </div>
+    </form>
 </div>
 
 @section Scripts {
     <script>
-        // Đường dẫn tương đối gọi qua YARP Reverse Proxy
-        const API_GATEWAY_URL = '';
-        // Biến lưu số tiền giảm giá thực tế sau khi kiểm tra mã voucher
-        let appliedDiscount = 0;
-        let currentDeliveryAddress = '';
+        let currentCart = [];
+        let currentDiscount = parseFloat(document.getElementById('discountAmountInput').value || '0') || 0;
 
-        /**
-         * Khởi tạo trang Đặt hàng:
-         * 1. Kiểm tra trạng thái đăng nhập JWT.
-         * 2. Nạp thông tin người nhận & địa chỉ từ thông tin tài khoản thật trong localStorage.
-         * 3. Hiển thị danh sách sản phẩm từ giỏ hàng.
-         */
-        function initOrderPage() {
-            const authRequiredState = document.getElementById('auth-required-state');
-            const orderMainState = document.getElementById('order-main-state');
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCartFromStorage();
+            toggleDeliveryType();
+        });
 
-            if (!isUserLoggedIn()) {
-                authRequiredState.classList.remove('hidden');
-                orderMainState.classList.add('hidden');
-                return;
-            }
-
-            authRequiredState.classList.add('hidden');
-            orderMainState.classList.remove('hidden');
-
-            // Nạp thông tin người dùng thực tế từ localStorage (không dùng dữ liệu mẫu fix cứng)
-            try {
-                const user = JSON.parse(localStorage.getItem('current_user') || '{}');
-                const savedAddr = localStorage.getItem('customer_delivery_address') || user.address || '';
-
-                if (user.fullName) {
-                    document.getElementById('cust-name').value = user.fullName;
-                }
-                if (user.phoneNumber || user.phone) {
-                    document.getElementById('cust-phone').value = user.phoneNumber || user.phone;
-                }
-                if (savedAddr) {
-                    currentDeliveryAddress = savedAddr;
-                    document.getElementById('display-address-title').innerText = savedAddr;
-                    document.getElementById('display-address-subtitle').innerText = 'Địa chỉ nhận hàng đã lưu của bạn';
-                }
-            } catch (e) {
-                console.warn('Không thể đọc thông tin người dùng từ localStorage:', e);
-            }
-
-            renderOrderItems();
-
-            // Nạp mã voucher từ URL query nếu có (ví dụ: /Order?voucher=LOWLAND20)
-            try {
-                const urlParams = new URLSearchParams(window.location.search);
-                const voucherParam = urlParams.get('voucher');
-                if (voucherParam) {
-                    const couponInput = document.getElementById('coupon-input');
-                    if (couponInput) couponInput.value = voucherParam.trim().toUpperCase();
-                    openCouponModal();
-                }
-            } catch (e) {}
+        function toggleDeliveryType() {
+            const isPickup = document.getElementById('typePickup').checked;
+            document.getElementById('deliveryAddressGroup').classList.toggle('hidden', isPickup);
+            document.getElementById('pickupStoreGroup').classList.toggle('hidden', !isPickup);
         }
 
-        /**
-         * Render danh sách các món trong giỏ hàng và tính tổng tiền.
-         */
-        function renderOrderItems() {
-            const container = document.getElementById('order-items-container');
-            const submitBtn = document.getElementById('btn-submit-order');
-            const cart = getCart();
+        function loadCartFromStorage() {
+            try {
+                currentCart = JSON.parse(localStorage.getItem('lowland_cart') || '[]');
+            } catch {
+                currentCart = [];
+            }
+            syncAndRenderCart();
+        }
 
-            if (cart.length === 0) {
+        function syncAndRenderCart() {
+            document.getElementById('cartJsonInput').value = JSON.stringify(currentCart);
+            const container = document.getElementById('checkoutItemsContainer');
+            const submitBtn = document.getElementById('btnPlaceOrder');
+
+            if (!currentCart || currentCart.length === 0) {
                 container.innerHTML = `
-                    <div class="py-12 text-center text-gray-500 space-y-3">
-                        <div class="w-16 h-16 mx-auto rounded-full bg-amber-50 text-amber-600 flex items-center justify-center text-3xl">
-                            <i class="fi fi-rr-shopping-bag"></i>
+                    <div class="py-8 text-center space-y-3">
+                        <div class="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center text-xl mx-auto">
+                            <i class="fi fi-rr-shopping-cart"></i>
                         </div>
-                        <div class="font-extrabold text-gray-800 text-base">Giỏ hàng của bạn đang trống</div>
-                        <p class="text-xs text-gray-400 max-w-xs mx-auto">Hãy ghé qua thực đơn và chọn cho mình một ly thức uống thơm ngon nhé!</p>
-                        <div class="pt-2">
-                            <a href="/Index#menu" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-red-highland text-white font-bold text-xs uppercase hover:bg-red-700 transition">
-                                <i class="fi fi-rr-arrow-left"></i>
-                                <span>Khám phá Thực đơn</span>
-                            </a>
-                        </div>
-                    </div>
-                `;
+                        <p class="text-sm font-bold text-gray-500">Giỏ hàng của bạn đang trống.</p>
+                        <a href="/Products" class="inline-block px-4 py-2 rounded-xl bg-red-highland text-white text-xs font-extrabold">Chọn món ngay</a>
+                    </div>`;
                 submitBtn.disabled = true;
-                recalculateTotal();
+                updateTotals(0);
                 return;
             }
 
             submitBtn.disabled = false;
-            container.innerHTML = cart.map(item => `
-                <div class="order-item-row pt-4 first:pt-0 flex items-center gap-4" data-id="${item.id}" data-price="${item.price}">
-                    <div class="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center p-1.5 flex-shrink-0 shadow-sm border border-gray-200">
-                        <img src="${item.image || '/images/logo.jpg'}" alt="${item.name}" class="w-full h-full object-cover rounded-xl" onerror="this.src='/images/logo.jpg'" />
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-start justify-between">
-                            <h4 class="font-extrabold text-sm text-gray-900 truncate">${item.name}</h4>
-                            <span class="font-black text-sm text-gray-900 ml-2 item-price">${(item.price * item.quantity).toLocaleString('vi-VN')} đ</span>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-0.5">${item.size || 'Size M'}</p>
+            let subtotal = 0;
+            let html = '';
 
-                        <!-- Bộ nút tăng/giảm số lượng và xóa món -->
-                        <div class="flex items-center justify-between mt-2">
-                            <div class="flex items-center gap-2">
-                                <button type="button" onclick="updateItemQuantity('${item.id}', -1)" class="w-5 h-5 rounded-full bg-red-highland text-white flex items-center justify-center text-xs font-black shadow-sm active:scale-90">-</button>
-                                <span class="text-xs font-bold text-gray-900 px-1 qty-val">${item.quantity}</span>
-                                <button type="button" onclick="updateItemQuantity('${item.id}', 1)" class="w-5 h-5 rounded-full bg-red-highland text-white flex items-center justify-center text-xs font-black shadow-sm active:scale-90">+</button>
+            currentCart.forEach((item, index) => {
+                const qty = parseInt(item.quantity || 1);
+                const price = parseFloat(item.price || 0);
+                const lineTotal = qty * price;
+                subtotal += lineTotal;
+
+                html += `
+                    <div class="py-3 flex items-center justify-between gap-3">
+                        <div class="min-w-0 flex-1">
+                            <div class="text-sm font-extrabold text-gray-900 truncate">${item.name}</div>
+                            <div class="text-xs text-gray-500">Size ${item.size || 'M'} • ${price.toLocaleString('vi-VN')} đ</div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="inline-flex items-center rounded-xl border border-gray-200 bg-gray-50">
+                                <button type="button" onclick="changeCartItemQty(${index}, -1)" class="px-2.5 py-1 text-xs font-black text-gray-700 hover:bg-gray-200 rounded-l-xl">-</button>
+                                <span class="px-2.5 py-1 text-xs font-black text-gray-900">${qty}</span>
+                                <button type="button" onclick="changeCartItemQty(${index}, 1)" class="px-2.5 py-1 text-xs font-black text-gray-700 hover:bg-gray-200 rounded-r-xl">+</button>
                             </div>
-                            <button type="button" onclick="removeItemFromCart('${item.id}')" class="text-gray-400 hover:text-red-highland p-1" title="Xóa món">
-                                <i class="fi fi-rr-trash text-sm"></i>
-                            </button>
+                            <div class="text-sm font-extrabold text-gray-900 text-right min-w-[80px]">${lineTotal.toLocaleString('vi-VN')} đ</div>
                         </div>
-                    </div>
-                </div>
-            `).join('');
-
-            recalculateTotal();
-        }
-
-        /**
-         * Tăng hoặc giảm số lượng của một sản phẩm trong giỏ hàng.
-         */
-        function updateItemQuantity(itemId, delta) {
-            let cart = getCart();
-            const item = cart.find(x => x.id === itemId);
-            if (!item) return;
-
-            item.quantity += delta;
-            if (item.quantity <= 0) {
-                cart = cart.filter(x => x.id !== itemId);
-                showToast('Giỏ hàng', `Đã xóa "${item.name}" khỏi giỏ hàng`, 'warning');
-            }
-            saveCart(cart);
-            renderOrderItems();
-        }
-
-        /**
-         * Xóa hẳn một món khỏi giỏ hàng.
-         */
-        function removeItemFromCart(itemId) {
-            let cart = getCart();
-            const item = cart.find(x => x.id === itemId);
-            cart = cart.filter(x => x.id !== itemId);
-            saveCart(cart);
-            renderOrderItems();
-            if (item) {
-                showToast('Giỏ hàng', `Đã xóa "${item.name}" khỏi giỏ hàng`, 'info');
-            }
-        }
-
-        /**
-         * Tính lại Tạm tính, Giảm giá và Tổng thanh toán.
-         * Đồng bộ chính xác với công thức của Backend Order.API: FinalAmount = TotalAmount - DiscountAmount.
-         */
-        function recalculateTotal() {
-            const cart = getCart();
-            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            const discount = subtotal > 0 ? Math.min(appliedDiscount, subtotal) : 0;
-            const total = Math.max(0, subtotal - discount);
-
-            document.getElementById('subtotal-display').textContent = `${subtotal.toLocaleString('vi-VN')} đ`;
-            document.getElementById('discount-display').textContent = discount > 0 ? `-${discount.toLocaleString('vi-VN')} đ` : '0 đ';
-            document.getElementById('total-display').textContent = `${total.toLocaleString('vi-VN')} đ`;
-        }
-
-        /**
-         * Mở modal cập nhật địa chỉ nhận hàng.
-         */
-        function editAddress() {
-            const input = document.getElementById('address-input');
-            if (input) input.value = currentDeliveryAddress;
-            const modal = document.getElementById('address-modal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-
-        function closeAddressModal() {
-            const modal = document.getElementById('address-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        /**
-         * Lưu địa chỉ giao hàng mới vào giao diện và localStorage.
-         */
-        function saveNewAddress() {
-            const newAddr = document.getElementById('address-input').value.trim();
-            if (newAddr) {
-                currentDeliveryAddress = newAddr;
-                localStorage.setItem('customer_delivery_address', newAddr);
-                document.getElementById('display-address-title').innerText = newAddr;
-                document.getElementById('display-address-subtitle').innerText = 'Địa chỉ nhận hàng đã cập nhật';
-                closeAddressModal();
-                showToast('Cập nhật địa chỉ', 'Đã lưu địa chỉ nhận hàng thành công!', 'success');
-            } else {
-                showToast('Lỗi', 'Vui lòng nhập địa chỉ nhận hàng hợp lệ.', 'error');
-            }
-        }
-
-        /**
-         * Mở/đóng modal nhập mã ưu đãi (Voucher).
-         */
-        function openCouponModal() {
-            document.getElementById('coupon-modal').classList.remove('hidden');
-            document.getElementById('coupon-modal').classList.add('flex');
-        }
-
-        function closeCouponModal() {
-            document.getElementById('coupon-modal').classList.add('hidden');
-            document.getElementById('coupon-modal').classList.remove('flex');
-        }
-
-        /**
-         * Kiểm tra và áp dụng mã giảm giá (Voucher) qua Engagement.API.
-         * Tính toán chính xác mức giảm dựa trên giá trị đơn hàng hiện tại.
-         */
-        async function applyCoupon() {
-            const code = document.getElementById('coupon-input').value.trim().toUpperCase();
-            if (!code) {
-                showToast('Thiếu thông tin', 'Vui lòng nhập mã giảm giá cần áp dụng.', 'warning');
-                return;
-            }
-
-            const cart = getCart();
-            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-            const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token') || '';
-            const headers = {
-                'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-            };
-
-            let data = null;
-            // 1. Gọi xác thực voucher qua API Gateway
-            try {
-                const res = await fetch(`${API_GATEWAY_URL}/api/vouchers/validate`, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify({ voucherCode: code, orderSubtotal: subtotal })
-                });
-                data = await res.json().catch(() => null);
-            } catch (e) {
-                console.warn('API Gateway failed:', e);
-            }
-
-            if (data && data.isSuccess && data.data) {
-                appliedDiscount = Number(data.data.discountAmount || 0);
-                closeCouponModal();
-                recalculateTotal();
-                showToast('Áp dụng thành công', data.data.message || `Đã áp dụng mã "${code}" giảm ${appliedDiscount.toLocaleString('vi-VN')}đ!`, 'success');
-            } else if (data && !data.isSuccess) {
-                showToast('Mã không hợp lệ', data.message || 'Mã ưu đãi không hợp lệ hoặc đơn hàng chưa đủ điều kiện tối thiểu.', 'error');
-            } else {
-                showToast('Không thể kiểm tra mã', 'Dịch vụ kiểm tra mã ưu đãi hiện không phản hồi. Vui lòng thử lại sau.', 'warning');
-            }
-        }
-
-        /**
-         * Chọn phương thức thanh toán trên giao diện (VNPAY hoặc CASH).
-         */
-        function selectPaymentMethodOption(cardEl) {
-            document.querySelectorAll('#payment-options .payment-card').forEach(card => {
-                card.classList.remove('border-2', 'border-red-highland', 'bg-red-50/20');
-                card.classList.add('border', 'border-gray-200');
-                const check = card.querySelector('.payment-check');
-                if (check) {
-                    check.classList.add('hidden');
-                    check.classList.remove('flex', 'bg-red-highland', 'text-white');
-                }
+                    </div>`;
             });
 
-            cardEl.classList.remove('border', 'border-gray-200');
-            cardEl.classList.add('border-2', 'border-red-highland', 'bg-red-50/20');
-            const radio = cardEl.querySelector('input[type="radio"]');
-            if (radio) radio.checked = true;
-            const check = cardEl.querySelector('.payment-check');
-            if (check) {
-                check.classList.remove('hidden');
-                check.classList.add('flex', 'bg-red-highland', 'text-white');
-            }
+            container.innerHTML = html;
+            updateTotals(subtotal);
         }
 
-        /**
-         * [Mục 22 & Mục 28]: Gửi yêu cầu Tạo đơn hàng (POST /api/orders) tới Order.API.
-         * - Nếu chọn VNPAY: Hiển thị mã QR VNPay trực tiếp trên màn hình kèm nút chuyển sang cổng thanh toán VNPay.
-         * - Nếu chọn CASH: Chuyển hướng sang trang Theo dõi đơn hàng (/MyOrders).
-         */
-        async function placeOrder() {
-            if (!isUserLoggedIn()) {
-                showToast('Yêu cầu đăng nhập', 'Vui lòng đăng nhập trước khi đặt hàng!', 'warning');
-                setTimeout(() => window.location.href = '/Auth/Login?returnUrl=' + encodeURIComponent(window.location.pathname), 1000);
+        function changeCartItemQty(index, delta) {
+            if (!currentCart[index]) return;
+            currentCart[index].quantity = (parseInt(currentCart[index].quantity || 1)) + delta;
+            if (currentCart[index].quantity <= 0) {
+                currentCart.splice(index, 1);
+            }
+            localStorage.setItem('lowland_cart', JSON.stringify(currentCart));
+            window.dispatchEvent(new Event('storage'));
+            syncAndRenderCart();
+        }
+
+        function clearCheckoutCart() {
+            currentCart = [];
+            currentDiscount = 0;
+            document.getElementById('discountAmountInput').value = '0';
+            localStorage.removeItem('lowland_cart');
+            window.dispatchEvent(new Event('storage'));
+            syncAndRenderCart();
+        }
+
+        function updateTotals(subtotal) {
+            if (currentDiscount > subtotal) {
+                currentDiscount = subtotal;
+            }
+            const finalTotal = Math.max(0, subtotal - currentDiscount);
+            document.getElementById('subtotalDisplay').textContent = subtotal.toLocaleString('vi-VN') + ' đ';
+            document.getElementById('discountDisplay').textContent = '-' + currentDiscount.toLocaleString('vi-VN') + ' đ';
+            document.getElementById('finalTotalDisplay').textContent = finalTotal.toLocaleString('vi-VN') + ' đ';
+            document.getElementById('discountAmountInput').value = currentDiscount;
+        }
+
+        function selectSuggestedVoucher(code) {
+            document.getElementById('voucherCodeInput').value = code;
+            applyVoucherViaPageHandler();
+        }
+
+        async function applyVoucherViaPageHandler() {
+            const code = (document.getElementById('voucherCodeInput').value || '').trim();
+            const feedback = document.getElementById('voucherFeedback');
+            const subtotal = currentCart.reduce((s, i) => s + (parseFloat(i.price || 0) * parseInt(i.quantity || 1)), 0);
+
+            if (!code) {
+                feedback.innerHTML = '<span class="text-red-600 font-bold">Vui lòng nhập mã giảm giá.</span>';
                 return;
             }
-
-            const cart = getCart();
-            if (cart.length === 0) {
-                showToast('Giỏ hàng trống', 'Vui lòng thêm món trước khi đặt hàng!', 'warning');
-                return;
-            }
-
-            const btn = document.getElementById('btn-submit-order');
-            const name = document.getElementById('cust-name').value.trim();
-            const phone = document.getElementById('cust-phone').value.trim();
-            const extraNote = document.getElementById('cust-note').value.trim();
-
-            if (!name || !phone) {
-                showToast('Thiếu thông tin', 'Vui lòng nhập đầy đủ họ tên và số điện thoại người nhận.', 'error');
-                return;
-            }
-
-            if (!currentDeliveryAddress) {
-                showToast('Thiếu địa chỉ giao hàng', 'Vui lòng nhấn "Cập nhật địa chỉ" để nhập nơi nhận đồ uống.', 'warning');
-                editAddress();
-                return;
-            }
-
-            // Kiểm tra tính hợp lệ của mã sản phẩm (định dạng GUID chuẩn từ Product.API)
-            const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-            for (const item of cart) {
-                const pid = item.id || item.productId;
-                if (!pid || !guidRegex.test(pid)) {
-                    showToast('Lỗi dữ liệu món', `Món "${item.name}" không có ID hợp lệ từ cơ sở dữ liệu. Vui lòng chọn lại từ thực đơn!`, 'error');
-                    return;
-                }
-            }
-
-            btn.disabled = true;
-            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Đang xử lý...`;
 
             try {
-                const token = localStorage.getItem('auth_token') || '';
-                if (!token) {
-                    showToast('Phiên đăng nhập hết hạn', 'Vui lòng đăng nhập lại tài khoản để đặt hàng.', 'warning');
-                    setTimeout(() => window.location.href = '/Auth/Login?returnUrl=' + encodeURIComponent(window.location.pathname), 1200);
-                    return;
-                }
-
-                const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'VNPAY';
-                const noteParts = [`Giao đến: ${currentDeliveryAddress}`, `Người nhận: ${name} (${phone})`];
-                if (extraNote) noteParts.push(`Ghi chú: ${extraNote}`);
-
-                const orderPayload = {
-                    customerName: name,
-                    paymentMethod: selectedMethod,
-                    discountAmount: appliedDiscount || 0,
-                    note: noteParts.join(' | '),
-                    returnUrl: window.location.origin + '/MyOrders',
-                    items: cart.map(item => ({
-                        productId: item.id || item.productId,
-                        productName: item.name,
-                        unitPrice: item.price,
-                        quantity: item.quantity,
-                        size: (item.size || 'M').replace(/^Size\s+/i, ''),
-                        note: ''
-                    }))
-                };
-
-                // Gọi API Tạo đơn hàng qua API Gateway (Port 8080 -> Order.API)
-                const response = await fetch(`${API_GATEWAY_URL}/api/orders`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify(orderPayload)
-                });
-
-                if (response.status === 401) {
-                    showToast('Phiên làm việc hết hạn', 'Vui lòng đăng nhập lại để tiếp tục.', 'warning');
-                    setTimeout(() => window.location.href = '/Auth/Login?returnUrl=' + encodeURIComponent(window.location.pathname), 1200);
-                    return;
-                }
-
-                const resData = await response.json().catch(() => null);
-
-                if (!response.ok || !resData || !resData.isSuccess) {
-                    const errorMsg = resData?.message || (resData?.errors && resData.errors[0]) || 'Máy chủ không thể tạo đơn hàng.';
-                    throw new Error(errorMsg);
-                }
-
-                const order = resData.data;
-
-                // Xóa giỏ hàng sau khi đơn hàng đã được lưu thành công vào Database
-                saveCart([]);
-
-                // Nếu chọn VNPAY: Hiển thị Modal QR VNPay (Mục 28) để khách quét mã hoặc bấm mở cổng VNPay
-                if (selectedMethod === 'VNPAY') {
-                    const vnpayUrl = order?.vnPayPayment?.paymentUrl;
-                    if (!vnpayUrl) {
-                        throw new Error('Đơn hàng đã tạo nhưng không nhận được đường dẫn thanh toán VNPay.');
-                    }
-
-                    showCustomerVnPayQrModal(order.orderCode, order.finalAmount, vnpayUrl);
+                const res = await fetch(`/Order?handler=ValidateVoucher&code=${encodeURIComponent(code)}&orderAmount=${subtotal}`);
+                const data = await res.json();
+                if (data.isSuccess) {
+                    currentDiscount = parseFloat(data.discountAmount || 0);
+                    feedback.innerHTML = `<span class="text-emerald-700 font-bold">✓ ${data.message}</span>`;
                 } else {
-                    showToast('Đặt hàng thành công', `Đơn hàng ${order.orderCode} đã được tiếp nhận!`, 'success', 3000);
-                    setTimeout(() => {
-                        window.location.href = '/MyOrders';
-                    }, 1200);
+                    currentDiscount = 0;
+                    feedback.innerHTML = `<span class="text-red-600 font-bold">✕ ${data.message}</span>`;
                 }
-            } catch (err) {
-                console.error('Lỗi khi đặt hàng:', err);
-                btn.disabled = false;
-                btn.innerHTML = `<i class="fi fi-rr-credit-card text-base"></i><span>Đặt đơn hàng</span>`;
-                showToast('Đặt hàng thất bại', err.message || 'Không thể tạo đơn hàng, vui lòng thử lại sau.', 'error');
+                updateTotals(subtotal);
+            } catch {
+                feedback.innerHTML = '<span class="text-red-600 font-bold">Không thể kiểm tra mã giảm giá lúc này.</span>';
             }
         }
-
-        /**
-         * Hiển thị Modal chứa mã QR VNPay cho khách hàng quét hoặc chuyển hướng sang cổng VNPay.
-         */
-        function showCustomerVnPayQrModal(orderCode, amount, paymentUrl) {
-            document.getElementById('qr-modal-order-code').textContent = `#${orderCode}`;
-            document.getElementById('qr-modal-amount').textContent = `${Number(amount || 0).toLocaleString('vi-VN')} đ`;
-            document.getElementById('qr-modal-pay-link').href = paymentUrl;
-            document.getElementById('qr-modal-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(paymentUrl)}`;
-
-            const modal = document.getElementById('customer-vnpay-qr-modal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-
-        /**
-         * [Mục 29B]: Đồng bộ kết quả thanh toán khi VNPay redirect về trang.
-         */
-        async function checkVnPayCallback() {
-            const params = new URLSearchParams(window.location.search);
-            const responseCode = params.get('vnp_ResponseCode');
-            const txnRef = params.get('vnp_TxnRef');
-            const amount = params.get('vnp_Amount');
-
-            if (responseCode) {
-                try {
-                    const res = await fetch(`${API_GATEWAY_URL}/api/payments/vnpay-return${window.location.search}`);
-                    const json = await res.json().catch(() => null);
-
-                    if (responseCode === '00' && (res.ok || json?.isSuccess)) {
-                        const formattedAmt = amount ? (parseInt(amount) / 100).toLocaleString('vi-VN') + ' đ' : '';
-                        showToast('Thanh toán VNPay thành công', `Giao dịch ${txnRef || ''} (${formattedAmt}) đã được xác nhận!`, 'success', 4000);
-                        setTimeout(() => {
-                            window.location.href = '/MyOrders';
-                        }, 1200);
-                        return;
-                    } else {
-                        showToast('Thanh toán chưa hoàn tất', json?.message || 'Giao dịch qua VNPay đã bị hủy hoặc chưa hoàn tất.', 'warning', 5000);
-                    }
-                } catch (e) {
-                    console.error('Lỗi đồng bộ VNPay:', e);
-                } finally {
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                }
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            initOrderPage();
-            checkVnPayCallback();
-        });
     </script>
 }

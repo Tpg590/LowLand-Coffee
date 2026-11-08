@@ -82,6 +82,7 @@ public class PaymentController : ControllerBase
     /// Phân quyền: Chỉ Staff.
     /// </summary>
     [HttpPut("{orderId:guid}/cash-confirm")]
+    [HttpPut("{orderId:guid}/confirm-cash")]
     [Authorize(Roles = "Staff")]
     public async Task<IActionResult> ConfirmCashPayment(
         Guid orderId,
@@ -100,14 +101,17 @@ public class PaymentController : ControllerBase
 
     private (Guid? userId, string role) GetCurrentUserContext()
     {
-        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier)
+        // Ưu tiên đọc Header do API Gateway đã xác thực JWT và chuyển tiếp xuống
+        var userIdStr = Request.Headers["X-User-Id"].FirstOrDefault()
+                     ?? User.FindFirstValue(ClaimTypes.NameIdentifier)
                      ?? User.FindFirstValue("sub")
                      ?? User.FindFirstValue("uid")
                      ?? User.FindFirstValue("userId");
 
         Guid? userId = Guid.TryParse(userIdStr, out var parsedId) ? parsedId : null;
 
-        var role = User.FindFirstValue(ClaimTypes.Role)
+        var role = Request.Headers["X-User-Role"].FirstOrDefault()
+                ?? User.FindFirstValue(ClaimTypes.Role)
                 ?? User.FindFirstValue("role")
                 ?? "Customer";
 

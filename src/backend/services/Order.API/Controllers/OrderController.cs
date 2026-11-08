@@ -47,6 +47,7 @@ public class OrderController : ControllerBase
     /// Khách hàng xem danh sách đơn hàng cá nhân của chính mình, hỗ trợ lọc theo trạng thái và mã đơn.
     /// </summary>
     [HttpGet("my-orders")]
+    [HttpGet("my")]
     [Authorize(Roles = "Customer")]
     public async Task<IActionResult> GetMyOrders([FromQuery] OrderFilterRequest filter, CancellationToken cancellationToken)
     {
@@ -116,6 +117,7 @@ public class OrderController : ControllerBase
     /// - Staff: Được phép hủy đơn hàng kèm theo lý do hủy bắt buộc.
     /// </summary>
     [HttpPost("{id:guid}/cancel")]
+    [HttpPut("{id:guid}/cancel")]
     [Authorize(Roles = "Customer,Staff")]
     public async Task<IActionResult> CancelOrder(
         Guid id,
@@ -134,14 +136,17 @@ public class OrderController : ControllerBase
 
     private (Guid? userId, string role) GetCurrentUserContext()
     {
-        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier)
+        // Ưu tiên đọc Header do API Gateway đã xác thực JWT và chuyển tiếp xuống
+        var userIdStr = Request.Headers["X-User-Id"].FirstOrDefault()
+                     ?? User.FindFirstValue(ClaimTypes.NameIdentifier)
                      ?? User.FindFirstValue("sub")
                      ?? User.FindFirstValue("uid")
                      ?? User.FindFirstValue("userId");
 
         Guid? userId = Guid.TryParse(userIdStr, out var parsedId) ? parsedId : null;
 
-        var role = User.FindFirstValue(ClaimTypes.Role)
+        var role = Request.Headers["X-User-Role"].FirstOrDefault()
+                ?? User.FindFirstValue(ClaimTypes.Role)
                 ?? User.FindFirstValue("role")
                 ?? "Customer";
 

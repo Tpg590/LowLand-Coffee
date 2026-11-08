@@ -14,5 +14,6 @@ public interface IAuthService
     Task<ApiResponse<UserProfileDto>> UpdateProfileAsync(Guid userId, UpdateProfileRequest request, CancellationToken cancellationToken = default);
     Task<ApiResponse<UserProfileDto>> UploadAvatarAsync(Guid userId, IFormFile file, CancellationToken cancellationToken = default);
     Task<ApiResponse<bool>> ChangePasswordAsync(Guid userId, ChangePasswordRequest request, CancellationToken cancellationToken = default);
-    Task<ApiResponse<bool>> LogoutAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<ApiResponse<bool>> LogoutAsync(Guid userId, string? accessToken = null, CancellationToken cancellationToken = default);
+    bool IsTokenBlacklisted(string? accessToken, string? jti = null);
 }

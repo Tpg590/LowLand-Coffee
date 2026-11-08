@@ -29,6 +29,7 @@ public class OrderDbContext : DbContext
             entity.Property(o => o.DiscountAmount).HasPrecision(12, 2).HasDefaultValue(0.00m);
             entity.Property(o => o.FinalAmount).HasPrecision(12, 2);
             entity.Property(o => o.Status).IsRequired().HasMaxLength(30);
+            entity.Property(o => o.CustomerName).HasMaxLength(150).IsUnicode(true);
             entity.Property(o => o.Note).IsUnicode(true);
             entity.Property(o => o.CancelReason).IsUnicode(true);
             entity.Property(o => o.CreatedAt).HasDefaultValueSql("GETDATE()");

@@ -1,866 +1,591 @@
-@page
-@model MyOrdersModel
+@page "/MyOrders"
+@model CoffeeShop.WebRazorPages.Pages.MyOrdersModel
 @{
-    ViewData["Title"] = "Đơn hàng của tôi - LowLand Coffee";
+    Layout = "_Layout";
+    ViewData["Title"] = "Đơn Hàng Của Tôi - LowLand Coffee";
+}
+
+<!-- Hero Header -->
+<section class="relative bg-gradient-to-r from-red-highland-dark via-red-highland to-red-800 text-white overflow-hidden py-10 sm:py-12 px-4 sm:px-8 lg:px-12 shadow-inner">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
+        <div class="space-y-2">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-300/20 border border-amber-300/40 text-amber-200 text-xs font-extrabold uppercase tracking-wider">
+                <i class="fi fi-rr-receipt"></i>
+                <span>Theo Dõi Tiến Trình Đơn Hàng</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight">
+                Đơn Hàng Của Tôi
+            </h1>
+            <p class="text-white/85 text-sm sm:text-base max-w-2xl">
+                Kiểm tra trạng thái pha chế theo thời gian thực, xem hóa đơn chi tiết và thanh toán trực tuyến qua cổng VNPay QR bất cứ lúc nào.
+            </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+            <a asp-page="/MyOrders" asp-route-Status="@Model.Status" asp-route-Search="@Model.Search"
+               class="px-5 py-2.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white border border-white/30 font-bold text-sm transition flex items-center gap-2">
+                <i class="fi fi-rr-refresh"></i>
+                <span>Làm mới</span>
+            </a>
+            <a asp-page="/Products"
+               class="px-5 py-2.5 rounded-2xl bg-amber-300 hover:bg-amber-200 text-red-950 font-extrabold text-sm shadow-lg transition flex items-center gap-2">
+                <i class="fi fi-rr-plus-small text-base"></i>
+                <span>Đặt thêm món</span>
+            </a>
+        </div>
+    </div>
+</section>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-8 space-y-6">
+    <!-- Thông báo phản hồi từ Server / VNPay Return -->
+    @if (!string.IsNullOrWhiteSpace(Model.SuccessMessage))
+    {
+        <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-between gap-3 shadow-sm">
+            <div class="flex items-center gap-3">
+                <span class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                    <i class="fi fi-rr-check"></i>
+                </span>
+                <span class="text-sm font-bold">@Model.SuccessMessage</span>
+            </div>
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+        <div class="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 flex items-center justify-between gap-3 shadow-sm">
+            <div class="flex items-center gap-3">
+                <span class="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0">
+                    <i class="fi fi-rr-exclamation"></i>
+                </span>
+                <span class="text-sm font-bold">@Model.ErrorMessage</span>
+            </div>
+        </div>
+    }
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center gap-4">
+            <span class="w-12 h-12 rounded-2xl bg-red-50 text-red-highland flex items-center justify-center text-xl shrink-0">
+                <i class="fi fi-rr-shopping-bag"></i>
+            </span>
+            <div>
+                <div class="text-2xl font-black text-gray-900">@Model.TotalCount</div>
+                <div class="text-xs font-bold uppercase tracking-wider text-gray-500">Tổng đơn hàng</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center gap-4">
+            <span class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shrink-0">
+                <i class="fi fi-rr-hourglass-end"></i>
+            </span>
+            <div>
+                <div class="text-2xl font-black text-gray-900">@Model.PendingCount</div>
+                <div class="text-xs font-bold uppercase tracking-wider text-gray-500">Chờ xác nhận</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center gap-4">
+            <span class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl shrink-0">
+                <i class="fi fi-rr-mug-hot-alt"></i>
+            </span>
+            <div>
+                <div class="text-2xl font-black text-gray-900">@Model.ActiveCount</div>
+                <div class="text-xs font-bold uppercase tracking-wider text-gray-500">Đang pha chế / Giao</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center gap-4">
+            <span class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0">
+                <i class="fi fi-rr-badge-check"></i>
+            </span>
+            <div>
+                <div class="text-2xl font-black text-gray-900">@Model.CompletedCount</div>
+                <div class="text-xs font-bold uppercase tracking-wider text-gray-500">Đã hoàn thành</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thanh Lọc Trạng Thái & Tìm Kiếm (Razor Form GET) -->
+    <div class="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
+        <div class="flex flex-wrap items-center gap-2">
+            @{
+                var tabs = new (string Key, string Label, int? Count)[]
+                {
+                    ("ALL", "Tất cả", Model.TotalCount),
+                    ("PENDING", "Chờ xác nhận", Model.PendingCount),
+                    ("PROCESSING", "Đang pha chế", null),
+                    ("SHIPPING", "Đang giao hàng", null),
+                    ("COMPLETED", "Hoàn thành", Model.CompletedCount),
+                    ("CANCELLED", "Đã hủy", Model.CancelledCount)
+                };
+            }
+            @foreach (var tab in tabs)
+            {
+                var isActive = string.Equals(Model.Status, tab.Key, StringComparison.OrdinalIgnoreCase);
+                <a asp-page="/MyOrders"
+                   asp-route-Status="@tab.Key"
+                   asp-route-Search="@Model.Search"
+                   class="px-4 py-2.5 rounded-2xl text-xs font-extrabold transition @(isActive ? "bg-red-highland text-white shadow-md" : "bg-gray-100 text-gray-700 hover:bg-gray-200")">
+                    @tab.Label @(tab.Count.HasValue ? $"({tab.Count.Value})" : "")
+                </a>
+            }
+        </div>
+
+        <form method="get" asp-page="/MyOrders" class="flex items-center gap-2 w-full lg:w-96">
+            <input type="hidden" name="Status" value="@Model.Status" />
+            <div class="relative flex-1">
+                <input type="text"
+                       name="Search"
+                       value="@Model.Search"
+                       placeholder="Tìm mã đơn (VD: ORD-2026)..."
+                       class="w-full bg-gray-50 border border-gray-300 rounded-2xl pl-10 pr-4 py-2.5 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland" />
+                <span class="absolute left-3.5 top-3 text-gray-400">
+                    <i class="fi fi-rr-search text-sm"></i>
+                </span>
+            </div>
+            <button type="submit" class="px-5 py-2.5 rounded-2xl bg-gray-900 hover:bg-black text-white text-xs font-extrabold transition">
+                Tìm
+            </button>
+            @if (!string.IsNullOrWhiteSpace(Model.Search))
+            {
+                <a asp-page="/MyOrders" asp-route-Status="@Model.Status"
+                   class="px-3.5 py-2.5 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition"
+                   title="Xóa từ khóa">
+                    <i class="fi fi-rr-cross-small"></i>
+                </a>
+            }
+        </form>
+    </div>
+
+    <!-- Danh sách đơn hàng (Server-side Razor rendering) -->
+    @if (Model.Orders.Count == 0)
+    {
+        <div class="bg-white rounded-3xl border border-gray-200 p-12 text-center shadow-sm space-y-4">
+            <div class="w-16 h-16 rounded-full bg-red-50 text-red-highland flex items-center justify-center text-3xl mx-auto">
+                <i class="fi fi-rr-mug-hot-alt"></i>
+            </div>
+            <h3 class="text-xl font-black text-gray-900">Chưa có đơn hàng nào</h3>
+            <p class="text-gray-500 text-sm max-w-md mx-auto">
+                Không tìm thấy đơn hàng nào khớp với bộ lọc hiện tại. Hãy khám phá thực đơn LowLand Coffee và đặt món ngay!
+            </p>
+            <div class="pt-2">
+                <a asp-page="/Products" class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-red-highland hover:bg-red-highland-dark text-white font-extrabold text-sm shadow-md transition">
+                    <i class="fi fi-rr-shopping-cart-add"></i>
+                    <span>Khám phá thực đơn</span>
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        var flowSteps = new[] { "PENDING", "PROCESSING", "SHIPPING", "COMPLETED" };
+        var stepLabels = new Dictionary<string, string>
+        {
+            ["PENDING"] = "1. Tiếp nhận",
+            ["PROCESSING"] = "2. Đang pha chế",
+            ["SHIPPING"] = "3. Đang giao hàng",
+            ["COMPLETED"] = "4. Hoàn thành"
+        };
+
+        <div class="space-y-4">
+            @foreach (var order in Model.Orders)
+            {
+                var currentIdx = Array.IndexOf(flowSteps, order.NormalizedStatus);
+                var statusBadgeClass = order.NormalizedStatus switch
+                {
+                    "PENDING" => "bg-amber-100 text-amber-800 border-amber-300",
+                    "PROCESSING" => "bg-blue-100 text-blue-800 border-blue-300",
+                    "SHIPPING" => "bg-purple-100 text-purple-800 border-purple-300",
+                    "COMPLETED" => "bg-emerald-100 text-emerald-800 border-emerald-300",
+                    "CANCELLED" => "bg-red-100 text-red-800 border-red-300",
+                    _ => "bg-gray-100 text-gray-800 border-gray-300"
+                };
+
+                var paymentBadgeClass = order.IsPaid
+                    ? "bg-emerald-100 text-emerald-800"
+                    : (order.NormalizedPaymentStatus == "FAILED" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-800");
+
+                <div class="bg-white rounded-3xl border border-gray-200 shadow-sm hover:shadow-md transition overflow-hidden">
+                    <!-- Header Card -->
+                    <div class="px-6 py-4 bg-gray-50/80 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <span class="px-3 py-1 rounded-xl bg-amber-100/80 text-gray-900 font-mono font-black text-sm">
+                                #@order.OrderCode
+                            </span>
+                            <span class="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
+                                <i class="fi fi-rr-clock"></i>
+                                @order.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                            </span>
+                            <span class="px-3 py-1 rounded-xl text-xs font-extrabold @paymentBadgeClass">
+                                @order.PaymentMethodDisplayName • @order.PaymentStatusDisplayName
+                            </span>
+                        </div>
+
+                        <span class="px-3.5 py-1 rounded-full text-xs font-extrabold border @statusBadgeClass">
+                            @order.StatusDisplayName
+                        </span>
+                    </div>
+
+                    <!-- Body Card -->
+                    <div class="p-6 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                        <div class="space-y-3 flex-1">
+                            <div class="text-base font-extrabold text-gray-900">
+                                @(string.IsNullOrWhiteSpace(order.ItemsSummary) ? $"Đơn hàng ({order.TotalItems} món)" : order.ItemsSummary)
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(order.Note))
+                            {
+                                <div class="text-xs text-gray-600 flex items-center gap-1.5">
+                                    <i class="fi fi-rr-comment-alt text-gray-400"></i>
+                                    <span>@order.Note</span>
+                                </div>
+                            }
+
+                            @if (order.IsCancelled)
+                            {
+                                <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold">
+                                    <i class="fi fi-rr-Ban"></i>
+                                    <span>Lý do hủy: @(string.IsNullOrWhiteSpace(order.CancelReason) ? "Không có lý do chi tiết" : order.CancelReason)</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <!-- Thanh tiến trình trạng thái 4 bước -->
+                                <div class="flex flex-wrap items-center gap-2 pt-1">
+                                    @for (int idx = 0; idx < flowSteps.Length; idx++)
+                                    {
+                                        var stepKey = flowSteps[idx];
+                                        var nodeClass = idx < currentIdx
+                                            ? "bg-emerald-100 text-emerald-800"
+                                            : (idx == currentIdx ? "bg-gray-900 text-white shadow-sm" : "bg-gray-100 text-gray-500");
+
+                                        <span class="px-3 py-1 rounded-xl text-xs font-bold @nodeClass">
+                                            @stepLabels[stepKey]
+                                        </span>
+                                        if (idx < flowSteps.Length - 1)
+                                        {
+                                            <span class="text-gray-300 text-xs">→</span>
+                                        }
+                                    }
+                                </div>
+                            }
+
+                            <!-- Nghiệp vụ 3: Nhắc nhở và cho phép bấm thanh toán ngay nếu đơn chưa thanh toán -->
+                            @if (order.CanRetryPayment)
+                            {
+                                <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-amber-50 border border-dashed border-amber-400 text-amber-900 text-xs font-semibold">
+                                    <i class="fi fi-rr-info text-amber-600"></i>
+                                    <span>Đơn hàng chưa hoàn tất thanh toán. Bạn có thể nhấn <strong>Thanh toán QR VNPay</strong> bên phải để thanh toán ngay.</span>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Cột giá tiền & Các nút thao tác -->
+                        <div class="w-full lg:w-auto flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between gap-3 pt-4 lg:pt-0 border-t lg:border-t-0 border-gray-100">
+                            <div class="lg:text-right">
+                                <div class="text-xs font-semibold text-gray-500">Tổng thanh toán</div>
+                                <div class="text-xl font-black text-red-highland">@order.FinalAmount.ToString("N0") đ</div>
+                            </div>
+
+                            <div class="flex flex-wrap items-center gap-2">
+                                <a asp-page="/MyOrders"
+                                   asp-route-Status="@Model.Status"
+                                   asp-route-Search="@Model.Search"
+                                   asp-route-DetailId="@order.Id"
+                                   class="px-4 py-2.5 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-extrabold transition flex items-center gap-1.5">
+                                    <i class="fi fi-rr-eye"></i>
+                                    <span>Chi tiết</span>
+                                </a>
+
+                                @if (order.CanRetryPayment)
+                                {
+                                    <form method="post" asp-page-handler="GenerateQr" class="inline">
+                                        <input type="hidden" name="orderId" value="@order.Id" />
+                                        <input type="hidden" name="returnStatus" value="@Model.Status" />
+                                        <input type="hidden" name="returnSearch" value="@Model.Search" />
+                                        <button type="submit"
+                                                class="px-4 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold shadow-sm transition flex items-center gap-1.5">
+                                            <i class="fi fi-rr-qrcode"></i>
+                                            <span>@(order.NormalizedPaymentStatus == "FAILED" ? "Thanh toán lại QR VNPay" : "Thanh toán QR VNPay")</span>
+                                        </button>
+                                    </form>
+                                }
+
+                                @if (order.CanCustomerCancel)
+                                {
+                                    <button type="button"
+                                            onclick="openCustomerCancelModal('@order.Id', '@order.OrderCode')"
+                                            class="px-4 py-2.5 rounded-2xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-extrabold transition flex items-center gap-1.5">
+                                        <i class="fi fi-rr-cross-circle"></i>
+                                        <span>Hủy đơn</span>
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL 1: CHI TIẾT ĐƠN HÀNG (SERVER-SIDE RAZOR)                            -->
+<!-- ========================================================================= -->
+@if (Model.SelectedOrderDetail != null)
+{
+    var detail = Model.SelectedOrderDetail;
+    var latestPayment = detail.Payments?.OrderByDescending(p => p.CreatedAt).FirstOrDefault();
+
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl shadow-2xl border border-gray-200 w-full max-w-2xl overflow-hidden my-8">
+            <div class="px-6 py-4 bg-gray-900 text-white flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-black">Chi tiết đơn hàng #@detail.OrderCode</h3>
+                    <p class="text-xs text-gray-400">Ngày đặt: @detail.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
+                </div>
+                <a asp-page="/MyOrders" asp-route-Status="@Model.Status" asp-route-Search="@Model.Search"
+                   class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition">
+                    <i class="fi fi-rr-cross-small"></i>
+                </a>
+            </div>
+
+            <div class="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-1.5">
+                        <div class="text-[11px] font-extrabold uppercase tracking-wider text-gray-400">Trạng thái đơn hàng</div>
+                        <div class="text-sm font-black text-gray-900">@detail.StatusDisplayName</div>
+                        @if (!string.IsNullOrWhiteSpace(detail.CustomerName))
+                        {
+                            <div class="text-xs text-gray-600"><strong>Khách hàng:</strong> @detail.CustomerName</div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(detail.Note))
+                        {
+                            <div class="text-xs text-gray-600"><strong>Ghi chú:</strong> @detail.Note</div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(detail.CancelReason))
+                        {
+                            <div class="text-xs text-red-600 font-bold"><strong>Lý do hủy:</strong> @detail.CancelReason</div>
+                        }
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-1.5">
+                        <div class="text-[11px] font-extrabold uppercase tracking-wider text-gray-400">Thông tin thanh toán</div>
+                        <div class="text-sm font-black text-gray-900">Phương thức: @detail.PaymentMethodDisplayName</div>
+                        <div class="text-xs font-bold @(detail.IsPaid ? "text-emerald-700" : "text-amber-700")">
+                            Trạng thái: @detail.PaymentStatusDisplayName
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(latestPayment?.TransactionCode))
+                        {
+                            <div class="text-xs text-gray-500 font-mono">Mã GD: @latestPayment.TransactionCode</div>
+                        }
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-sm font-black text-gray-900 mb-2.5">Danh sách món đã đặt (@detail.Items.Count)</h4>
+                    <div class="border border-gray-200 rounded-2xl overflow-hidden">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-gray-50 text-xs font-extrabold uppercase text-gray-500 border-b border-gray-200">
+                                <tr>
+                                    <th class="px-4 py-3">Tên món</th>
+                                    <th class="px-3 py-3 text-center">SL</th>
+                                    <th class="px-4 py-3 text-right">Đơn giá</th>
+                                    <th class="px-4 py-3 text-right">Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                @foreach (var item in detail.Items)
+                                {
+                                    <tr>
+                                        <td class="px-4 py-3">
+                                            <div class="font-bold text-gray-900">@item.ProductName</div>
+                                            @if (!string.IsNullOrWhiteSpace(item.OptionsSummary))
+                                            {
+                                                <div class="text-xs text-gray-500">@item.OptionsSummary</div>
+                                            }
+                                        </td>
+                                        <td class="px-3 py-3 text-center font-bold">x@(item.Quantity)</td>
+                                        <td class="px-4 py-3 text-right text-gray-600">@item.UnitPrice.ToString("N0") đ</td>
+                                        <td class="px-4 py-3 text-right font-extrabold text-gray-900">@item.Subtotal.ToString("N0") đ</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-1.5 text-sm">
+                    <div class="flex justify-between text-gray-600">
+                        <span>Tạm tính:</span>
+                        <span class="font-bold">@detail.TotalAmount.ToString("N0") đ</span>
+                    </div>
+                    <div class="flex justify-between text-emerald-700">
+                        <span>Giảm giá khuyến mãi:</span>
+                        <span class="font-bold">-@detail.DiscountAmount.ToString("N0") đ</span>
+                    </div>
+                    <div class="flex justify-between pt-2 border-t border-amber-200 text-base font-black text-red-highland">
+                        <span>Tổng thanh toán:</span>
+                        <span>@detail.FinalAmount.ToString("N0") đ</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    @if (detail.CanRetryPayment)
+                    {
+                        <form method="post" asp-page-handler="GenerateQr" class="inline">
+                            <input type="hidden" name="orderId" value="@detail.Id" />
+                            <input type="hidden" name="returnStatus" value="@Model.Status" />
+                            <input type="hidden" name="returnSearch" value="@Model.Search" />
+                            <button type="submit" class="px-5 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold shadow-sm transition flex items-center gap-2">
+                                <i class="fi fi-rr-qrcode"></i>
+                                <span>Thanh toán ngay (QR VNPay)</span>
+                            </button>
+                        </form>
+                    }
+                </div>
+                <a asp-page="/MyOrders" asp-route-Status="@Model.Status" asp-route-Search="@Model.Search"
+                   class="px-5 py-2.5 rounded-2xl bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-extrabold transition">
+                    Đóng
+                </a>
+            </div>
+        </div>
+    </div>
 }
 
 <!-- ========================================================================= -->
-<!-- GIAO DIỆN KHÁCH HÀNG (CUSTOMER UI) - QUẢN LÝ & THEO DÕI ĐƠN HÀNG CÁ NHÂN  -->
-<!-- Đáp ứng đầy đủ các chức năng của Customer trong ma trận phân quyền:       -->
-<!-- - Mục 23: View Order List (Customer xem danh sách đơn hàng cá nhân)       -->
-<!-- - Mục 24: View Order Detail (Xem chi tiết items, giá tiền trong đơn)      -->
-<!-- - Mục 25: Search & Filter Order (Tìm kiếm theo mã đơn/tên món & lọc)      -->
-<!-- - Mục 27: Cancel Order (Khách hủy đơn mới khi còn ở trạng thái Pending)   -->
-<!-- - Mục 28: Generate VNPay QR (Tạo mã QR VNPay để thanh toán đơn hàng)      -->
+<!-- MODAL 2: THANH TOÁN MÃ QR VNPAY (SERVER-SIDE RAZOR)                       -->
 <!-- ========================================================================= -->
-<div class="w-full px-4 sm:px-8 lg:px-12 xl:px-16 py-6 sm:py-8 max-w-7xl mx-auto">
-    <!-- Thanh điều hướng Breadcrumb -->
-    <nav class="flex text-xs text-gray-500 mb-6 gap-2 items-center">
-        <a asp-page="/Index" class="hover:text-red-highland transition">Trang chủ</a>
-        <span>/</span>
-        <span class="text-gray-900 font-semibold">Đơn hàng của tôi</span>
-    </nav>
+@if (Model.ActiveVnPayQr != null)
+{
+    var qr = Model.ActiveVnPayQr;
+    var qrSrc = !string.IsNullOrWhiteSpace(qr.QrCodeBase64) && qr.QrCodeBase64.StartsWith("data:image")
+        ? qr.QrCodeBase64
+        : $"https://api.qrserver.com/v1/create-qr-code/?size=280x280&data={Uri.EscapeDataString(qr.PaymentUrl ?? "")}";
 
-    <!-- Tiêu đề trang & Các nút điều hướng nhanh -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <div>
-            <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight flex items-center gap-3">
-                <i class="fi fi-rr-clipboard-list text-red-highland"></i>
-                <span>Đơn hàng của tôi</span>
-            </h1>
-            <p class="text-sm text-gray-500 mt-1">Tra cứu, tìm kiếm, xem chi tiết món và theo dõi tiến độ xử lý đơn hàng</p>
-        </div>
-        <div class="flex items-center gap-3">
-            <a href="/Index#menu" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-red-highland hover:bg-red-700 text-white font-bold text-sm shadow-md transition active:scale-95">
-                <i class="fi fi-rr-coffee"></i>
-                <span>Đặt thêm món</span>
-            </a>
-            <a asp-page="/Order" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold text-sm shadow-sm transition">
-                <i class="fi fi-rr-shopping-bag"></i>
-                <span>Giỏ hàng</span>
-            </a>
-        </div>
-    </div>
-
-    <!-- ========================================================================= -->
-    <!-- TRẠNG THÁI 1: CHƯA ĐĂNG NHẬP                                              -->
-    <!-- ========================================================================= -->
-    <div id="unauth-box" class="hidden max-w-lg mx-auto my-12 bg-white rounded-3xl p-8 sm:p-12 text-center shadow-xl border border-gray-200 space-y-6">
-        <div class="w-20 h-20 mx-auto rounded-full bg-red-50 text-red-highland flex items-center justify-center text-4xl shadow-inner">
-            <i class="fi fi-rr-lock"></i>
-        </div>
-        <div class="space-y-2">
-            <h2 class="text-2xl font-black text-gray-900">Vui lòng đăng nhập</h2>
-            <p class="text-gray-500 text-sm leading-relaxed">
-                Bạn cần đăng nhập tài khoản để xem lịch sử đơn hàng cá nhân và theo dõi trạng thái giao đồ uống.
-            </p>
-        </div>
-        <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a asp-page="/Auth/Login" class="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-red-highland hover:bg-red-700 text-white font-extrabold text-sm uppercase tracking-wider shadow-lg transition active:scale-95 flex items-center justify-center gap-2">
-                <i class="fi fi-rr-sign-in-alt text-base"></i>
-                <span>Đăng nhập ngay</span>
-            </a>
-            <a asp-page="/Index" class="w-full sm:w-auto px-6 py-3.5 rounded-2xl border border-gray-300 text-gray-700 font-bold text-sm hover:bg-gray-50 transition">
-                Về trang chủ
-            </a>
-        </div>
-    </div>
-
-    <!-- ========================================================================= -->
-    <!-- TRẠNG THÁI 2: ĐÃ ĐĂNG NHẬP (Hiển thị Tìm kiếm, Bộ lọc & Danh sách đơn)    -->
-    <!-- ========================================================================= -->
-    <div id="myorders-container" class="hidden">
-        <!-- [Mục 25 - Search & Filter Order]: Thanh tìm kiếm mã đơn / tên món & nút làm mới -->
-        <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-            <div class="relative flex-1">
-                <i class="fi fi-rr-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                <input type="text"
-                       id="customer-order-search"
-                       oninput="handleSearchOrderInput()"
-                       placeholder="Tìm kiếm theo mã đơn (#ORD-...) hoặc tên đồ uống, ghi chú..."
-                       class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm font-medium text-gray-900 focus:bg-white focus:ring-2 focus:ring-red-highland focus:border-red-highland outline-none transition" />
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl shadow-2xl border border-gray-200 w-full max-w-md overflow-hidden my-8">
+            <div class="px-6 py-4 bg-blue-700 text-white flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <i class="fi fi-rr-qrcode text-xl"></i>
+                    <h3 class="text-base font-black">Thanh Toán Cổng VNPay QR</h3>
+                </div>
+                <a asp-page="/MyOrders" asp-route-Status="@Model.Status" asp-route-Search="@Model.Search"
+                   class="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition">
+                    <i class="fi fi-rr-cross-small"></i>
+                </a>
             </div>
-            <div class="flex items-center gap-2">
-                <button type="button" onclick="fetchMyOrders()" class="px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs flex items-center justify-center gap-1.5 transition">
-                    <i class="fi fi-rr-refresh"></i>
-                    <span>Làm mới</span>
-                </button>
+
+            <div class="p-6 text-center space-y-4">
+                <div>
+                    <div class="text-xs font-bold uppercase text-gray-400">Đơn hàng #@qr.OrderCode</div>
+                    <div class="text-2xl font-black text-red-highland mt-0.5">@qr.Amount.ToString("N0") VNĐ</div>
+                </div>
+
+                <div class="p-4 bg-white border-2 border-blue-100 rounded-3xl inline-block shadow-sm">
+                    <img src="@qrSrc" alt="VNPay QR Code" class="w-56 h-56 object-contain mx-auto rounded-xl" />
+                </div>
+
+                <p class="text-xs text-gray-500 leading-relaxed">
+                    Quét mã QR bằng ứng dụng Ngân hàng / Ví VNPay hoặc nhấn nút <strong>Mở cổng thanh toán VNPay</strong> bên dưới. Nếu bạn đóng cửa sổ này khi chưa thanh toán, nút thanh toán vẫn luôn hiển thị trên đơn hàng.
+                </p>
+
+                <div class="space-y-2.5 pt-2">
+                    <a href="@qr.PaymentUrl"
+                       class="w-full py-3 px-5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm shadow-md transition flex items-center justify-center gap-2">
+                        <i class="fi fi-rr-arrow-up-right-from-square"></i>
+                        <span>Mở cổng thanh toán VNPay</span>
+                    </a>
+                    <a asp-page="/MyOrders" asp-route-Status="@Model.Status" asp-route-Search="@Model.Search"
+                       class="block w-full py-2.5 px-5 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs transition">
+                        Để sau / Đóng cửa sổ
+                    </a>
+                </div>
             </div>
         </div>
-
-        <!-- [Mục 25 - Filter Order]: Các tab lọc theo trạng thái đơn hàng (Pending -> Processing -> Shipping -> Completed / Cancelled) -->
-        <div class="flex items-center gap-2 overflow-x-auto pb-3 mb-6 scrollbar-none border-b border-gray-200">
-            <button onclick="setFilterStatus('')" id="tab-all" class="filter-tab px-4 py-2 rounded-full text-sm font-bold transition whitespace-nowrap bg-red-highland text-white shadow-sm">
-                Tất cả đơn
-            </button>
-            <button onclick="setFilterStatus('PENDING')" id="tab-PENDING" class="filter-tab px-4 py-2 rounded-full text-sm font-bold transition whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200">
-                Chờ xác nhận (Pending)
-            </button>
-            <button onclick="setFilterStatus('PROCESSING')" id="tab-PROCESSING" class="filter-tab px-4 py-2 rounded-full text-sm font-bold transition whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200">
-                Đang pha chế (Processing)
-            </button>
-            <button onclick="setFilterStatus('SHIPPING')" id="tab-SHIPPING" class="filter-tab px-4 py-2 rounded-full text-sm font-bold transition whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200">
-                Đang giao hàng (Shipping)
-            </button>
-            <button onclick="setFilterStatus('COMPLETED')" id="tab-COMPLETED" class="filter-tab px-4 py-2 rounded-full text-sm font-bold transition whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200">
-                Hoàn thành (Completed)
-            </button>
-            <button onclick="setFilterStatus('CANCELLED')" id="tab-CANCELLED" class="filter-tab px-4 py-2 rounded-full text-sm font-bold transition whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200">
-                Đã hủy (Cancelled)
-            </button>
-        </div>
-
-        <!-- Trạng thái đang tải dữ liệu từ Order.API -->
-        <div id="orders-loading" class="py-16 text-center">
-            <div class="inline-block animate-spin rounded-full h-10 w-10 border-4 border-red-highland border-t-transparent"></div>
-            <p class="mt-4 text-sm font-bold text-gray-500">Đang tải danh sách đơn hàng từ máy chủ...</p>
-        </div>
-
-        <!-- Trạng thái không có đơn hàng thỏa điều kiện lọc -->
-        <div id="orders-empty" class="hidden py-16 text-center bg-white rounded-3xl border border-gray-200 p-8 shadow-sm">
-            <div class="w-20 h-20 mx-auto rounded-full bg-amber-50 text-amber-800 flex items-center justify-center text-3xl mb-4">
-                <i class="fi fi-rr-mug-hot"></i>
-            </div>
-            <h3 class="text-xl font-bold text-gray-900 mb-2">Không tìm thấy đơn hàng nào</h3>
-            <p class="text-gray-500 text-sm max-w-md mx-auto mb-6">Bạn chưa có đơn đặt hàng nào khớp với bộ lọc hiện tại. Hãy khám phá thực đơn của LowLand Coffee nhé!</p>
-            <a href="/Index#menu" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-red-highland hover:bg-red-700 text-white font-bold text-sm shadow-md transition active:scale-95">
-                <i class="fi fi-rr-coffee"></i>
-                <span>Xem thực đơn ngay</span>
-            </a>
-        </div>
-
-        <!-- [Mục 23 - View Order List]: Danh sách các thẻ đơn hàng cá nhân -->
-        <div id="orders-list" class="space-y-4">
-        </div>
     </div>
-</div>
+}
 
 <!-- ========================================================================= -->
-<!-- MODAL 1: XEM CHI TIẾT ĐƠN HÀNG (Mục 24 - View Order Detail)               -->
+<!-- MODAL 3: HỦY ĐƠN HÀNG (GỬI VỀ ONPOSTCANCELORDERASYNC)                     -->
 <!-- ========================================================================= -->
-<div id="order-detail-modal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <!-- Đầu Modal -->
-        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/80">
-            <div>
-                <h3 class="text-lg font-black text-gray-900 flex items-center gap-2">
-                    <span>Chi tiết đơn hàng</span>
-                    <span id="modal-order-code" class="text-sm font-mono text-red-highland bg-red-50 px-2.5 py-0.5 rounded-full">#ORD-...</span>
+<div id="cancelOrderModal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-3xl shadow-2xl border border-gray-200 w-full max-w-md overflow-hidden">
+        <form method="post" asp-page-handler="CancelOrder">
+            <div class="px-6 py-4 bg-red-highland text-white flex items-center justify-between">
+                <h3 class="text-base font-black flex items-center gap-2">
+                    <i class="fi fi-rr-exclamation"></i>
+                    <span>Xác nhận hủy đơn hàng</span>
                 </h3>
-                <p id="modal-order-date" class="text-xs text-gray-500 mt-0.5">Thời gian đặt: --/--/----</p>
-            </div>
-            <button onclick="closeOrderDetailModal()" class="w-8 h-8 rounded-full bg-gray-200/80 hover:bg-gray-300 text-gray-700 flex items-center justify-center transition">
-                <i class="fi fi-rr-cross text-xs"></i>
-            </button>
-        </div>
-
-        <!-- Nội dung chi tiết đơn hàng -->
-        <div class="p-6 overflow-y-auto space-y-5 flex-1">
-            <!-- Thanh trạng thái xử lý & phương thức thanh toán -->
-            <div class="flex items-center justify-between p-4 rounded-2xl bg-amber-50/60 border border-amber-200/60">
-                <div class="flex items-center gap-3">
-                    <div id="modal-status-icon" class="w-10 h-10 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center text-lg">
-                        <i class="fi fi-rr-clock"></i>
-                    </div>
-                    <div>
-                        <div class="text-xs font-semibold text-gray-500">Trạng thái đơn hàng</div>
-                        <div id="modal-status-text" class="text-base font-black text-amber-900">Chờ xác nhận</div>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <div class="text-xs font-semibold text-gray-500">Thanh toán</div>
-                    <div id="modal-payment-method" class="text-sm font-black text-gray-800">Tiền mặt</div>
-                </div>
-            </div>
-
-            <!-- Hiển thị lý do hủy nếu đơn đã bị hủy -->
-            <div id="modal-cancel-reason-box" class="hidden p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-900">
-                <div class="flex items-center gap-2 font-black text-sm text-rose-700">
-                    <i class="fi fi-rr-cross-circle"></i>
-                    <span>Đơn hàng đã bị hủy</span>
-                </div>
-                <p id="modal-cancel-reason-text" class="mt-1 text-rose-800 font-medium"></p>
-            </div>
-
-            <!-- Danh sách chi tiết từng món (OrderItems) và giá tiền -->
-            <div>
-                <h4 class="text-sm font-black text-gray-900 mb-3 flex items-center gap-2">
-                    <i class="fi fi-rr-coffee text-red-highland"></i>
-                    <span>Danh sách đồ uống & tùy chọn</span>
-                </h4>
-                <div id="modal-items-list" class="divide-y divide-gray-100 border border-gray-100 rounded-2xl p-2 bg-gray-50/50">
-                </div>
-            </div>
-
-            <!-- Chi tiết tổng tiền, giảm giá và thành tiền cuối cùng -->
-            <div class="p-4 bg-gray-50 rounded-2xl space-y-2 text-sm border border-gray-100">
-                <div class="flex justify-between text-gray-600">
-                    <span>Tổng tiền món</span>
-                    <span id="modal-subtotal" class="font-bold text-gray-900">0 đ</span>
-                </div>
-                <div class="flex justify-between text-gray-600">
-                    <span>Giảm giá ưu đãi</span>
-                    <span id="modal-discount" class="font-bold text-green-600">-0 đ</span>
-                </div>
-                <div class="border-t border-gray-200 pt-2 flex justify-between items-center text-base">
-                    <span class="font-black text-gray-900">Tổng thanh toán</span>
-                    <span id="modal-total" class="font-black text-red-highland text-xl">0 đ</span>
-                </div>
-            </div>
-
-            <!-- Ghi chú đơn hàng / Địa chỉ giao -->
-            <div id="modal-note-container" class="hidden p-3.5 bg-blue-50/60 border border-blue-100 rounded-2xl text-xs text-blue-900">
-                <span class="font-bold block mb-1">Ghi chú & Địa chỉ nhận hàng:</span>
-                <span id="modal-note-text" class="italic"></span>
-            </div>
-        </div>
-
-        <!-- Chân Modal: Nút Hủy đơn mới (Mục 27) & Tạo mã QR VNPay (Mục 28) -->
-        <div class="px-6 py-3.5 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between gap-3">
-            <div class="flex items-center gap-2">
-                <!-- Mục 27: Khách hủy đơn mới khi đơn còn ở trạng thái PENDING -->
-                <button type="button" id="modal-btn-cancel" onclick="openCancelModalFromCurrentDetail()" class="hidden px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs flex items-center gap-1.5 transition">
-                    <i class="fi fi-rr-cross-circle"></i>
-                    <span>Hủy đơn này</span>
-                </button>
-
-                <!-- Mục 28: Tạo mã QR VNPay để thanh toán đơn hàng -->
-                <button type="button" id="modal-btn-vnpay" onclick="retryVnPayPaymentFromCurrentDetail()" class="hidden px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition active:scale-95">
-                    <i class="fi fi-rr-qrcode"></i>
-                    <span>Tạo mã QR VNPay</span>
+                <button type="button" onclick="closeCustomerCancelModal()" class="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white">
+                    <i class="fi fi-rr-cross-small"></i>
                 </button>
             </div>
 
-            <button type="button" onclick="closeOrderDetailModal()" class="px-5 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-100 text-gray-700 font-bold text-sm transition">
-                Đóng
-            </button>
-        </div>
-    </div>
-</div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" name="orderId" id="cancelOrderIdInput" />
+                <input type="hidden" name="returnStatus" value="@Model.Status" />
+                <input type="hidden" name="returnSearch" value="@Model.Search" />
 
-<!-- ========================================================================= -->
-<!-- MODAL 2: XÁC NHẬN HỦY ĐƠN HÀNG (Mục 27 - Cancel Order cho Customer)       -->
-<!-- ========================================================================= -->
-<div id="cancel-order-modal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
-        <div class="flex items-center justify-between pb-3 border-b border-gray-100">
-            <div class="flex items-center gap-2.5">
-                <span class="w-9 h-9 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-lg">
-                    <i class="fi fi-rr-triangle-warning"></i>
-                </span>
-                <h3 class="text-lg font-black text-gray-900">Xác nhận hủy đơn hàng</h3>
-            </div>
-            <button type="button" onclick="closeCancelModal()" class="text-gray-400 hover:text-gray-600">✕</button>
-        </div>
+                <p class="text-sm text-gray-700">
+                    Bạn có chắc chắn muốn hủy đơn hàng <strong id="cancelOrderCodeLabel" class="text-red-highland font-black"></strong>?
+                </p>
 
-        <div class="space-y-3">
-            <p class="text-sm text-gray-600 leading-relaxed">
-                Bạn có chắc chắn muốn hủy đơn hàng <span id="cancel-modal-order-code" class="font-bold text-gray-900">#ORD</span>?
-            </p>
-            <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 text-xs text-amber-900 flex items-start gap-2">
-                <i class="fi fi-rr-info text-amber-600 mt-0.5"></i>
-                <span>Lưu ý: Khách hàng chỉ có thể hủy đơn mới khi đơn đang ở trạng thái <strong>Chờ xác nhận (Pending)</strong>.</span>
-            </div>
-
-            <div>
-                <label class="block text-xs font-bold text-gray-700 mb-1.5">Lý do hủy đơn (tùy chọn)</label>
-                <select id="cancel-reason-select" onchange="toggleCustomReasonInput(this.value)" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-red-highland">
-                    <option value="Tôi muốn đổi món / đổi địa chỉ">Tôi muốn đổi món / đổi địa chỉ</option>
-                    <option value="Thời gian chờ đợi quá lâu">Thời gian chờ đợi quá lâu</option>
-                    <option value="Đặt nhầm số lượng">Đặt nhầm số lượng</option>
-                    <option value="Khách đổi ý, tạm thời chưa đặt">Khách đổi ý, tạm thời chưa đặt</option>
-                    <option value="OTHER">Nhập lý do khác...</option>
-                </select>
-
-                <div id="custom-reason-container" class="hidden mt-2">
-                    <input type="text" id="cancel-custom-reason" placeholder="Nhập lý do hủy đơn của bạn..." class="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-2 text-sm text-gray-800 focus:ring-2 focus:ring-red-highland" />
+                <div class="space-y-2">
+                    <label class="block text-xs font-extrabold uppercase text-gray-600">Lý do hủy đơn <span class="text-red-500">*</span></label>
+                    <select onchange="if(this.value) document.getElementById('cancelReasonInput').value = this.value;"
+                            class="w-full bg-gray-50 border border-gray-300 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-gray-800">
+                        <option value="">-- Chọn nhanh lý do hủy --</option>
+                        <option value="Muốn thay đổi món hoặc số lượng trong đơn">Muốn thay đổi món hoặc số lượng trong đơn</option>
+                        <option value="Muốn đổi phương thức thanh toán hoặc mã giảm giá">Muốn đổi phương thức thanh toán hoặc mã giảm giá</option>
+                        <option value="Thay đổi địa chỉ hoặc thời gian nhận hàng">Thay đổi địa chỉ hoặc thời gian nhận hàng</option>
+                        <option value="Đặt nhầm đơn hàng">Đặt nhầm đơn hàng</option>
+                    </select>
+                    <textarea name="cancelReason" id="cancelReasonInput" rows="3" required
+                              class="w-full bg-gray-50 border border-gray-300 rounded-2xl p-3.5 text-sm text-gray-800"
+                              placeholder="Nhập lý do hủy đơn...">Khách hàng yêu cầu hủy đơn</textarea>
                 </div>
             </div>
-        </div>
 
-        <div class="flex items-center gap-3 pt-2">
-            <button type="button" onclick="closeCancelModal()" class="flex-1 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm transition">
-                Quay lại
-            </button>
-            <button type="button" id="btn-confirm-cancel" onclick="submitCancelOrder()" class="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm shadow-md transition active:scale-95 flex items-center justify-center gap-2">
-                <i class="fi fi-rr-cross"></i>
-                <span>Xác nhận hủy</span>
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- ========================================================================= -->
-<!-- MODAL 3: HIỂN THỊ MÃ QR VNPAY (Mục 28 - Generate VNPay QR)                -->
-<!-- ========================================================================= -->
-<div id="vnpay-qr-modal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl text-center space-y-5">
-        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
-            <div class="flex items-center gap-2">
-                <span class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-black text-xs">VNPAY-QR</span>
-                <h3 class="text-lg font-black text-gray-900">Mã QR Thanh Toán</h3>
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-2.5">
+                <button type="button" onclick="closeCustomerCancelModal()" class="px-4 py-2.5 rounded-2xl bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-extrabold">
+                    Quay lại
+                </button>
+                <button type="submit" class="px-5 py-2.5 rounded-2xl bg-red-highland hover:bg-red-highland-dark text-white text-xs font-extrabold shadow-sm">
+                    Xác nhận hủy đơn
+                </button>
             </div>
-            <button type="button" onclick="closeVnPayQrModal()" class="text-gray-400 hover:text-gray-600 font-bold">✕</button>
-        </div>
-
-        <div class="space-y-1">
-            <p class="text-xs text-gray-500">Mã đơn hàng: <strong id="vnpay-qr-ordercode" class="text-gray-900">#ORD</strong></p>
-            <p class="text-2xl font-black text-red-highland" id="vnpay-qr-amount">0 đ</p>
-        </div>
-
-        <div class="p-4 bg-white rounded-2xl border-2 border-dashed border-blue-200 inline-block mx-auto shadow-inner">
-            <img id="vnpay-qr-image" src="" alt="VNPay QR" class="w-52 h-52 object-contain mx-auto" />
-        </div>
-
-        <p class="text-xs text-gray-500 leading-relaxed">
-            Quét mã QR bằng ứng dụng Ngân hàng / Ví VNPay hoặc nhấn nút bên dưới để thanh toán trực tiếp trên cổng VNPay.
-        </p>
-
-        <div class="flex flex-col sm:flex-row gap-3 pt-2">
-            <a id="vnpay-qr-gateway-link" href="#" class="flex-1 py-3 px-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg transition flex items-center justify-center gap-2">
-                <i class="fi fi-rr-credit-card"></i>
-                <span>Mở cổng VNPay</span>
-            </a>
-            <button type="button" onclick="closeVnPayQrModal()" class="py-3 px-4 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs transition">
-                Đóng
-            </button>
-        </div>
+        </form>
     </div>
 </div>
 
-<script>
-    // Đường dẫn tương đối gọi qua YARP Reverse Proxy
-    const API_GATEWAY_URL = '';
-    // Danh sách đơn hàng thật từ Order.API (không dùng dữ liệu mẫu)
-    let allOrders = [];
-    let currentFilter = '';
-    let currentSearchKeyword = '';
-    let currentViewingOrder = null;
-    let pendingCancelOrderId = null;
-
-    document.addEventListener('DOMContentLoaded', () => {
-        checkAuthAndLoadOrders();
-    });
-
-    /**
-     * Hàm thông báo tiện ích (ưu tiên sử dụng Toast chung của Layout nếu có).
-     */
-    function notifyCustomer(title, message, type = 'info') {
-        if (typeof showToast === 'function') {
-            showToast(title, message, type);
-        } else {
-            alert(`${title}: ${message}`);
-        }
-    }
-
-    /**
-     * Kiểm tra đăng nhập JWT, đồng bộ kết quả trả về từ VNPay (nếu có) và tải danh sách đơn.
-     */
-    async function checkAuthAndLoadOrders() {
-        const token = localStorage.getItem('auth_token');
-        const user = localStorage.getItem('current_user');
-
-        if (!token || !user) {
-            document.getElementById('unauth-box').classList.remove('hidden');
-            document.getElementById('myorders-container').classList.add('hidden');
-            return;
-        }
-
-        document.getElementById('unauth-box').classList.add('hidden');
-        document.getElementById('myorders-container').classList.remove('hidden');
-
-        // [Mục 29B]: Đồng bộ kết quả thanh toán khi khách hàng được redirect từ VNPay về /MyOrders
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('vnp_ResponseCode')) {
-            try {
-                const res = await fetch(`${API_GATEWAY_URL}/api/payments/vnpay-return${window.location.search}`);
-                const data = await res.json().catch(() => null);
-                if (params.get('vnp_ResponseCode') === '00' && (res.ok || data?.isSuccess)) {
-                    notifyCustomer('Thanh toán thành công', `Đơn hàng ${data?.data?.orderCode || ''} đã được xác nhận thanh toán VNPay!`, 'success');
-                } else {
-                    notifyCustomer('Thanh toán chưa hoàn tất', data?.message || 'Giao dịch VNPay chưa hoàn tất.', 'warning');
-                }
-            } catch (e) {
-                console.error('Lỗi đồng bộ VNPay Return:', e);
+@section Scripts {
+    <script>
+        @if (Model.Created)
+        {
+            <text>
+            localStorage.removeItem('lowland_cart');
+            window.dispatchEvent(new Event('storage'));
+            if (typeof updateCartBadge === 'function') {
+                updateCartBadge();
             }
-            window.history.replaceState({}, document.title, window.location.pathname);
+            </text>
         }
 
-        await fetchMyOrders();
-    }
-
-    /**
-     * [Mục 23 - View Order List]: Gọi API lấy danh sách đơn hàng cá nhân của Customer (GET /api/orders/my-orders).
-     */
-    async function fetchMyOrders() {
-        const token = localStorage.getItem('auth_token');
-        const loading = document.getElementById('orders-loading');
-        const empty = document.getElementById('orders-empty');
-        const list = document.getElementById('orders-list');
-
-        loading.classList.remove('hidden');
-        empty.classList.add('hidden');
-        list.innerHTML = '';
-
-        try {
-            const res = await fetch(`${API_GATEWAY_URL}/api/orders/my-orders?pageNumber=1&pageSize=50`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (res.status === 401) {
-                document.getElementById('unauth-box').classList.remove('hidden');
-                document.getElementById('myorders-container').classList.add('hidden');
-                return;
-            }
-
-            const data = await res.json();
-            if (data && data.data && Array.isArray(data.data.items)) {
-                allOrders = data.data.items;
-            } else if (Array.isArray(data.data)) {
-                allOrders = data.data;
-            } else {
-                allOrders = [];
-            }
-
-            renderOrders();
-        } catch (err) {
-            console.error('Lỗi khi tải danh sách đơn hàng cá nhân:', err);
-            empty.classList.remove('hidden');
-        } finally {
-            loading.classList.add('hidden');
-        }
-    }
-
-    /**
-     * [Mục 25 - Search & Filter Order]: Xử lý khi người dùng nhập từ khóa tìm kiếm đơn hàng.
-     */
-    function handleSearchOrderInput() {
-        const input = document.getElementById('customer-order-search');
-        currentSearchKeyword = (input?.value || '').trim().toLowerCase();
-        renderOrders();
-    }
-
-    /**
-     * [Mục 25 - Search & Filter Order]: Chuyển tab lọc theo trạng thái đơn hàng.
-     */
-    function setFilterStatus(status) {
-        currentFilter = status;
-        document.querySelectorAll('.filter-tab').forEach(btn => {
-            btn.classList.remove('bg-red-highland', 'text-white', 'shadow-sm');
-            btn.classList.add('bg-gray-100', 'text-gray-600');
-        });
-
-        const activeId = status ? `tab-${status}` : 'tab-all';
-        const activeBtn = document.getElementById(activeId);
-        if (activeBtn) {
-            activeBtn.classList.remove('bg-gray-100', 'text-gray-600');
-            activeBtn.classList.add('bg-red-highland', 'text-white', 'shadow-sm');
+        function openCustomerCancelModal(orderId, orderCode) {
+            document.getElementById('cancelOrderIdInput').value = orderId;
+            document.getElementById('cancelOrderCodeLabel').textContent = '#' + orderCode;
+            const modal = document.getElementById('cancelOrderModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
         }
 
-        renderOrders();
-    }
-
-    /**
-     * Định dạng nhãn phương thức & trạng thái thanh toán của đơn hàng.
-     */
-    function formatPaymentText(method, status) {
-        let m = (method || 'CASH').toUpperCase();
-        let name = m.includes('VNPAY') ? 'VNPay QR' : 'Tiền mặt';
-
-        const s = (status || '').toUpperCase();
-        if (s === 'SUCCESS' || s === 'PAID') {
-            return `${name} <span class="text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full text-[11px] ml-1">Đã thanh toán</span>`;
-        } else if (s === 'PENDING') {
-            return `${name} <span class="text-amber-700 font-bold bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full text-[11px] ml-1">Chờ thanh toán</span>`;
+        function closeCustomerCancelModal() {
+            const modal = document.getElementById('cancelOrderModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         }
-        return name;
-    }
-
-    /**
-     * Hiển thị danh sách đơn hàng sau khi áp dụng bộ lọc trạng thái và từ khóa tìm kiếm.
-     */
-    function renderOrders() {
-        const list = document.getElementById('orders-list');
-        const empty = document.getElementById('orders-empty');
-
-        let filtered = allOrders;
-
-        // 1. Lọc theo trạng thái đơn hàng
-        if (currentFilter) {
-            filtered = filtered.filter(o => {
-                const s = (o.status || '').toUpperCase();
-                const cf = currentFilter.toUpperCase();
-                if (cf === 'SHIPPING' || cf === 'DELIVERING') {
-                    return s === 'SHIPPING' || s === 'DELIVERING';
-                }
-                if (cf === 'PROCESSING' || cf === 'CONFIRMED') {
-                    return s === 'PROCESSING' || s === 'CONFIRMED';
-                }
-                return s === cf;
-            });
-        }
-
-        // 2. Lọc theo từ khóa tìm kiếm (mã đơn hàng, tóm tắt món, ghi chú)
-        if (currentSearchKeyword) {
-            filtered = filtered.filter(o => {
-                const code = (o.orderCode || '').toLowerCase();
-                const items = (o.itemsSummary || '').toLowerCase();
-                const note = (o.note || '').toLowerCase();
-                return code.includes(currentSearchKeyword) ||
-                       items.includes(currentSearchKeyword) ||
-                       note.includes(currentSearchKeyword);
-            });
-        }
-
-        if (!filtered || filtered.length === 0) {
-            empty.classList.remove('hidden');
-            list.innerHTML = '';
-            return;
-        }
-
-        empty.classList.add('hidden');
-
-        list.innerHTML = filtered.map(order => {
-            const statusConfig = getStatusBadge(order.status);
-            const formattedDate = formatDate(order.createdAt);
-            const totalFmt = (order.finalAmount || order.totalAmount || 0).toLocaleString('vi-VN');
-            const totalItems = order.totalItems || 1;
-            const isPending = (order.status || '').toUpperCase() === 'PENDING';
-            const isCancelled = (order.status || '').toUpperCase() === 'CANCELLED';
-            const isPaid = (order.paymentStatus || '').toUpperCase() === 'SUCCESS' || (order.paymentStatus || '').toUpperCase() === 'PAID';
-            const canGenerateVnPayQr = !isCancelled && !isPaid && (order.paymentMethod || '').toUpperCase().includes('VNPAY');
-
-            return `
-                <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm hover:shadow-md transition">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-gray-100 gap-3">
-                        <div class="flex items-center gap-3">
-                            <span class="w-10 h-10 rounded-xl bg-red-50 text-red-highland flex items-center justify-center text-lg font-bold">
-                                <i class="fi fi-rr-receipt"></i>
-                            </span>
-                            <div>
-                                <div class="font-mono font-bold text-gray-900 text-base sm:text-lg">#${order.orderCode || order.id.substring(0, 8).toUpperCase()}</div>
-                                <div class="text-xs text-gray-500 flex items-center gap-1.5 mt-0.5">
-                                    <i class="fi fi-rr-calendar"></i>
-                                    <span>${formattedDate}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 ${statusConfig.class}">
-                                <i class="${statusConfig.icon}"></i>
-                                <span>${statusConfig.label}</span>
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div class="space-y-1">
-                            <div class="text-sm font-bold text-gray-700">
-                                <span>Số lượng món:</span> <span class="text-gray-900 font-black">${totalItems} phần</span>
-                            </div>
-                            ${order.itemsSummary ? `<div class="text-xs font-semibold text-gray-800 bg-gray-50 border border-gray-200/60 rounded-lg px-2.5 py-1 inline-block">${order.itemsSummary}</div>` : ''}
-                            <div class="text-xs text-gray-500 flex items-center gap-1 flex-wrap">
-                                <span>Phương thức thanh toán:</span>
-                                <span>${formatPaymentText(order.paymentMethod, order.paymentStatus)}</span>
-                            </div>
-                            ${order.note ? `<div class="text-xs text-amber-800 bg-amber-50 rounded-lg px-2.5 py-1 inline-block mt-1 font-medium">Ghi chú: ${order.note}</div>` : ''}
-                            ${order.cancelReason ? `<div class="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-2.5 py-1 inline-block mt-1 font-semibold flex items-center gap-1"><i class="fi fi-rr-info"></i>Lý do hủy: ${order.cancelReason}</div>` : ''}
-                        </div>
-
-                        <div class="sm:text-right">
-                            <div class="text-xs text-gray-500 font-medium">Tổng tiền thanh toán</div>
-                            <div class="text-xl sm:text-2xl font-black text-red-highland">${totalFmt} đ</div>
-                        </div>
-                    </div>
-
-                    <div class="pt-3 border-t border-gray-100 flex items-center justify-end gap-2.5 flex-wrap">
-                        ${canGenerateVnPayQr ? `
-                            <button onclick="retryVnPayPayment('${order.id}')" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition active:scale-95" title="Tạo mã QR thanh toán VNPay">
-                                <i class="fi fi-rr-qrcode"></i>
-                                <span>Tạo mã QR VNPay</span>
-                            </button>
-                        ` : ''}
-
-                        ${isPending ? `
-                            <button onclick="openCancelModal('${order.id}', '${order.orderCode || ''}')" class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs flex items-center gap-1.5 transition active:scale-95" title="Hủy đơn hàng mới">
-                                <i class="fi fi-rr-cross-circle"></i>
-                                <span>Hủy đơn</span>
-                            </button>
-                        ` : ''}
-
-                        <button onclick="viewOrderDetail('${order.id}')" class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs flex items-center gap-1.5 transition">
-                            <i class="fi fi-rr-eye"></i>
-                            <span>Xem chi tiết</span>
-                        </button>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    /**
-     * [Mục 24 - View Order Detail]: Gọi API GET /api/orders/{id} để xem chi tiết từng món và giá tiền trong đơn.
-     */
-    async function viewOrderDetail(orderId) {
-        const token = localStorage.getItem('auth_token');
-        try {
-            const res = await fetch(`${API_GATEWAY_URL}/api/orders/${orderId}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            const resJson = await res.json();
-            const order = resJson.data || resJson;
-
-            if (!order) return;
-            currentViewingOrder = order;
-
-            document.getElementById('modal-order-code').innerText = `#${order.orderCode || order.id.substring(0, 8).toUpperCase()}`;
-            document.getElementById('modal-order-date').innerText = `Thời gian đặt: ${formatDate(order.createdAt)}`;
-
-            const statusConfig = getStatusBadge(order.status);
-            document.getElementById('modal-status-text').innerText = statusConfig.label;
-            document.getElementById('modal-status-text').className = `text-base font-black ${statusConfig.textClass}`;
-            document.getElementById('modal-status-icon').innerHTML = `<i class="${statusConfig.icon}"></i>`;
-
-            let payName = (order.paymentMethod || '').toUpperCase().includes('VNPAY') ? 'VNPay QR' : 'Tiền mặt';
-            const paySt = (order.paymentStatus || '').toUpperCase();
-            const payStatusText = (paySt === 'SUCCESS' || paySt === 'PAID') ? ' (Đã thanh toán)' : ' (Chờ thanh toán)';
-            document.getElementById('modal-payment-method').innerText = `${payName}${payStatusText}`;
-
-            const cancelBox = document.getElementById('modal-cancel-reason-box');
-            if ((order.status || '').toUpperCase() === 'CANCELLED' && order.cancelReason) {
-                cancelBox.classList.remove('hidden');
-                document.getElementById('modal-cancel-reason-text').innerText = `Lý do: ${order.cancelReason}`;
-            } else {
-                cancelBox.classList.add('hidden');
-            }
-
-            const itemsContainer = document.getElementById('modal-items-list');
-            if (order.items && order.items.length > 0) {
-                itemsContainer.innerHTML = order.items.map(item => `
-                    <div class="py-2.5 px-3 flex items-center justify-between text-sm">
-                        <div>
-                            <div class="font-bold text-gray-900">${item.productName || 'Đồ uống'}</div>
-                            <div class="text-xs text-gray-500">${item.optionsSummary || ''}</div>
-                            <div class="text-[11px] text-gray-400">Đơn giá: ${(item.unitPrice || 0).toLocaleString('vi-VN')} đ</div>
-                        </div>
-                        <div class="text-right">
-                            <div class="font-bold text-gray-900">${(item.subtotal || item.unitPrice * item.quantity).toLocaleString('vi-VN')} đ</div>
-                            <div class="text-xs text-gray-500">x${item.quantity}</div>
-                        </div>
-                    </div>
-                `).join('');
-            } else {
-                itemsContainer.innerHTML = `<div class="p-3 text-xs text-gray-500 italic text-center">Không có thông tin món</div>`;
-            }
-
-            document.getElementById('modal-subtotal').innerText = `${(order.totalAmount || 0).toLocaleString('vi-VN')} đ`;
-            document.getElementById('modal-discount').innerText = `-${(order.discountAmount || 0).toLocaleString('vi-VN')} đ`;
-            document.getElementById('modal-total').innerText = `${(order.finalAmount || order.totalAmount || 0).toLocaleString('vi-VN')} đ`;
-
-            if (order.note) {
-                document.getElementById('modal-note-container').classList.remove('hidden');
-                document.getElementById('modal-note-text').innerText = order.note;
-            } else {
-                document.getElementById('modal-note-container').classList.add('hidden');
-            }
-
-            const isPending = (order.status || '').toUpperCase() === 'PENDING';
-            const isCancelled = (order.status || '').toUpperCase() === 'CANCELLED';
-            const isPaid = paySt === 'SUCCESS' || paySt === 'PAID';
-            const canGenerateVnPayQr = !isCancelled && !isPaid && (order.paymentMethod || '').toUpperCase().includes('VNPAY');
-
-            const btnCancel = document.getElementById('modal-btn-cancel');
-            const btnVnPay = document.getElementById('modal-btn-vnpay');
-
-            if (isPending) {
-                btnCancel.classList.remove('hidden');
-            } else {
-                btnCancel.classList.add('hidden');
-            }
-
-            if (canGenerateVnPayQr) {
-                btnVnPay.classList.remove('hidden');
-            } else {
-                btnVnPay.classList.add('hidden');
-            }
-
-            document.getElementById('order-detail-modal').classList.remove('hidden');
-        } catch (e) {
-            console.error(e);
-            notifyCustomer('Lỗi tải chi tiết', 'Không thể tải chi tiết đơn hàng từ máy chủ.', 'error');
-        }
-    }
-
-    function closeOrderDetailModal() {
-        document.getElementById('order-detail-modal').classList.add('hidden');
-        currentViewingOrder = null;
-    }
-
-    /**
-     * [Mục 27 - Cancel Order]: Mở Modal xác nhận hủy đơn mới cho Customer.
-     */
-    function openCancelModal(orderId, orderCode) {
-        pendingCancelOrderId = orderId;
-        document.getElementById('cancel-modal-order-code').innerText = `#${orderCode || orderId.substring(0, 8).toUpperCase()}`;
-        document.getElementById('cancel-reason-select').value = 'Tôi muốn đổi món / đổi địa chỉ';
-        document.getElementById('custom-reason-container').classList.add('hidden');
-        document.getElementById('cancel-custom-reason').value = '';
-        document.getElementById('cancel-order-modal').classList.remove('hidden');
-    }
-
-    function openCancelModalFromCurrentDetail() {
-        if (!currentViewingOrder) return;
-        closeOrderDetailModal();
-        openCancelModal(currentViewingOrder.id, currentViewingOrder.orderCode);
-    }
-
-    function closeCancelModal() {
-        document.getElementById('cancel-order-modal').classList.add('hidden');
-        pendingCancelOrderId = null;
-    }
-
-    function toggleCustomReasonInput(val) {
-        const container = document.getElementById('custom-reason-container');
-        if (val === 'OTHER') {
-            container.classList.remove('hidden');
-        } else {
-            container.classList.add('hidden');
-        }
-    }
-
-    /**
-     * [Mục 27 - Cancel Order]: Gửi yêu cầu hủy đơn mới (POST /api/orders/{id}/cancel).
-     */
-    async function submitCancelOrder() {
-        if (!pendingCancelOrderId) return;
-        const token = localStorage.getItem('auth_token');
-        const selectVal = document.getElementById('cancel-reason-select').value;
-        let reason = selectVal;
-        if (selectVal === 'OTHER') {
-            const custom = document.getElementById('cancel-custom-reason').value.trim();
-            reason = custom || 'Khách hàng yêu cầu hủy đơn mới';
-        }
-
-        const btn = document.getElementById('btn-confirm-cancel');
-        btn.disabled = true;
-        btn.innerHTML = `<span class="animate-spin inline-block mr-1">⌛</span> Đang xử lý...`;
-
-        try {
-            const res = await fetch(`${API_GATEWAY_URL}/api/orders/${pendingCancelOrderId}/cancel`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ reason: reason })
-            });
-
-            const data = await res.json().catch(() => null);
-
-            if (res.ok && data?.isSuccess !== false) {
-                closeCancelModal();
-                notifyCustomer('Đã hủy đơn hàng', 'Đơn hàng của bạn đã được hủy thành công.', 'success');
-                await fetchMyOrders();
-            } else {
-                const msg = data?.message || (data?.errors && data.errors[0]) || 'Không thể hủy đơn hàng.';
-                notifyCustomer('Không thể hủy đơn', msg, 'error');
-            }
-        } catch (e) {
-            console.error('Lỗi khi hủy đơn:', e);
-            notifyCustomer('Lỗi kết nối', 'Không thể kết nối đến máy chủ Order.API.', 'error');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = `<i class="fi fi-rr-cross"></i><span>Xác nhận hủy</span>`;
-        }
-    }
-
-    /**
-     * [Mục 28 - Generate VNPay QR]: Gọi API POST /api/payments/vnpay/create-url để tạo mã QR & URL thanh toán VNPay.
-     */
-    async function retryVnPayPayment(orderId) {
-        const token = localStorage.getItem('auth_token');
-        try {
-            const res = await fetch(`${API_GATEWAY_URL}/api/payments/vnpay/create-url`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ orderId: orderId })
-            });
-
-            const data = await res.json().catch(() => null);
-            const paymentData = data?.data;
-            const vnpayUrl = paymentData?.paymentUrl;
-
-            if (res.ok && vnpayUrl) {
-                document.getElementById('vnpay-qr-ordercode').textContent = `#${paymentData.orderCode || ''}`;
-                document.getElementById('vnpay-qr-amount').textContent = `${Number(paymentData.amount || 0).toLocaleString('vi-VN')} đ`;
-                document.getElementById('vnpay-qr-gateway-link').href = vnpayUrl;
-                document.getElementById('vnpay-qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(vnpayUrl)}`;
-
-                document.getElementById('vnpay-qr-modal').classList.remove('hidden');
-            } else {
-                notifyCustomer('Không thể tạo QR VNPay', data?.message || 'Không thể khởi tạo đường dẫn thanh toán VNPay.', 'error');
-            }
-        } catch (e) {
-            console.error('Lỗi gọi VNPay:', e);
-            notifyCustomer('Lỗi kết nối', 'Không thể kết nối máy chủ khi tạo mã QR VNPay.', 'error');
-        }
-    }
-
-    function closeVnPayQrModal() {
-        document.getElementById('vnpay-qr-modal').classList.add('hidden');
-    }
-
-    function retryVnPayPaymentFromCurrentDetail() {
-        if (!currentViewingOrder) return;
-        const orderId = currentViewingOrder.id;
-        closeOrderDetailModal();
-        retryVnPayPayment(orderId);
-    }
-
-    /**
-     * Cấu hình màu sắc và biểu tượng theo chuẩn 5 trạng thái của Order.API:
-     * PENDING -> PROCESSING -> SHIPPING -> COMPLETED (và CANCELLED).
-     */
-    function getStatusBadge(status) {
-        const s = (status || '').toUpperCase();
-        switch (s) {
-            case 'PENDING':
-                return { label: 'Chờ xác nhận (Pending)', class: 'bg-amber-100 text-amber-800', textClass: 'text-amber-800', icon: 'fi fi-rr-time-past' };
-            case 'CONFIRMED':
-            case 'PROCESSING':
-                return { label: 'Đang pha chế (Processing)', class: 'bg-blue-100 text-blue-800', textClass: 'text-blue-800', icon: 'fi fi-rr-coffee' };
-            case 'SHIPPING':
-            case 'DELIVERING':
-                return { label: 'Đang giao hàng (Shipping)', class: 'bg-purple-100 text-purple-800', textClass: 'text-purple-800', icon: 'fi fi-rr-moped' };
-            case 'COMPLETED':
-                return { label: 'Hoàn thành (Completed)', class: 'bg-emerald-100 text-emerald-800', textClass: 'text-emerald-800', icon: 'fi fi-rr-check-circle' };
-            case 'CANCELLED':
-                return { label: 'Đã hủy (Cancelled)', class: 'bg-rose-100 text-rose-800', textClass: 'text-rose-800', icon: 'fi fi-rr-cross-circle' };
-            default:
-                return { label: status || 'Không xác định', class: 'bg-gray-100 text-gray-800', textClass: 'text-gray-800', icon: 'fi fi-rr-info' };
-        }
-    }
-
-    function formatDate(dateStr) {
-        if (!dateStr) return '';
-        try {
-            const d = new Date(dateStr);
-            return d.toLocaleDateString('vi-VN', {
-                hour: '2-digit',
-                minute: '2-digit',
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
-        } catch {
-            return dateStr;
-        }
-    }
-</script>
+    </script>
+}

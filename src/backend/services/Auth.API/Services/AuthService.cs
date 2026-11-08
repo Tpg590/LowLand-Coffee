@@ -292,9 +292,67 @@ public class AuthService : IAuthService
         return ApiResponse<bool>.Success(true, "Đổi mật khẩu thành công");
     }
 
-    public Task<ApiResponse<bool>> LogoutAsync(Guid userId, CancellationToken cancellationToken = default)
+    public Task<ApiResponse<bool>> LogoutAsync(Guid userId, string? accessToken = null, CancellationToken cancellationToken = default)
     {
         _tokenStore.RevokeUserTokens(userId);
-        return Task.FromResult(ApiResponse<bool>.Success(true, "Đăng xuất thành công"));
+
+        if (!string.IsNullOrWhiteSpace(accessToken))
+        {
+            var rawToken = accessToken.Trim();
+            if (rawToken.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                rawToken = rawToken["Bearer ".Length..].Trim();
+            }
+
+            var expiresAt = DateTime.UtcNow.AddMinutes(_tokenService.GetTokenExpiryMinutes());
+            try
+            {
+                var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+                if (handler.CanReadToken(rawToken))
+                {
+                    var jwt = handler.ReadJwtToken(rawToken);
+                    if (jwt.ValidTo > DateTime.UtcNow)
+                    {
+                        expiresAt = jwt.ValidTo;
+                    }
+                    if (!string.IsNullOrWhiteSpace(jwt.Id))
+                    {
+                        _tokenStore.BlacklistAccessToken(jwt.Id, expiresAt);
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore token parsing error and blacklist raw string directly
+            }
+
+            _tokenStore.BlacklistAccessToken(rawToken, expiresAt);
+        }
+
+        return Task.FromResult(ApiResponse<bool>.Success(true, "Đăng xuất thành công. Token đã được thu hồi và đưa vào danh sách đen (Blacklist)."));
+    }
+
+    public bool IsTokenBlacklisted(string? accessToken, string? jti = null)
+    {
+        if (!string.IsNullOrWhiteSpace(jti) && _tokenStore.IsAccessTokenBlacklisted(jti.Trim()))
+        {
+            return true;
+        }
+
+        if (!string.IsNullOrWhiteSpace(accessToken))
+        {
+            var rawToken = accessToken.Trim();
+            if (rawToken.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                rawToken = rawToken["Bearer ".Length..].Trim();
+            }
+
+            if (_tokenStore.IsAccessTokenBlacklisted(rawToken))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
