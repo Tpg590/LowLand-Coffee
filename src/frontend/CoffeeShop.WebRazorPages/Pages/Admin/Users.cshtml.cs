@@ -45,6 +45,9 @@ public class UsersModel : PageModel
     [BindProperty]
     public UpdateUserViewModel UpdateUserInput { get; set; } = new();
 
+    [BindProperty]
+    public Guid EditUserId { get; set; }
+
     [TempData]
     public string? SuccessMessage { get; set; }
 
@@ -65,9 +68,8 @@ public class UsersModel : PageModel
             return RedirectToPage(AuthConstants.LoginRoute);
         }
 
-        ModelState.Remove("UpdateUserInput.FullName");
-        ModelState.Remove("UpdateUserInput.PhoneNumber");
-        ModelState.Remove("UpdateUserInput.Address");
+        ModelState.Clear();
+        TryValidateModel(CreateStaffInput, nameof(CreateStaffInput));
 
         if (!ModelState.IsValid)
         {
@@ -88,7 +90,7 @@ public class UsersModel : PageModel
         return RedirectToPage(new { Search, RoleName, IsActive, PageNumber });
     }
 
-    public async Task<IActionResult> OnPostUpdateUserAsync([FromForm] Guid id)
+    public async Task<IActionResult> OnPostUpdateUserAsync(Guid? id)
     {
         var token = GetAccessToken();
         if (string.IsNullOrEmpty(token))
@@ -96,10 +98,16 @@ public class UsersModel : PageModel
             return RedirectToPage(AuthConstants.LoginRoute);
         }
 
-        ModelState.Remove("CreateStaffInput.FullName");
-        ModelState.Remove("CreateStaffInput.Email");
-        ModelState.Remove("CreateStaffInput.PhoneNumber");
-        ModelState.Remove("CreateStaffInput.Password");
+        var targetId = (id.HasValue && id.Value != Guid.Empty) ? id.Value : EditUserId;
+        if (targetId == Guid.Empty)
+        {
+            await LoadUsersAndRolesAsync();
+            ErrorMessage = "Không xác định được tài khoản người dùng cần cập nhật.";
+            return Page();
+        }
+
+        ModelState.Clear();
+        TryValidateModel(UpdateUserInput, nameof(UpdateUserInput));
 
         if (!ModelState.IsValid)
         {
@@ -108,7 +116,7 @@ public class UsersModel : PageModel
             return Page();
         }
 
-        var result = await _userHttpService.UpdateUserAsync(token, id, UpdateUserInput);
+        var result = await _userHttpService.UpdateUserAsync(token, targetId, UpdateUserInput);
         if (!result.IsSuccess)
         {
             await LoadUsersAndRolesAsync();
@@ -120,7 +128,7 @@ public class UsersModel : PageModel
         return RedirectToPage(new { Search, RoleName, IsActive, PageNumber });
     }
 
-    public async Task<IActionResult> OnPostToggleStatusAsync([FromForm] Guid id, [FromForm] bool isActive)
+    public async Task<IActionResult> OnPostToggleStatusAsync(Guid id, bool isActive)
     {
         var token = GetAccessToken();
         if (string.IsNullOrEmpty(token))
@@ -141,7 +149,7 @@ public class UsersModel : PageModel
         return RedirectToPage(new { Search, RoleName, IsActive, PageNumber });
     }
 
-    public async Task<IActionResult> OnPostDeleteUserAsync([FromForm] Guid id)
+    public async Task<IActionResult> OnPostDeleteUserAsync(Guid id)
     {
         var token = GetAccessToken();
         if (string.IsNullOrEmpty(token))
