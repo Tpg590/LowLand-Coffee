@@ -270,12 +270,19 @@
                                 </div>
                             }
 
-                            <!-- Nghiệp vụ 3: Nhắc nhở và cho phép bấm thanh toán ngay nếu đơn chưa thanh toán -->
+                            <!-- Nhắc nhở trạng thái thanh toán -->
                             @if (order.CanRetryPayment)
                             {
                                 <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-amber-50 border border-dashed border-amber-400 text-amber-900 text-xs font-semibold">
                                     <i class="fi fi-rr-info text-amber-600"></i>
-                                    <span>Đơn hàng chưa hoàn tất thanh toán. Bạn có thể nhấn <strong>Thanh toán VNPay</strong> bên phải để chuyển tới cổng thanh toán VNPay ngay.</span>
+                                    <span>Đơn hàng chưa thanh toán VNPay. Bạn có thể nhấn <strong>Thanh toán VNPay</strong> bên phải để chuyển tới cổng thanh toán ngay.</span>
+                                </div>
+                            }
+                            else if (order.NormalizedPaymentMethod == "CASH" && !order.IsPaid && !order.IsCancelled)
+                            {
+                                <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
+                                    <i class="fi fi-rr-money-bill-wave text-emerald-600"></i>
+                                    <span>Phương thức: <strong>Tiền mặt (COD)</strong> khi nhận hàng.</span>
                                 </div>
                             }
                         </div>
