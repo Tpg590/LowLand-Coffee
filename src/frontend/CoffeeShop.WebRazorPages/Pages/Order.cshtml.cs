@@ -36,7 +36,12 @@ public class OrderModel : PageModel
     [BindProperty]
     public CheckoutFormInputViewModel CheckoutInput { get; set; } = new();
 
+    [BindProperty(SupportsGet = true)]
+    public string? Voucher { get; set; }
+
     public List<VoucherViewModel> AvailableVouchers { get; set; } = new();
+
+    public LoyaltyMemberProfileViewModel? MemberProfile { get; set; }
 
     [TempData]
     public string? ErrorMessage { get; set; }
@@ -46,12 +51,23 @@ public class OrderModel : PageModel
         ?? HttpContext.Session.GetString(AuthConstants.JwtSessionKey)
         ?? Request.Cookies["access_token"];
 
+    private Guid? GetCurrentUserId()
+    {
+        var uidStr = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        return Guid.TryParse(uidStr, out var uid) ? uid : null;
+    }
+
     public async Task<IActionResult> OnGetAsync()
     {
         var token = GetAccessToken();
         if (string.IsNullOrWhiteSpace(token))
         {
             return RedirectToPage("/Auth/Login", new { returnUrl = "/Order" });
+        }
+
+        if (!string.IsNullOrWhiteSpace(Voucher))
+        {
+            CheckoutInput.VoucherCode = Voucher.Trim().ToUpperInvariant();
         }
 
         // Tự động điền thông tin người nhận từ hồ sơ đã đăng nhập
@@ -77,7 +93,7 @@ public class OrderModel : PageModel
             _logger.LogWarning(ex, "Không thể lấy thông tin hồ sơ người dùng khi mở trang Checkout");
         }
 
-        await LoadAvailableVouchersAsync();
+        await LoadAvailableVouchersAsync(token);
         return Page();
     }
 
@@ -89,7 +105,7 @@ public class OrderModel : PageModel
             return RedirectToPage("/Auth/Login", new { returnUrl = "/Order" });
         }
 
-        await LoadAvailableVouchersAsync();
+        await LoadAvailableVouchersAsync(token);
 
         if (string.IsNullOrWhiteSpace(CheckoutInput.FullName) || CheckoutInput.FullName.Trim().Length < 2)
         {
@@ -140,7 +156,11 @@ public class OrderModel : PageModel
 
             var qty = item.Quantity > 0 ? item.Quantity : 1;
             var unitPrice = item.Price >= 0 ? item.Price : 0m;
-            var sizeLabel = string.IsNullOrWhiteSpace(item.Size) ? "M" : item.Size.Trim();
+            var rawOptionLabel = string.IsNullOrWhiteSpace(item.Size) ? "Size M" : item.Size.Trim();
+            var shortSize = ExtractShortSize(rawOptionLabel);
+            var optionsSummary = rawOptionLabel.StartsWith("Size", StringComparison.OrdinalIgnoreCase)
+                ? rawOptionLabel
+                : $"Size {rawOptionLabel}";
 
             subtotal += unitPrice * qty;
 
@@ -150,8 +170,8 @@ public class OrderModel : PageModel
                 ProductName = string.IsNullOrWhiteSpace(item.Name) ? "Sản phẩm Lowland" : item.Name.Trim(),
                 UnitPrice = unitPrice,
                 Quantity = qty,
-                Size = sizeLabel,
-                OptionsSummary = $"Size {sizeLabel}"
+                Size = shortSize,
+                OptionsSummary = optionsSummary
             });
         }
 
@@ -161,21 +181,57 @@ public class OrderModel : PageModel
             return Page();
         }
 
-        // Kiểm tra mã giảm giá qua EngagementHttpService (nếu khách có nhập)
-        decimal discountAmount = CheckoutInput.DiscountAmount >= 0 ? CheckoutInput.DiscountAmount : 0m;
+        // 1. Tính giảm giá theo Đặc quyền Hạng thẻ thành viên (Tier Loyalty Benefit: Đồng 0%, Bạc 1%, Vàng 2%, Kim Cương 3%)
+        var currentUserId = GetCurrentUserId();
+        decimal tierDiscountPercent = MemberProfile?.DiscountPercent ?? 0m;
+        decimal tierDiscount = tierDiscountPercent > 0m
+            ? Math.Round(subtotal * (tierDiscountPercent / 100m), 0, MidpointRounding.AwayFromZero)
+            : 0m;
+
+        // 2. Kiểm tra mã giảm giá qua EngagementHttpService (nếu khách có nhập)
+        decimal voucherDiscount = 0m;
+        Guid? validatedVoucherId = null;
+
         if (!string.IsNullOrWhiteSpace(CheckoutInput.VoucherCode))
         {
             var voucherRes = await _engagementHttpService.ValidateVoucherAsync(new ValidateVoucherRequestViewModel
             {
                 VoucherCode = CheckoutInput.VoucherCode.Trim().ToUpperInvariant(),
-                OrderSubtotal = subtotal
-            });
+                OrderSubtotal = subtotal,
+                UserId = currentUserId
+            }, token);
 
             if (voucherRes.IsSuccess && voucherRes.Data != null && voucherRes.Data.IsValid)
             {
-                discountAmount = voucherRes.Data.DiscountAmount;
+                voucherDiscount = voucherRes.Data.DiscountAmount;
+                validatedVoucherId = voucherRes.Data.VoucherId;
+            }
+            else
+            {
+                ErrorMessage = voucherRes.Data?.Message ?? voucherRes.Message ?? "Mã giảm giá không hợp lệ hoặc bạn đã sử dụng mã này.";
+                return Page();
             }
         }
+
+        // 3. Kiểm tra sử dụng Điểm thưởng thành viên (1 điểm = 1.000 VNĐ)
+        int actualPointsToRedeem = 0;
+        decimal pointsDiscount = 0m;
+        if (CheckoutInput.PointsToRedeem > 0 && currentUserId.HasValue)
+        {
+            var availablePoints = MemberProfile?.CurrentPoints ?? 0;
+            if (CheckoutInput.PointsToRedeem > availablePoints)
+            {
+                ErrorMessage = $"Số điểm muốn sử dụng ({CheckoutInput.PointsToRedeem} điểm) vượt quá số dư điểm hiện có của bạn ({availablePoints} điểm).";
+                return Page();
+            }
+
+            var remainingAfterTierAndVoucher = Math.Max(0m, subtotal - tierDiscount - voucherDiscount);
+            var maxPointsForOrder = (int)Math.Floor(remainingAfterTierAndVoucher / 1000m);
+            actualPointsToRedeem = Math.Min(CheckoutInput.PointsToRedeem, maxPointsForOrder);
+            pointsDiscount = actualPointsToRedeem * 1000m;
+        }
+
+        decimal discountAmount = Math.Min(subtotal, tierDiscount + voucherDiscount + pointsDiscount);
 
         var locationDesc = isPickup
             ? $"Nhận tại quán: {CheckoutInput.StoreName ?? "Lowland Nguyễn Huệ (Quận 1)"}"
@@ -186,6 +242,16 @@ public class OrderModel : PageModel
             $"Người nhận: {CheckoutInput.FullName.Trim()} ({CheckoutInput.Phone.Trim()})",
             locationDesc
         };
+
+        if (tierDiscount > 0)
+        {
+            noteParts.Add($"Ưu đãi {MemberProfile?.TierName ?? "Hạng thẻ"} (-{tierDiscountPercent:0.##}%: -{tierDiscount:N0}đ)");
+        }
+
+        if (actualPointsToRedeem > 0)
+        {
+            noteParts.Add($"Dùng {actualPointsToRedeem} điểm thưởng (-{pointsDiscount:N0}đ)");
+        }
 
         if (!string.IsNullOrWhiteSpace(CheckoutInput.Note))
         {
@@ -218,10 +284,60 @@ public class OrderModel : PageModel
 
         var createdOrder = result.Data;
 
+        // Ghi nhận sử dụng Voucher vào Engagement.API nếu đơn hàng có áp dụng mã giảm giá hợp lệ
+        if (validatedVoucherId.HasValue && currentUserId.HasValue && voucherDiscount > 0)
+        {
+            try
+            {
+                await _engagementHttpService.ApplyVoucherUsageAsync(new ApplyVoucherUsageRequestViewModel
+                {
+                    VoucherId = validatedVoucherId.Value,
+                    UserId = currentUserId.Value,
+                    OrderId = createdOrder.Id,
+                    DiscountAmount = voucherDiscount
+                }, token);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Không thể ghi nhận lượt sử dụng voucher {VoucherId} cho đơn {OrderId}", validatedVoucherId, createdOrder.Id);
+            }
+        }
+
+        // Quy đổi & trừ điểm thưởng trong Engagement.API nếu khách hàng có sử dụng điểm
+        if (actualPointsToRedeem > 0 && currentUserId.HasValue)
+        {
+            try
+            {
+                await _engagementHttpService.RedeemPointsAsync(new RedeemPointsRequestViewModel
+                {
+                    UserId = currentUserId.Value,
+                    OrderId = createdOrder.Id,
+                    PointsToRedeem = actualPointsToRedeem,
+                    Reason = $"Đổi {actualPointsToRedeem} điểm trừ tiền đơn hàng #{createdOrder.OrderCode}"
+                }, token);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Không thể trừ điểm thưởng cho đơn {OrderId}", createdOrder.Id);
+            }
+        }
+
         if (paymentMethod == "VNPAY")
         {
-            TempData["SuccessMessage"] = $"Đã tạo đơn hàng #{createdOrder.OrderCode} thành công! Vui lòng quét mã QR VNPay hoặc bấm 'Mở cổng thanh toán VNPay' để hoàn tất thanh toán.";
-            return RedirectToPage("/MyOrders", new { Created = true, PayOrderId = createdOrder.Id });
+            var paymentUrl = createdOrder.VnPayPayment?.PaymentUrl;
+            if (string.IsNullOrWhiteSpace(paymentUrl))
+            {
+                var qrRes = await _orderHttpService.GenerateVnPayUrlAsync(createdOrder.Id, returnUrl, token);
+                paymentUrl = qrRes.Data?.PaymentUrl;
+            }
+
+            if (!string.IsNullOrWhiteSpace(paymentUrl))
+            {
+                return Redirect(paymentUrl);
+            }
+
+            TempData["SuccessMessage"] = $"Đã tạo đơn hàng #{createdOrder.OrderCode} thành công! Bạn có thể bấm 'Thanh toán VNPay' trên đơn hàng để chuyển tới trang VNPay.";
+            return RedirectToPage("/MyOrders", new { Created = true });
         }
 
         TempData["SuccessMessage"] = $"Đặt đơn hàng #{createdOrder.OrderCode} thành công! Tổng thanh toán: {createdOrder.FinalAmount:N0}đ.";
@@ -235,11 +351,15 @@ public class OrderModel : PageModel
             return new JsonResult(new { isSuccess = false, message = "Vui lòng nhập mã giảm giá." });
         }
 
+        var token = GetAccessToken();
+        var currentUserId = GetCurrentUserId();
+
         var response = await _engagementHttpService.ValidateVoucherAsync(new ValidateVoucherRequestViewModel
         {
             VoucherCode = code.Trim().ToUpperInvariant(),
-            OrderSubtotal = orderAmount
-        });
+            OrderSubtotal = orderAmount,
+            UserId = currentUserId
+        }, token);
 
         if (response.IsSuccess && response.Data != null && response.Data.IsValid)
         {
@@ -259,22 +379,48 @@ public class OrderModel : PageModel
         });
     }
 
-    private async Task LoadAvailableVouchersAsync()
+    private static string ExtractShortSize(string rawSize)
+    {
+        var upper = rawSize.ToUpperInvariant();
+        if (upper.Contains("SIZE L") || upper == "L" || upper.StartsWith("L ")) return "L";
+        if (upper.Contains("SIZE S") || upper == "S" || upper.StartsWith("S ")) return "S";
+        return "M";
+    }
+
+    private async Task LoadAvailableVouchersAsync(string? token = null)
     {
         try
         {
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                var profileRes = await _engagementHttpService.GetMemberProfileAsync(token);
+                if (profileRes.IsSuccess && profileRes.Data != null)
+                {
+                    MemberProfile = profileRes.Data;
+                }
+            }
+
+            var usedIds = new HashSet<Guid>();
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                var usedRes = await _engagementHttpService.GetMyUsedVoucherIdsAsync(token);
+                if (usedRes.IsSuccess && usedRes.Data != null)
+                {
+                    usedIds = usedRes.Data.ToHashSet();
+                }
+            }
+
             var res = await _engagementHttpService.GetActiveVouchersAsync();
             if (res.IsSuccess && res.Data != null)
             {
                 AvailableVouchers = res.Data
-                    .Where(v => v.IsValidNow)
-                    .Take(5)
+                    .Where(v => v.IsValidNow && !usedIds.Contains(v.Id))
                     .ToList();
             }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Không thể tải danh sách voucher gợi ý");
+            _logger.LogWarning(ex, "Không thể tải danh sách voucher và điểm thưởng khách hàng");
         }
     }
 

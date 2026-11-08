@@ -134,6 +134,7 @@
                 <form method="post" asp-page-handler="CreatePosOrder" id="posOrderForm" class="space-y-4">
                     <input type="hidden" name="posCartJson" id="posCartJsonInput" value="[]" />
                     <input type="hidden" name="discountAmount" id="posDiscountInput" value="0" />
+                    <input type="hidden" name="customerId" id="posCustomerIdInput" value="" />
 
                     <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                         <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
@@ -145,9 +146,79 @@
                         </button>
                     </div>
 
+                    <!-- Bước 1: Nhập SĐT kiểm tra tài khoản thành viên, điểm thưởng & voucher -->
+                    <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
+                        <label class="block text-[11px] font-extrabold uppercase text-slate-600 flex items-center gap-1.5">
+                            <i class="fi fi-rr-phone-call text-red-highland"></i>
+                            <span>SĐT Khách hàng thành viên (Tích/Trừ điểm &amp; Voucher)</span>
+                        </label>
+                        <div class="flex gap-2">
+                            <input type="text" name="customerPhone" id="posCustomerPhoneInput"
+                                   placeholder="Nhập SĐT khách (VD: 0901234567)..."
+                                   onkeydown="if(event.key==='Enter'){event.preventDefault();lookupPosCustomerByPhone();}"
+                                   class="flex-1 bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-900" />
+                            <button type="button" onclick="lookupPosCustomerByPhone()"
+                                    id="btnLookupPhone"
+                                    class="px-3.5 py-2 rounded-xl bg-red-highland hover:bg-red-highland-dark text-white text-xs font-extrabold transition shrink-0">
+                                Kiểm tra SĐT
+                            </button>
+                        </div>
+                        <div id="posPhoneLookupMsg" class="text-xs"></div>
+
+                        <!-- Thẻ thông tin thành viên & Điểm thưởng khả dụng (hiện khi tìm thấy tài khoản) -->
+                        <div id="posMemberCard" class="hidden p-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 space-y-2.5">
+                            <div class="flex items-start justify-between gap-2">
+                                <div>
+                                    <div class="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                                        <i class="fi fi-sr-medal text-amber-500"></i>
+                                        <span id="posMemberName">Khách hàng</span>
+                                    </div>
+                                    <div class="text-[11px] text-slate-600 mt-0.5">
+                                        Hạng thẻ: <strong id="posMemberTier" class="text-amber-900">Hạng Đồng</strong>
+                                        (<span id="posMemberBenefitBadge" class="text-blue-700 font-extrabold">Giảm 0% • Tích điểm x1</span>) •
+                                        Điểm khả dụng: <strong id="posMemberPoints" class="text-red-highland text-xs">0</strong> điểm
+                                        (<span id="posMemberPointsValue">0 đ</span>)
+                                    </div>
+                                </div>
+                                <button type="button" onclick="clearPosCustomer()" class="text-[11px] font-extrabold text-red-600 hover:underline">
+                                    Bỏ chọn
+                                </button>
+                            </div>
+
+                            <!-- Nhập số điểm thưởng muốn trừ vào đơn theo yêu cầu khách -->
+                            <div class="pt-2 border-t border-amber-200/80 space-y-1.5">
+                                <label class="block text-[11px] font-extrabold text-amber-950">
+                                    Nhập điểm thưởng trừ tiền đơn (1 điểm = 1.000đ):
+                                </label>
+                                <div class="flex gap-1.5">
+                                    <input type="number" name="pointsToRedeem" id="posPointsInput"
+                                           value="0" min="0" step="1"
+                                           oninput="onPosPointsInput()"
+                                           placeholder="Số điểm muốn dùng..."
+                                           class="flex-1 bg-white border border-amber-300 rounded-xl px-3 py-1.5 text-xs font-black text-slate-900" />
+                                    <button type="button" onclick="applyMaxPosPoints()"
+                                            class="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-extrabold transition shrink-0">
+                                        Dùng tối đa
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Danh sách Voucher thỏa mãn điều kiện của khách hàng -->
+                            <div class="pt-2 border-t border-amber-200/80 space-y-1.5">
+                                <div class="text-[11px] font-extrabold text-amber-950 flex items-center justify-between">
+                                    <span>Voucher khả dụng của khách:</span>
+                                    <span id="posEligibleVoucherCount" class="text-[10px] font-bold text-emerald-700"></span>
+                                </div>
+                                <div id="posMemberVouchersList" class="space-y-1 max-h-36 overflow-y-auto pr-1">
+                                    <!-- Render danh sách voucher của khách -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div>
                         <label class="block text-[11px] font-extrabold uppercase text-slate-500 mb-1">Tên khách hàng / Số bàn</label>
-                        <input type="text" name="customerName" placeholder="VD: Khách tại quầy - Bàn 05"
+                        <input type="text" name="customerName" id="posCustomerNameInput" placeholder="VD: Khách tại quầy - Bàn 05"
                                class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900" />
                     </div>
 
@@ -158,7 +229,7 @@
                     <div>
                         <label class="block text-[11px] font-extrabold uppercase text-slate-500 mb-1">Mã giảm giá (Voucher)</label>
                         <div class="flex gap-2">
-                            <input type="text" name="voucherCode" id="posVoucherInput" placeholder="Nhập mã khuyến mãi..."
+                            <input type="text" name="voucherCode" id="posVoucherInput" placeholder="Nhập hoặc chọn mã khuyến mãi..."
                                    class="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-bold uppercase" />
                             <button type="button" onclick="applyPosVoucher()"
                                     class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-black text-white text-xs font-extrabold">
@@ -183,7 +254,7 @@
                             </label>
                             <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer">
                                 <input type="radio" name="paymentMethod" value="VNPAY" onchange="togglePosCashOption(this.value)" class="text-blue-600" />
-                                <span class="text-xs font-extrabold text-slate-800">VNPay QR</span>
+                                <span class="text-xs font-extrabold text-slate-800">VNPay</span>
                             </label>
                         </div>
 
@@ -198,13 +269,25 @@
                             <span>Tạm tính:</span>
                             <span id="posSubtotalLabel" class="font-bold">0 đ</span>
                         </div>
+                        <div class="flex justify-between text-blue-700">
+                            <span id="posTierDiscountTitle">Đặc quyền hạng thẻ (0%):</span>
+                            <span id="posTierDiscountLabel" class="font-bold">-0 đ</span>
+                        </div>
                         <div class="flex justify-between text-emerald-700">
-                            <span>Giảm giá:</span>
+                            <span>Giảm giá Voucher:</span>
                             <span id="posDiscountLabel" class="font-bold">-0 đ</span>
+                        </div>
+                        <div class="flex justify-between text-amber-700">
+                            <span>Giảm điểm thưởng:</span>
+                            <span id="posPointsDiscountLabel" class="font-bold">-0 đ</span>
                         </div>
                         <div class="flex justify-between pt-1.5 border-t border-amber-200 text-sm font-black text-red-highland">
                             <span>Khách cần trả:</span>
                             <span id="posFinalLabel" class="text-base">0 đ</span>
+                        </div>
+                        <div id="posEarnPointsPreview" class="hidden flex justify-between pt-1 text-[11px] font-bold text-amber-800">
+                            <span>Điểm cộng khi hoàn thành đơn:</span>
+                            <span id="posEarnPointsLabel">+1 điểm</span>
                         </div>
                     </div>
 
@@ -382,8 +465,8 @@
                                                     <input type="hidden" name="returnSearch" value="@Model.Search" />
                                                     <button type="submit"
                                                             class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-extrabold shadow-sm transition flex items-center gap-1">
-                                                        <i class="fi fi-rr-qrcode"></i>
-                                                        <span>QR VNPay</span>
+                                                        <i class="fi fi-rr-credit-card"></i>
+                                                        <span>Thanh toán VNPay</span>
                                                     </button>
                                                 </form>
                                             </div>
@@ -538,7 +621,7 @@
                                     <input type="hidden" name="returnStatus" value="@Model.Status" />
                                     <input type="hidden" name="returnSearch" value="@Model.Search" />
                                     <button type="submit" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold">
-                                        Tạo mã QR VNPay
+                                        Thanh toán VNPay
                                     </button>
                                 </form>
                             </div>
@@ -597,45 +680,6 @@
 }
 
 <!-- ========================================================================= -->
-<!-- MODAL 2: MÃ QR VNPAY CHO STAFF ĐƯA KHÁCH QUÉT                              -->
-<!-- ========================================================================= -->
-@if (Model.ActiveVnPayQr != null)
-{
-    var qr = Model.ActiveVnPayQr;
-    var qrSrc = !string.IsNullOrWhiteSpace(qr.QrCodeBase64) && qr.QrCodeBase64.StartsWith("data:image")
-        ? qr.QrCodeBase64
-        : $"https://api.qrserver.com/v1/create-qr-code/?size=280x280&data={Uri.EscapeDataString(qr.PaymentUrl ?? "")}";
-
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-        <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden">
-            <div class="px-6 py-4 bg-blue-700 text-white flex items-center justify-between">
-                <h3 class="text-base font-black">Mã QR VNPay - Đơn #@qr.OrderCode</h3>
-                <a asp-page="/Staff/Orders" asp-route-View="orders" asp-route-Status="@Model.Status" asp-route-Search="@Model.Search"
-                   class="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white">
-                    <i class="fi fi-rr-cross-small"></i>
-                </a>
-            </div>
-            <div class="p-6 text-center space-y-4">
-                <div class="text-2xl font-black text-red-highland">@qr.Amount.ToString("N0") VNĐ</div>
-                <div class="p-4 border-2 border-blue-100 rounded-3xl inline-block bg-white shadow-sm">
-                    <img src="@qrSrc" alt="VNPay QR" class="w-56 h-56 object-contain mx-auto" />
-                </div>
-                <div class="space-y-2">
-                    <a href="@qr.PaymentUrl"
-                       class="block w-full py-3 px-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs">
-                        Mở cổng thanh toán VNPay
-                    </a>
-                    <a asp-page="/Staff/Orders" asp-route-View="orders" asp-route-Status="@Model.Status" asp-route-Search="@Model.Search"
-                       class="block w-full py-2.5 px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">
-                        Đóng cửa sổ
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-}
-
-<!-- ========================================================================= -->
 <!-- MODAL 3: NHÂN VIÊN HỦY ĐƠN KÈM LÝ DO                                       -->
 <!-- ========================================================================= -->
 <div id="staffCancelModal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -685,8 +729,10 @@
 @section Scripts {
     <script>
         let posCart = [];
-        let posDiscount = 0;
+        let posVoucherDiscount = 0;
         let selectedCategory = 'ALL';
+        let posCurrentCustomer = null;
+        let posCustomerVouchers = [];
 
         document.addEventListener('DOMContentLoaded', () => {
             renderPosCart();
@@ -738,10 +784,174 @@
 
         function clearPosCart() {
             posCart = [];
-            posDiscount = 0;
+            posVoucherDiscount = 0;
             const dInput = document.getElementById('posDiscountInput');
             if (dInput) dInput.value = '0';
+            const ptsInput = document.getElementById('posPointsInput');
+            if (ptsInput) ptsInput.value = '0';
+            const vInput = document.getElementById('posVoucherInput');
+            if (vInput) vInput.value = '';
+            const vMsg = document.getElementById('posVoucherMsg');
+            if (vMsg) vMsg.innerHTML = '';
             renderPosCart();
+        }
+
+        function clearPosCustomer() {
+            posCurrentCustomer = null;
+            posCustomerVouchers = [];
+            const idInput = document.getElementById('posCustomerIdInput');
+            if (idInput) idInput.value = '';
+            const phoneInput = document.getElementById('posCustomerPhoneInput');
+            if (phoneInput) phoneInput.value = '';
+            const ptsInput = document.getElementById('posPointsInput');
+            if (ptsInput) ptsInput.value = '0';
+            const card = document.getElementById('posMemberCard');
+            if (card) card.classList.add('hidden');
+            const msg = document.getElementById('posPhoneLookupMsg');
+            if (msg) msg.innerHTML = '';
+            const earnBox = document.getElementById('posEarnPointsPreview');
+            if (earnBox) earnBox.classList.add('hidden');
+            const subtotal = posCart.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
+            updatePosTotals(subtotal);
+        }
+
+        async function lookupPosCustomerByPhone() {
+            const phone = (document.getElementById('posCustomerPhoneInput')?.value || '').trim();
+            const msgEl = document.getElementById('posPhoneLookupMsg');
+            const cardEl = document.getElementById('posMemberCard');
+            const subtotal = posCart.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
+
+            if (!phone) {
+                if (msgEl) msgEl.innerHTML = '<span class="text-red-600 font-bold">Vui lòng nhập số điện thoại khách hàng.</span>';
+                return;
+            }
+
+            if (msgEl) msgEl.innerHTML = '<span class="text-slate-500 font-semibold">Đang kiểm tra tài khoản thành viên...</span>';
+
+            try {
+                const res = await fetch(`/Staff/Orders?handler=LookupCustomer&phone=${encodeURIComponent(phone)}&orderAmount=${subtotal}`);
+                const data = await res.json();
+
+                if (data.isSuccess && data.customer) {
+                    posCurrentCustomer = data.customer;
+                    posCustomerVouchers = data.vouchers || [];
+
+                    document.getElementById('posCustomerIdInput').value = data.customer.id;
+                    const nameInput = document.getElementById('posCustomerNameInput');
+                    if (nameInput && !nameInput.value.trim()) {
+                        nameInput.value = data.customer.fullName;
+                    }
+
+                    document.getElementById('posMemberName').textContent = `${data.customer.fullName} (${data.customer.phoneNumber})`;
+                    document.getElementById('posMemberTier').textContent = data.customer.tierName || 'Hạng Đồng';
+                    const benefitBadge = document.getElementById('posMemberBenefitBadge');
+                    if (benefitBadge) {
+                        const dp = parseFloat(data.customer.discountPercent || 0);
+                        const mult = parseFloat(data.customer.pointMultiplier || 1.0);
+                        benefitBadge.textContent = `Giảm ${dp}% • Tích điểm x${mult}`;
+                    }
+                    document.getElementById('posMemberPoints').textContent = (data.customer.currentPoints || 0).toLocaleString('vi-VN');
+                    document.getElementById('posMemberPointsValue').textContent = ((data.customer.currentPoints || 0) * 1000).toLocaleString('vi-VN') + ' đ';
+
+                    const ptsInput = document.getElementById('posPointsInput');
+                    if (ptsInput) {
+                        ptsInput.max = data.customer.currentPoints || 0;
+                        ptsInput.value = '0';
+                    }
+
+                    if (cardEl) cardEl.classList.remove('hidden');
+                    if (msgEl) msgEl.innerHTML = `<span class="text-emerald-700 font-bold">✓ ${data.message}</span>`;
+
+                    renderPosCustomerVouchers(subtotal);
+                    updatePosTotals(subtotal);
+                } else {
+                    posCurrentCustomer = null;
+                    posCustomerVouchers = [];
+                    document.getElementById('posCustomerIdInput').value = '';
+                    if (cardEl) cardEl.classList.add('hidden');
+                    if (msgEl) msgEl.innerHTML = `<span class="text-red-600 font-bold">✕ ${data.message || 'Không tìm thấy tài khoản.'}</span>`;
+                    updatePosTotals(subtotal);
+                }
+            } catch {
+                if (msgEl) msgEl.innerHTML = '<span class="text-red-600 font-bold">Lỗi kết nối khi tra cứu số điện thoại.</span>';
+            }
+        }
+
+        function renderPosCustomerVouchers(subtotal) {
+            const listEl = document.getElementById('posMemberVouchersList');
+            const countEl = document.getElementById('posEligibleVoucherCount');
+            if (!listEl) return;
+
+            if (!posCustomerVouchers || posCustomerVouchers.length === 0) {
+                listEl.innerHTML = '<div class="text-[11px] text-slate-500 italic py-1">Khách hàng đã sử dụng hết hoặc hiện không có voucher khả dụng.</div>';
+                if (countEl) countEl.textContent = '0 mã';
+                return;
+            }
+
+            let eligibleCount = 0;
+            let html = '';
+
+            posCustomerVouchers.forEach(v => {
+                const isEligible = subtotal >= (v.minOrderValue || 0);
+                if (isEligible) eligibleCount++;
+
+                const discountDesc = v.discountType === 'PERCENTAGE'
+                    ? `-${v.discountValue}%` + (v.maxDiscountAmount ? ` (tối đa ${Number(v.maxDiscountAmount).toLocaleString('vi-VN')}đ)` : '')
+                    : `-${Number(v.discountValue).toLocaleString('vi-VN')}đ`;
+
+                const badgeHtml = isEligible
+                    ? `<span class="px-2 py-0.5 rounded-lg bg-emerald-600 text-white text-[10px] font-extrabold shrink-0">Đủ ĐK • Áp dụng</span>`
+                    : `<span class="px-2 py-0.5 rounded-lg bg-slate-200 text-slate-600 text-[10px] font-bold shrink-0">Đơn từ ${Number(v.minOrderValue).toLocaleString('vi-VN')}đ</span>`;
+
+                html += `
+                    <button type="button"
+                            onclick="selectPosCustomerVoucher('${v.code}')"
+                            class="w-full text-left p-2 rounded-xl border transition flex items-center justify-between gap-2 ${isEligible ? 'bg-white hover:bg-emerald-50 border-emerald-300 cursor-pointer' : 'bg-white/60 border-slate-200 opacity-70'}">
+                        <div class="min-w-0">
+                            <div class="text-xs font-black text-slate-900 flex items-center gap-1">
+                                <i class="fi fi-rr-ticket text-red-highland"></i>
+                                <span>${v.code}</span>
+                                <span class="text-red-highland font-extrabold">(${discountDesc})</span>
+                            </div>
+                            <div class="text-[10px] text-slate-500 truncate">${v.title || ''} • Tối thiểu ${Number(v.minOrderValue || 0).toLocaleString('vi-VN')}đ</div>
+                        </div>
+                        ${badgeHtml}
+                    </button>`;
+            });
+
+            listEl.innerHTML = html;
+            if (countEl) {
+                countEl.textContent = `${eligibleCount}/${posCustomerVouchers.length} mã đủ ĐK đơn hiện tại`;
+            }
+        }
+
+        function selectPosCustomerVoucher(code) {
+            const vInput = document.getElementById('posVoucherInput');
+            if (vInput) {
+                vInput.value = code;
+                applyPosVoucher();
+            }
+        }
+
+        function onPosPointsInput() {
+            const subtotal = posCart.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
+            updatePosTotals(subtotal);
+        }
+
+        function applyMaxPosPoints() {
+            if (!posCurrentCustomer) return;
+            const subtotal = posCart.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
+            const tierDiscountPct = parseFloat(posCurrentCustomer.discountPercent || 0);
+            const tierDiscount = Math.round(subtotal * (tierDiscountPct / 100));
+            const availPts = parseInt(posCurrentCustomer.currentPoints || 0);
+            const remaining = Math.max(0, subtotal - tierDiscount - posVoucherDiscount);
+            const maxForOrder = Math.floor(remaining / 1000);
+            const ptsToUse = Math.min(availPts, maxForOrder);
+            const ptsInput = document.getElementById('posPointsInput');
+            if (ptsInput) {
+                ptsInput.value = ptsToUse;
+            }
+            updatePosTotals(subtotal);
         }
 
         function renderPosCart() {
@@ -755,6 +965,7 @@
             if (posCart.length === 0) {
                 container.innerHTML = '<div class="text-center text-slate-400 text-xs py-6">Chưa có món nào trong hóa đơn POS.</div>';
                 if (submitBtn) submitBtn.disabled = true;
+                renderPosCustomerVouchers(0);
                 updatePosTotals(0);
                 return;
             }
@@ -781,16 +992,67 @@
             });
 
             container.innerHTML = html;
+            if (posCurrentCustomer) {
+                renderPosCustomerVouchers(subtotal);
+            }
             updatePosTotals(subtotal);
         }
 
         function updatePosTotals(subtotal) {
-            if (posDiscount > subtotal) posDiscount = subtotal;
-            const finalAmt = Math.max(0, subtotal - posDiscount);
+            const tierDiscountPct = posCurrentCustomer ? (parseFloat(posCurrentCustomer.discountPercent || 0)) : 0;
+            const tierName = posCurrentCustomer ? (posCurrentCustomer.tierName || 'Hạng thẻ') : 'Hạng thẻ';
+            const tierDiscount = Math.round(subtotal * (tierDiscountPct / 100));
+            const remainingAfterTier = Math.max(0, subtotal - tierDiscount);
+
+            if (posVoucherDiscount > remainingAfterTier) posVoucherDiscount = remainingAfterTier;
+
+            let requestedPts = parseInt(document.getElementById('posPointsInput')?.value || '0') || 0;
+            if (requestedPts < 0) requestedPts = 0;
+            const maxMemberPts = posCurrentCustomer ? (parseInt(posCurrentCustomer.currentPoints || 0)) : 0;
+            if (requestedPts > maxMemberPts) requestedPts = maxMemberPts;
+
+            const remainingAfterVoucher = Math.max(0, remainingAfterTier - posVoucherDiscount);
+            const maxPtsForOrder = Math.floor(remainingAfterVoucher / 1000);
+            if (requestedPts > maxPtsForOrder) requestedPts = maxPtsForOrder;
+
+            const ptsInput = document.getElementById('posPointsInput');
+            if (ptsInput && parseInt(ptsInput.value || '0') !== requestedPts) {
+                ptsInput.value = requestedPts;
+            }
+
+            const pointsDiscount = requestedPts * 1000;
+            const totalDiscount = Math.min(subtotal, tierDiscount + posVoucherDiscount + pointsDiscount);
+            const finalAmt = Math.max(0, subtotal - totalDiscount);
+
             document.getElementById('posSubtotalLabel').textContent = subtotal.toLocaleString('vi-VN') + ' đ';
-            document.getElementById('posDiscountLabel').textContent = '-' + posDiscount.toLocaleString('vi-VN') + ' đ';
+            const tierTitleEl = document.getElementById('posTierDiscountTitle');
+            if (tierTitleEl) {
+                tierTitleEl.textContent = `Đặc quyền ${tierName} (-${tierDiscountPct}%):`;
+            }
+            const tierLabelEl = document.getElementById('posTierDiscountLabel');
+            if (tierLabelEl) {
+                tierLabelEl.textContent = '-' + tierDiscount.toLocaleString('vi-VN') + ' đ';
+            }
+            document.getElementById('posDiscountLabel').textContent = '-' + posVoucherDiscount.toLocaleString('vi-VN') + ' đ';
+            const ptsLabel = document.getElementById('posPointsDiscountLabel');
+            if (ptsLabel) {
+                ptsLabel.textContent = '-' + pointsDiscount.toLocaleString('vi-VN') + ' đ (' + requestedPts + ' điểm)';
+            }
             document.getElementById('posFinalLabel').textContent = finalAmt.toLocaleString('vi-VN') + ' đ';
-            document.getElementById('posDiscountInput').value = posDiscount;
+            document.getElementById('posDiscountInput').value = totalDiscount;
+
+            const earnBox = document.getElementById('posEarnPointsPreview');
+            const earnLabel = document.getElementById('posEarnPointsLabel');
+            if (earnBox && earnLabel) {
+                if (posCurrentCustomer && subtotal > 0) {
+                    const mult = parseFloat(posCurrentCustomer.pointMultiplier || 1.0);
+                    const estEarn = Math.max(1, Math.round((finalAmt / 10000) * mult));
+                    earnLabel.textContent = `+${estEarn} điểm (x${mult})`;
+                    earnBox.classList.remove('hidden');
+                } else {
+                    earnBox.classList.add('hidden');
+                }
+            }
         }
 
         function togglePosCashOption(method) {
@@ -802,16 +1064,26 @@
             const code = (document.getElementById('posVoucherInput')?.value || '').trim();
             const msgEl = document.getElementById('posVoucherMsg');
             const subtotal = posCart.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
-            if (!code) return;
+            const customerId = document.getElementById('posCustomerIdInput')?.value || '';
+            if (!code) {
+                posVoucherDiscount = 0;
+                if (msgEl) msgEl.innerHTML = '';
+                updatePosTotals(subtotal);
+                return;
+            }
 
             try {
-                const res = await fetch(`/Staff/Orders?handler=ValidateVoucher&code=${encodeURIComponent(code)}&orderAmount=${subtotal}`);
+                let url = `/Staff/Orders?handler=ValidateVoucher&code=${encodeURIComponent(code)}&orderAmount=${subtotal}`;
+                if (customerId) {
+                    url += `&customerId=${encodeURIComponent(customerId)}`;
+                }
+                const res = await fetch(url);
                 const data = await res.json();
                 if (data.isSuccess) {
-                    posDiscount = parseFloat(data.discountAmount || 0);
+                    posVoucherDiscount = parseFloat(data.discountAmount || 0);
                     msgEl.innerHTML = `<span class="text-emerald-700 font-bold">✓ ${data.message}</span>`;
                 } else {
-                    posDiscount = 0;
+                    posVoucherDiscount = 0;
                     msgEl.innerHTML = `<span class="text-red-600 font-bold">✕ ${data.message}</span>`;
                 }
                 updatePosTotals(subtotal);

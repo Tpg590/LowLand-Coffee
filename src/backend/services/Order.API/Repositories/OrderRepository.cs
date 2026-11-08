@@ -53,12 +53,13 @@ public class OrderRepository : IOrderRepository
             query = query.Where(o => o.Status == statusNormalized);
         }
 
-        // Tìm kiếm theo mã đơn hàng (OrderCode) hoặc tên khách hàng (CustomerName)
+        // Tìm kiếm theo mã đơn hàng (OrderCode), tên khách hàng (CustomerName) hoặc SĐT khách hàng trong Note
         if (!string.IsNullOrWhiteSpace(filter.OrderCode))
         {
             var keyword = filter.OrderCode.Trim();
             query = query.Where(o => o.OrderCode.Contains(keyword) ||
-                                     (o.CustomerName != null && o.CustomerName.Contains(keyword)));
+                                     (o.CustomerName != null && o.CustomerName.Contains(keyword)) ||
+                                     (o.Note != null && o.Note.Contains(keyword)));
         }
 
         // Lọc theo khoảng ngày tạo đơn

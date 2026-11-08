@@ -40,8 +40,21 @@ public class PaymentController : ControllerBase
         var clientIp = GetClientIpAddress();
 
         var result = await _paymentService.GenerateVnPayPaymentUrlAsync(
-            request.OrderId, userId, role, clientIp, cancellationToken);
+            request.OrderId, userId, role, clientIp, request.ReturnUrl, cancellationToken);
 
+        return StatusCode(result.StatusCode, result);
+    }
+
+    /// <summary>
+    /// [Mục 29B-Sim - Confirm Payment (VNPay Sandbox Simulator)]:
+    /// Xác nhận thanh toán VNPay Sandbox trực tiếp (Phân quyền: Chỉ Staff).
+    /// </summary>
+    [HttpPost("{orderId:guid}/vnpay-simulate")]
+    [Authorize(Roles = "Staff")]
+    public async Task<IActionResult> SimulateVnPayPayment(Guid orderId, CancellationToken cancellationToken)
+    {
+        var (userId, role) = GetCurrentUserContext();
+        var result = await _paymentService.SimulateVnPayPaymentAsync(orderId, userId, role, cancellationToken);
         return StatusCode(result.StatusCode, result);
     }
 
@@ -123,7 +136,15 @@ public class PaymentController : ControllerBase
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
         if (string.IsNullOrWhiteSpace(ip) || ip == "::1")
         {
-            ip = "127.0.0.1";
+            return "127.0.0.1";
+        }
+        if (ip.StartsWith("::ffff:", StringComparison.OrdinalIgnoreCase))
+        {
+            ip = ip["::ffff:".Length..];
+        }
+        if (ip.Contains(':') || ip.StartsWith("172.") || ip.StartsWith("10.") || ip.StartsWith("192.168."))
+        {
+            return "127.0.0.1";
         }
         return ip;
     }

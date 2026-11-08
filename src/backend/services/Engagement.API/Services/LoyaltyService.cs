@@ -88,16 +88,36 @@ public class LoyaltyService : ILoyaltyService
         var member = await GetOrCreateMemberAsync(request.UserId);
         var currentTier = member.Tier;
 
-        // Tính số điểm tích được: (OrderAmount / 10.000) * hệ số nhân của hạng thẻ
+        // Chống cộng trùng điểm cho cùng một đơn hàng (Idempotency check theo OrderId)
+        if (request.OrderId != Guid.Empty)
+        {
+            var existingTx = await _loyaltyRepository.GetTransactionByOrderAndTypeAsync(member.Id, request.OrderId, "EARN");
+            if (existingTx != null)
+            {
+                return new AddPointsResponse
+                {
+                    UserId = member.UserId,
+                    PointsEarned = existingTx.PointsChanged,
+                    CurrentPoints = member.CurrentPoints,
+                    TotalAccumulatedPoints = member.TotalAccumulatedPoints,
+                    TierName = member.Tier?.TierName ?? "Hạng Đồng",
+                    DidTierUpgrade = false
+                };
+            }
+        }
+
+        // Tính số điểm tích được: (OrderAmount / 10.000) * hệ số nhân của hạng thẻ (Đồng x1.0, Bạc x1.1, Vàng x1.2, Kim Cương x1.3)
         decimal basePoints = request.OrderAmount / VND_PER_STANDARD_POINT;
         decimal multiplier = currentTier?.PointMultiplier ?? 1.0m;
-        int pointsEarned = (int)Math.Floor(basePoints * multiplier);
+        int pointsEarned = (int)Math.Round(basePoints * multiplier, 0, MidpointRounding.AwayFromZero);
 
         // Đảm bảo đơn hợp lệ luôn được ít nhất 1 điểm thưởng
         if (pointsEarned <= 0)
         {
             pointsEarned = 1;
         }
+
+        var tierLabel = currentTier?.TierName ?? "Hạng Đồng";
 
         // Cập nhật số dư điểm khả dụng và tổng điểm tích lũy trọn đời
         member.CurrentPoints += pointsEarned;
@@ -118,7 +138,14 @@ public class LoyaltyService : ILoyaltyService
 
         await _loyaltyRepository.UpdateMemberAsync(member);
 
-        // Ghi lại lịch sử giao dịch tích điểm
+        // Ghi lại lịch sử giao dịch tích điểm kèm thông tin hạng thẻ và hệ số nhân
+        var baseReason = string.IsNullOrWhiteSpace(request.Reason)
+            ? $"Tích {pointsEarned} điểm từ đơn hàng"
+            : request.Reason.Trim();
+        var detailedReason = baseReason.Contains("x", StringComparison.OrdinalIgnoreCase)
+            ? baseReason
+            : $"{baseReason} ({tierLabel} - Hệ số x{multiplier:0.##})";
+
         var transaction = new LoyaltyPointTransactions
         {
             Id = Guid.NewGuid(),
@@ -127,7 +154,7 @@ public class LoyaltyService : ILoyaltyService
             TransactionType = "EARN",
             PointsChanged = pointsEarned,
             BalanceAfter = member.CurrentPoints,
-            Reason = request.Reason ?? $"Tích {pointsEarned} điểm từ đơn hàng",
+            Reason = detailedReason,
             CreatedAt = DateTime.UtcNow
         };
 

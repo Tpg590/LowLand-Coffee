@@ -25,27 +25,10 @@ public class VouchersModel : PageModel
     public IEnumerable<VoucherViewModel> Vouchers { get; set; } = new List<VoucherViewModel>();
 
     /// <summary>
-    /// Xử lý HTTP GET: Nạp danh sách voucher và kiểm tra quyền hạn khách hàng.
+    /// Xử lý HTTP GET: Nạp danh sách voucher công khai (Phân quyền được thực thi bằng [Authorize] Annotation tại Engagement.API Controller).
     /// </summary>
     public async Task<IActionResult> OnGetAsync()
     {
-        // Kiểm tra phân quyền: Nếu đã xác thực qua Cookie nhưng không phải Customer
-        if (User.Identity?.IsAuthenticated == true)
-        {
-            var role = User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
-            if (!string.IsNullOrEmpty(role) && !role.Equals("Customer", StringComparison.OrdinalIgnoreCase))
-            {
-                if (role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
-                {
-                    return RedirectToPage("/Admin/Vouchers");
-                }
-                if (role.Equals("Staff", StringComparison.OrdinalIgnoreCase))
-                {
-                    return RedirectToPage("/Staff/Orders");
-                }
-            }
-        }
-
         try
         {
             var res = await _engagementService.GetActiveVouchersAsync();

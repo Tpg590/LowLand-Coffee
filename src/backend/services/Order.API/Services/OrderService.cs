@@ -107,23 +107,32 @@ public class OrderService : IOrderService
             totalAmount += subtotal;
 
             // Tổng hợp thông tin tùy chọn (Size, Topping, Ghi chú từng món)
-            var summaryParts = new List<string>();
-            if (!string.IsNullOrWhiteSpace(item.Size))
+            string? optionsSummary = item.OptionsSummary;
+            if (string.IsNullOrWhiteSpace(optionsSummary))
             {
-                summaryParts.Add($"Size: {item.Size}");
-            }
-            if (item.Toppings != null && item.Toppings.Any())
-            {
-                summaryParts.Add($"Topping: {string.Join(", ", item.Toppings)}");
-            }
-            if (!string.IsNullOrWhiteSpace(item.Note))
-            {
-                summaryParts.Add($"Ghi chú: {item.Note}");
-            }
+                var summaryParts = new List<string>();
+                if (!string.IsNullOrWhiteSpace(item.Size))
+                {
+                    summaryParts.Add($"Size: {item.Size}");
+                }
+                if (item.Toppings != null && item.Toppings.Any())
+                {
+                    summaryParts.Add($"Topping: {string.Join(", ", item.Toppings)}");
+                }
+                if (!string.IsNullOrWhiteSpace(item.Note))
+                {
+                    summaryParts.Add($"Ghi chú: {item.Note}");
+                }
 
-            var optionsSummary = summaryParts.Any()
-                ? string.Join(" | ", summaryParts)
-                : item.OptionsSummary;
+                if (summaryParts.Any())
+                {
+                    optionsSummary = string.Join(" | ", summaryParts);
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(item.Note) && !optionsSummary.Contains(item.Note, StringComparison.OrdinalIgnoreCase))
+            {
+                optionsSummary = $"{optionsSummary} | Ghi chú: {item.Note}";
+            }
 
             var orderItem = new OrderItem
             {
@@ -140,31 +149,37 @@ public class OrderService : IOrderService
         }
 
         newOrder.TotalAmount = totalAmount;
+
+        // Nếu đơn hàng có gắn tài khoản khách hàng (Customer tự đặt hoặc Staff POS gắn SĐT khách)
+        // và phía Client chưa tính sẵn tổng chiết khấu (DiscountAmount == 0), tự động tra cứu hạng thẻ Loyalty để giảm theo % đặc quyền hạng (Tier Benefit)
+        if (targetUserId != Guid.Empty && newOrder.DiscountAmount <= 0 && totalAmount > 0)
+        {
+            var tierDiscountPercent = await GetCustomerTierDiscountPercentAsync(targetUserId, cancellationToken);
+            if (tierDiscountPercent > 0)
+            {
+                var tierDiscountAmount = Math.Round(totalAmount * (tierDiscountPercent / 100m), 0, MidpointRounding.AwayFromZero);
+                newOrder.DiscountAmount = Math.Min(totalAmount, tierDiscountAmount);
+            }
+        }
+
         newOrder.FinalAmount = Math.Max(0, totalAmount - newOrder.DiscountAmount);
         newOrder.OrderItems = orderItems;
 
         // Chuẩn hóa phương thức thanh toán (CASH hoặc VNPAY)
         var initialPaymentMethod = PaymentMethod.Normalize(request.PaymentMethod);
 
-        // Nếu Staff tạo đơn tiền mặt (CASH) tại quầy POS: tự động xác nhận đã thu tiền và chuyển sang Pha chế (PROCESSING)
-        var isCashPaidAtPos = initialPaymentMethod == PaymentMethod.CASH && isStaff;
-
+        // Đơn hàng mới tạo luôn ở trạng thái thanh toán PENDING (Chờ thu tiền / Chờ thanh toán)
         var orderPayment = new OrderPayment
         {
             OrderId = newOrder.Id,
             PaymentMethod = initialPaymentMethod,
             Amount = newOrder.FinalAmount,
-            PaymentStatus = isCashPaidAtPos ? PaymentStatus.SUCCESS : PaymentStatus.PENDING,
-            PaidAt = isCashPaidAtPos ? DateTime.UtcNow : null,
-            TransactionCode = isCashPaidAtPos ? $"CASH_POS_{randomSuffix}" : null,
+            PaymentStatus = PaymentStatus.PENDING,
+            PaidAt = null,
+            TransactionCode = null,
             CreatedAt = DateTime.UtcNow
         };
         newOrder.OrderPayments.Add(orderPayment);
-
-        if (isCashPaidAtPos)
-        {
-            newOrder.Status = OrderStatus.PROCESSING;
-        }
 
         // Lưu đơn hàng mới thông qua OrderRepository
         await _orderRepository.AddAsync(newOrder, cancellationToken);
@@ -336,7 +351,7 @@ public class OrderService : IOrderService
                 : $"{order.Note} | {request.Note}";
         }
 
-        // Lưu database trước khi gọi Notification API
+        // Lưu database trước khi gọi Engagement API & Notification API
         await _orderRepository.UpdateAsync(order, cancellationToken);
 
         _logger.LogInformation(
@@ -344,6 +359,13 @@ public class OrderService : IOrderService
             order.OrderCode,
             nextStatus,
             currentUserId);
+
+        // Nghiệp vụ Tích điểm: Khi đơn hàng chuyển sang trạng thái COMPLETED, tự động cộng điểm thưởng vào tài khoản khách hàng (order.UserId)
+        // Áp dụng cho cả 2 luồng: Khách tự đặt hàng (Customer Self-Order) và Nhân viên tạo đơn tại quầy POS có tài khoản khách (Staff POS Order)
+        if (nextStatus == OrderStatus.COMPLETED && order.UserId != Guid.Empty)
+        {
+            await AwardLoyaltyPointsOnCompletedOrderAsync(order, cancellationToken);
+        }
 
         // Gọi Notification API để thông báo cho khách hàng
         await _notificationClient.SendOrderNotificationAsync(
@@ -358,6 +380,81 @@ public class OrderService : IOrderService
         return ApiResponse<OrderDetailDto>.Success(
             _mapper.Map<OrderDetailDto>(order),
             $"Cập nhật trạng thái sang '{nextStatus}' thành công.");
+    }
+
+    private async Task<decimal> GetCustomerTierDiscountPercentAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var client = _httpClientFactory.CreateClient("EngagementApi");
+            using var req = new HttpRequestMessage(HttpMethod.Get, $"/api/loyalty/user/{userId}");
+            req.Headers.TryAddWithoutValidation("X-User-Id", userId.ToString());
+            req.Headers.TryAddWithoutValidation("X-User-Role", "Staff");
+
+            using var response = await client.SendAsync(req, cancellationToken);
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                using var doc = JsonDocument.Parse(content);
+                var root = doc.RootElement;
+                var dataEl = root.TryGetProperty("data", out var d) ? d : root;
+                if (dataEl.TryGetProperty("discountPercent", out var dpProp) && dpProp.TryGetDecimal(out var discountPercent))
+                {
+                    return Math.Max(0m, discountPercent);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Không thể tra cứu % giảm giá hạng thẻ từ Engagement.API cho UserId={UserId}", userId);
+        }
+
+        return 0m;
+    }
+
+    private async Task AwardLoyaltyPointsOnCompletedOrderAsync(Entities.Order order, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var client = _httpClientFactory.CreateClient("EngagementApi");
+            var payload = new
+            {
+                userId = order.UserId,
+                orderId = order.Id,
+                orderAmount = Math.Max(0, order.FinalAmount),
+                reason = $"Tích điểm hoàn thành đơn hàng #{order.OrderCode}"
+            };
+
+            using var req = new HttpRequestMessage(HttpMethod.Post, "/api/loyalty/add-points")
+            {
+                Content = JsonContent.Create(payload)
+            };
+            req.Headers.TryAddWithoutValidation("X-User-Id", order.UserId.ToString());
+            req.Headers.TryAddWithoutValidation("X-User-Role", "Staff");
+
+            using var response = await client.SendAsync(req, cancellationToken);
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation(
+                    "Đã cộng điểm thưởng thành công cho UserId={UserId} khi hoàn thành đơn #{OrderCode} (FinalAmount={FinalAmount})",
+                    order.UserId,
+                    order.OrderCode,
+                    order.FinalAmount);
+            }
+            else
+            {
+                var errContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogWarning(
+                    "Gọi Engagement.API cộng điểm cho đơn #{OrderCode} trả về HTTP {StatusCode}: {Error}",
+                    order.OrderCode,
+                    (int)response.StatusCode,
+                    errContent);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Không thể kết nối Engagement.API để tích điểm cho đơn #{OrderCode}", order.OrderCode);
+        }
     }
 
     /// <summary>

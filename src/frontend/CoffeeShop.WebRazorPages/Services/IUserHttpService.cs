@@ -16,5 +16,6 @@ public interface IUserHttpService
     Task<ApiResponse<UserViewModel>> UpdateUserStatusAsync(string accessToken, Guid id, bool isActive, CancellationToken cancellationToken = default);
     Task<ApiResponse<bool>> DeleteUserAsync(string accessToken, Guid id, CancellationToken cancellationToken = default);
     Task<ApiResponse<IEnumerable<RoleViewModel>>> GetRolesAsync(string accessToken, CancellationToken cancellationToken = default);
+    Task<ApiResponse<IEnumerable<UserViewModel>>> SearchCustomersAsync(string query, string? accessToken = null, CancellationToken cancellationToken = default);
 }
 

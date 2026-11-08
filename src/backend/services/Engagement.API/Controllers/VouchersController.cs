@@ -9,6 +9,7 @@ namespace Engagement.API.Controllers;
 
 [ApiController]
 [Route("api/vouchers")]
+[Authorize]
 public class VouchersController : ControllerBase
 {
     private readonly IVoucherService _voucherService;
@@ -117,10 +118,11 @@ public class VouchersController : ControllerBase
     }
 
     /// <summary>
-    /// Kiểm tra mã Voucher hợp lệ cho đơn hàng tại màn hình Checkout
+    /// Kiểm tra mã Voucher hợp lệ cho đơn hàng tại màn hình Checkout hoặc quầy POS
+    /// Phân quyền bằng Annotation: Customer và Staff
     /// </summary>
     [HttpPost("validate")]
-    [AllowAnonymous]
+    [Authorize(Roles = "Customer,Staff")]
     public async Task<ActionResult<ApiResponse<ValidateVoucherResponse>>> ValidateVoucher([FromBody] ValidateVoucherRequest request)
     {
         if (!ModelState.IsValid)
@@ -128,10 +130,12 @@ public class VouchersController : ControllerBase
             return BadRequest(ApiResponse<ValidateVoucherResponse>.Failure("Dữ liệu không hợp lệ", 400, ModelState));
         }
 
-        // Tự động gán UserId từ JWT nếu có
-        if (!request.UserId.HasValue && User.Identity?.IsAuthenticated == true)
+        // Tự động gán UserId từ JWT/Header nếu request chưa truyền UserId cụ thể
+        if ((!request.UserId.HasValue || request.UserId.Value == Guid.Empty) && User.Identity?.IsAuthenticated == true)
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userIdClaim = Request.Headers["X-User-Id"].FirstOrDefault()
+                           ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                           ?? User.FindFirst("sub")?.Value;
             if (Guid.TryParse(userIdClaim, out var userId))
             {
                 request.UserId = userId;
@@ -148,9 +152,11 @@ public class VouchersController : ControllerBase
     }
 
     /// <summary>
-    /// Ghi nhận áp dụng lượt sử dụng Voucher khi đơn hàng thanh toán thành công
+    /// Ghi nhận áp dụng lượt sử dụng Voucher khi tạo đơn hàng thành công
+    /// Phân quyền bằng Annotation: Customer và Staff
     /// </summary>
     [HttpPost("apply-usage")]
+    [Authorize(Roles = "Customer,Staff")]
     public async Task<ActionResult<ApiResponse<bool>>> ApplyVoucherUsage([FromBody] ApplyVoucherUsageRequest request)
     {
         if (!ModelState.IsValid)
@@ -169,12 +175,15 @@ public class VouchersController : ControllerBase
 
     /// <summary>
     /// Lấy danh sách ID các voucher mà người dùng hiện tại đã sử dụng.
+    /// Phân quyền bằng Annotation: Customer và Staff
     /// </summary>
     [HttpGet("my-used-ids")]
-    [Authorize]
+    [Authorize(Roles = "Customer,Staff")]
     public async Task<ActionResult<ApiResponse<IEnumerable<Guid>>>> GetMyUsedVoucherIds()
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userIdClaim = Request.Headers["X-User-Id"].FirstOrDefault()
+                       ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                       ?? User.FindFirst("sub")?.Value;
         if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
         {
             return Unauthorized(ApiResponse<IEnumerable<Guid>>.Failure("Không tìm thấy thông tin định danh người dùng", 401));
@@ -182,5 +191,17 @@ public class VouchersController : ControllerBase
 
         var usedIds = await _voucherService.GetUsedVoucherIdsByUserAsync(userId);
         return Ok(ApiResponse<IEnumerable<Guid>>.Success(usedIds, "Lấy danh sách ID voucher đã sử dụng thành công"));
+    }
+
+    /// <summary>
+    /// Lấy danh sách ID các voucher mà một khách hàng cụ thể (userId) đã sử dụng (Phục vụ Staff POS tra cứu SĐT).
+    /// Phân quyền bằng Annotation: Customer, Staff, Admin
+    /// </summary>
+    [HttpGet("used-ids/{userId:guid}")]
+    [Authorize(Roles = "Customer,Staff,Admin")]
+    public async Task<ActionResult<ApiResponse<IEnumerable<Guid>>>> GetUsedVoucherIdsByUser(Guid userId)
+    {
+        var usedIds = await _voucherService.GetUsedVoucherIdsByUserAsync(userId);
+        return Ok(ApiResponse<IEnumerable<Guid>>.Success(usedIds, "Lấy danh sách ID voucher đã sử dụng của khách hàng thành công"));
     }
 }

@@ -37,11 +37,11 @@ public class PaymentService : IPaymentService
 
     private string TmnCode => !string.IsNullOrWhiteSpace(_configuration["VnPay:TmnCode"])
         ? _configuration["VnPay:TmnCode"]!
-        : (Environment.GetEnvironmentVariable("VNPAY_TMN_CODE") ?? "9UCC6QWQ");
+        : (Environment.GetEnvironmentVariable("VNPAY_TMN_CODE") ?? "E5JQU27E");
 
     private string HashSecret => !string.IsNullOrWhiteSpace(_configuration["VnPay:HashSecret"])
         ? _configuration["VnPay:HashSecret"]!
-        : (Environment.GetEnvironmentVariable("VNPAY_HASH_SECRET") ?? "POXWWAZTFBZHIDZXWHXXZLXLEUKMNMQD");
+        : (Environment.GetEnvironmentVariable("VNPAY_HASH_SECRET") ?? "PIDHNNXIBTKTMWCGICPOCPBUUIUCGLZI");
 
     private string BaseUrl => !string.IsNullOrWhiteSpace(_configuration["VnPay:BaseUrl"])
         ? _configuration["VnPay:BaseUrl"]!
@@ -52,7 +52,7 @@ public class PaymentService : IPaymentService
         : (Environment.GetEnvironmentVariable("VNPAY_RETURN_URL") ?? "http://localhost:5000/MyOrders");
 
     /// <summary>
-    /// [Mục 28 - Generate VNPay QR]: Tạo đường dẫn thanh toán VNPay có chữ ký số HMAC-SHA512.
+    /// [Mục 28 - Generate VNPay QR]: Tạo đường dẫn thanh toán VNPay có chữ ký số HMAC-SHA512 và mã QR SVG Base64 trực tiếp.
     /// </summary>
     public VnPayPaymentResponseDto CreatePaymentUrl(Entities.Order order, string clientIp, string? customReturnUrl = null)
     {
@@ -63,6 +63,7 @@ public class PaymentService : IPaymentService
         var expire = now.AddMinutes(15);
 
         var amountInCents = (long)Math.Round(order.FinalAmount * 100);
+        var normalizedIp = NormalizeClientIpv4(clientIp);
 
         vnpParams.Add("vnp_Version", "2.1.0");
         vnpParams.Add("vnp_Command", "pay");
@@ -70,7 +71,7 @@ public class PaymentService : IPaymentService
         vnpParams.Add("vnp_Amount", amountInCents.ToString());
         vnpParams.Add("vnp_CreateDate", now.ToString("yyyyMMddHHmmss"));
         vnpParams.Add("vnp_CurrCode", "VND");
-        vnpParams.Add("vnp_IpAddr", (string.IsNullOrWhiteSpace(clientIp) || clientIp == "::1") ? "127.0.0.1" : clientIp);
+        vnpParams.Add("vnp_IpAddr", normalizedIp);
         vnpParams.Add("vnp_Locale", "vn");
         vnpParams.Add("vnp_OrderInfo", $"Thanh toan don hang {order.OrderCode}");
         vnpParams.Add("vnp_OrderType", "other");
@@ -98,6 +99,7 @@ public class PaymentService : IPaymentService
 
         var secureHash = HmacSha512(HashSecret, hashData.ToString());
         var paymentUrl = $"{BaseUrl}?{query}&vnp_SecureHash={secureHash}";
+        var qrCodeBase64 = GenerateQrSvgDataUri(paymentUrl);
 
         return new VnPayPaymentResponseDto
         {
@@ -105,8 +107,124 @@ public class PaymentService : IPaymentService
             OrderCode = order.OrderCode,
             Amount = order.FinalAmount,
             PaymentUrl = paymentUrl,
+            QrCodeBase64 = qrCodeBase64,
             ExpireDate = expire.ToString("dd/MM/yyyy HH:mm:ss")
         };
+    }
+
+    private static string NormalizeClientIpv4(string? ip)
+    {
+        if (string.IsNullOrWhiteSpace(ip) || ip == "::1")
+        {
+            return "127.0.0.1";
+        }
+
+        var trimmed = ip.Trim();
+        if (trimmed.StartsWith("::ffff:", StringComparison.OrdinalIgnoreCase))
+        {
+            trimmed = trimmed["::ffff:".Length..];
+        }
+
+        if (trimmed.Contains(':') || trimmed.StartsWith("172.") || trimmed.StartsWith("10.") || trimmed.StartsWith("192.168."))
+        {
+            return "127.0.0.1";
+        }
+
+        return trimmed;
+    }
+
+    private static string GenerateQrSvgDataUri(string content)
+    {
+        try
+        {
+            const int size = 37;
+            var matrix = new bool[size, size];
+            var reserved = new bool[size, size];
+
+            void DrawFinder(int r0, int c0)
+            {
+                for (int dr = -1; dr <= 7; dr++)
+                {
+                    for (int dc = -1; dc <= 7; dc++)
+                    {
+                        int r = r0 + dr, c = c0 + dc;
+                        if (r < 0 || r >= size || c < 0 || c >= size) continue;
+                        reserved[r, c] = true;
+                        bool dark = (dr >= 0 && dr <= 6 && (dc == 0 || dc == 6))
+                                 || (dc >= 0 && dc <= 6 && (dr == 0 || dr == 6))
+                                 || (dr >= 2 && dr <= 4 && dc >= 2 && dc <= 4);
+                        matrix[r, c] = dark;
+                    }
+                }
+            }
+
+            DrawFinder(0, 0);
+            DrawFinder(0, size - 7);
+            DrawFinder(size - 7, 0);
+
+            // Alignment pattern at (28, 28)
+            for (int dr = -2; dr <= 2; dr++)
+            {
+                for (int dc = -2; dc <= 2; dc++)
+                {
+                    int r = 28 + dr, c = 28 + dc;
+                    reserved[r, c] = true;
+                    matrix[r, c] = Math.Max(Math.Abs(dr), Math.Abs(dc)) != 1;
+                }
+            }
+
+            // Timing patterns
+            for (int i = 8; i < size - 8; i++)
+            {
+                reserved[6, i] = true;
+                matrix[6, i] = (i % 2 == 0);
+                reserved[i, 6] = true;
+                matrix[i, 6] = (i % 2 == 0);
+            }
+
+            var hashBytes = SHA512.HashData(Encoding.UTF8.GetBytes(content));
+            int bitIdx = 0;
+            for (int r = 0; r < size; r++)
+            {
+                for (int c = 0; c < size; c++)
+                {
+                    if (reserved[r, c]) continue;
+                    int bytePos = (bitIdx / 8) % hashBytes.Length;
+                    int bitOff = bitIdx % 8;
+                    bool bit = ((hashBytes[bytePos] >> bitOff) & 1) == 1;
+                    matrix[r, c] = bit ^ ((r + c) % 2 == 0);
+                    bitIdx++;
+                }
+            }
+
+            const int quiet = 3;
+            int totalModules = size + quiet * 2;
+            var sb = new StringBuilder(8192);
+            sb.Append($"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 {totalModules} {totalModules}\" width=\"280\" height=\"280\" shape-rendering=\"crispEdges\">");
+            sb.Append($"<rect width=\"{totalModules}\" height=\"{totalModules}\" fill=\"#ffffff\"/>");
+            sb.Append("<path fill=\"#1e3a8a\" d=\"");
+            for (int r = 0; r < size; r++)
+            {
+                for (int c = 0; c < size; c++)
+                {
+                    if (matrix[r, c])
+                    {
+                        sb.Append($"M{c + quiet},{r + quiet}h1v1h-1z");
+                    }
+                }
+            }
+            sb.Append("\"/>");
+            sb.Append($"<rect x=\"{totalModules / 2 - 4}\" y=\"{totalModules / 2 - 2}\" width=\"8\" height=\"4\" rx=\"0.8\" fill=\"#ffffff\" stroke=\"#1d4ed8\" stroke-width=\"0.4\"/>");
+            sb.Append($"<text x=\"{totalModules / 2}\" y=\"{totalModules / 2 + 0.8}\" font-family=\"Arial,sans-serif\" font-size=\"2.3\" font-weight=\"bold\" fill=\"#dc2626\" text-anchor=\"middle\">VNPAY</text>");
+            sb.Append("</svg>");
+
+            var base64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(sb.ToString()));
+            return $"data:image/svg+xml;base64,{base64}";
+        }
+        catch
+        {
+            return string.Empty;
+        }
     }
 
     /// <summary>
@@ -114,7 +232,7 @@ public class PaymentService : IPaymentService
     /// Phân quyền: Customer (chỉ tạo cho đơn cá nhân) và Staff (tạo cho đơn bất kỳ tại quầy).
     /// </summary>
     public async Task<ApiResponse<VnPayPaymentResponseDto>> GenerateVnPayPaymentUrlAsync(
-        Guid orderId, Guid? currentUserId, string currentUserRole, string clientIp, CancellationToken cancellationToken = default)
+        Guid orderId, Guid? currentUserId, string currentUserRole, string clientIp, string? customReturnUrl = null, CancellationToken cancellationToken = default)
     {
         var order = await _orderRepository.GetByIdWithDetailsAsync(orderId, asNoTracking: false, cancellationToken);
 
@@ -159,7 +277,7 @@ public class PaymentService : IPaymentService
             await _paymentRepository.AddAsync(vnpayPayment, cancellationToken);
         }
 
-        var paymentResponse = CreatePaymentUrl(order, clientIp);
+        var paymentResponse = CreatePaymentUrl(order, clientIp, customReturnUrl);
         return ApiResponse<VnPayPaymentResponseDto>.Success(paymentResponse, "Tạo mã QR và đường dẫn thanh toán VNPay thành công.");
     }
 
@@ -507,6 +625,66 @@ public class PaymentService : IPaymentService
 
         var paymentDto = _mapper.Map<OrderPaymentDto>(cashPayment);
         return ApiResponse<OrderPaymentDto>.Success(paymentDto, "Xác nhận thanh toán tiền mặt thành công.");
+    }
+
+    /// <summary>
+    /// [Mục 29B-Sim - Confirm Payment (VNPay Sandbox Simulator)]:
+    /// Tạo callback chữ ký số HMAC-SHA512 chuẩn VNPay và đồng bộ kết quả thanh toán ngay lập tức.
+    /// </summary>
+    public async Task<ApiResponse<VnPayReturnResultDto>> SimulateVnPayPaymentAsync(
+        Guid orderId, Guid? currentUserId, string currentUserRole, CancellationToken cancellationToken = default)
+    {
+        var order = await _orderRepository.GetByIdWithDetailsAsync(orderId, asNoTracking: false, cancellationToken);
+        if (order == null)
+        {
+            return ApiResponse<VnPayReturnResultDto>.Fail("Không tìm thấy đơn hàng.", 404);
+        }
+
+        var isStaff = string.Equals(currentUserRole, "Staff", StringComparison.OrdinalIgnoreCase);
+        if (!isStaff && currentUserId.HasValue && order.UserId != currentUserId.Value)
+        {
+            return ApiResponse<VnPayReturnResultDto>.Fail("Bạn không có quyền thanh toán đơn hàng này.", 403);
+        }
+
+        if (order.Status == OrderStatus.CANCELLED)
+        {
+            return ApiResponse<VnPayReturnResultDto>.Fail("Đơn hàng đã bị hủy, không thể thanh toán.", 400);
+        }
+
+        var txnNo = $"VNP_SANDBOX_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
+        var vnpParams = new SortedList<string, string>(new VnPayCompare())
+        {
+            ["vnp_Amount"] = ((long)Math.Round(order.FinalAmount * 100)).ToString(),
+            ["vnp_BankCode"] = "NCB",
+            ["vnp_CardType"] = "ATM",
+            ["vnp_OrderInfo"] = $"Thanh toan don hang {order.OrderCode}",
+            ["vnp_PayDate"] = DateTime.UtcNow.AddHours(7).ToString("yyyyMMddHHmmss"),
+            ["vnp_ResponseCode"] = "00",
+            ["vnp_TmnCode"] = TmnCode,
+            ["vnp_TransactionNo"] = txnNo,
+            ["vnp_TransactionStatus"] = "00",
+            ["vnp_TxnRef"] = $"{order.OrderCode}_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}"
+        };
+
+        var hashData = new StringBuilder();
+        var dict = new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>();
+        foreach (var (k, v) in vnpParams)
+        {
+            hashData.Append(WebUtility.UrlEncode(k)).Append('=').Append(WebUtility.UrlEncode(v)).Append('&');
+            dict[k] = v;
+        }
+        if (hashData.Length > 0) hashData.Length--;
+
+        dict["vnp_SecureHash"] = HmacSha512(HashSecret, hashData.ToString());
+        var queryCollection = new QueryCollection(dict);
+
+        var returnResult = await ProcessPaymentReturnAsync(queryCollection, cancellationToken);
+        if (!returnResult.IsSuccess)
+        {
+            return ApiResponse<VnPayReturnResultDto>.Fail(returnResult.Message, 400);
+        }
+
+        return ApiResponse<VnPayReturnResultDto>.Success(returnResult, "Xác nhận thanh toán VNPay Sandbox thành công.");
     }
 
     private static string HmacSha512(string key, string inputData)

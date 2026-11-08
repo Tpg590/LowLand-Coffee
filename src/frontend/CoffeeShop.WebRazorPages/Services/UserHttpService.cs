@@ -207,5 +207,34 @@ public class UserHttpService : IUserHttpService
             return ApiResponse<IEnumerable<RoleViewModel>>.Failure("Đã xảy ra lỗi khi lấy danh sách vai trò.", 500);
         }
     }
+
+    public async Task<ApiResponse<IEnumerable<UserViewModel>>> SearchCustomersAsync(string query, string? accessToken = null, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return ApiResponse<IEnumerable<UserViewModel>>.Success(Array.Empty<UserViewModel>());
+            }
+
+            var endpoint = $"{AuthConstants.UsersEndpoint}/search?q={Uri.EscapeDataString(query.Trim())}";
+            using var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            }
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            var result = JsonSerializer.Deserialize<ApiResponse<IEnumerable<UserViewModel>>>(content, JsonOptions);
+            return result ?? ApiResponse<IEnumerable<UserViewModel>>.Failure("Không thể đọc kết quả tìm kiếm khách hàng từ máy chủ.", (int)response.StatusCode);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi tìm kiếm khách hàng theo từ khóa: {Query}", query);
+            return ApiResponse<IEnumerable<UserViewModel>>.Failure("Đã xảy ra lỗi khi tra cứu khách hàng.", 500);
+        }
+    }
 }
 

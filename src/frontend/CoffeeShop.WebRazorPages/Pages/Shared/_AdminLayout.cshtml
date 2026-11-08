@@ -247,6 +247,38 @@
     <div id="toast-container"></div>
 
     <!-- Scripts -->
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        var currentToken = User.FindFirst(CoffeeShop.WebRazorPages.Constants.AuthConstants.AccessTokenClaimType)?.Value
+                         ?? Context.Session.GetString(CoffeeShop.WebRazorPages.Constants.AuthConstants.JwtSessionKey)
+                         ?? Context.Request.Cookies["access_token"] ?? "";
+        var currentEmail = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "";
+        var currentName = User.Identity?.Name ?? "";
+        var currentRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Admin";
+        var currentId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
+        var serializedToken = System.Text.Json.JsonSerializer.Serialize(currentToken);
+        var serializedUser = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            id = currentId,
+            fullName = currentName,
+            email = currentEmail,
+            role = currentRole,
+            roleName = currentRole
+        });
+        <script>
+            (function() {
+                try {
+                    const tk = @Html.Raw(serializedToken);
+                    const usr = @Html.Raw(serializedUser);
+                    if (tk) {
+                        localStorage.setItem('auth_token', tk);
+                        localStorage.setItem('access_token', tk);
+                    }
+                    localStorage.setItem('current_user', JSON.stringify(usr));
+                } catch(e) {}
+            })();
+        </script>
+    }
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>

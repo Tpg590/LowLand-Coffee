@@ -112,6 +112,8 @@ services:
       - "VnPay__BaseUrl=${VNPAY_BASE_URL:?VNPAY_BASE_URL must be defined in .env}"
       - "VnPay__ReturnUrl=${VNPAY_RETURN_URL:?VNPAY_RETURN_URL must be defined in .env}"
       - "Services__ProductApiUrl=http://product-api:8080"
+      - "Services__EngagementApiUrl=http://engagement-api:8080"
+      - "Services__NotificationApi=http://notification-api:8080/"
     depends_on:
       db-init:
         condition: service_completed_successfully

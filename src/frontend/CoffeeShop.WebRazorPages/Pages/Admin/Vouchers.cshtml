@@ -265,7 +265,7 @@
         let pendingDeleteVoucherId = null;
 
         async function fetchAdminVouchers(endpoint, options = {}) {
-            const token = localStorage.getItem('auth_token');
+            const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
             const headers = {
                 'Content-Type': 'application/json',
                 ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
@@ -275,9 +275,15 @@
             // Gọi qua API Gateway thông qua Reverse Proxy tương đối
             try {
                 const res = await fetch(`${API_BASE}${endpoint}`, { credentials: 'omit', ...options, headers });
+                if (res.status === 401 || res.status === 403) {
+                    const errJson = await res.json().catch(() => null);
+                    showToast('Không có quyền truy cập', errJson?.message || 'Chỉ Quản trị viên (Admin) mới có quyền quản lý Voucher.', 'error');
+                    return errJson;
+                }
                 if (res.ok) {
                     return await res.json();
                 }
+                return await res.json().catch(() => null);
             } catch (e) {
                 console.warn('API Gateway request failed:', e);
             }

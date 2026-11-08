@@ -60,6 +60,8 @@ public class RedeemPointsRequestViewModel
 
     [Range(1, 1000000, ErrorMessage = "Số điểm quy đổi phải từ 1 điểm trở lên")]
     public int PointsToRedeem { get; set; }
+
+    public string? Reason { get; set; }
 }
 
 public class RedeemPointsResponseViewModel

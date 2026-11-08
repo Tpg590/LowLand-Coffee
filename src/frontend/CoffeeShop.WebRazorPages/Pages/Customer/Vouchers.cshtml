@@ -219,41 +219,6 @@
         let currentFilterCat = 'ALL';
         let usedVoucherIds = [];
 
-        // AUTH GUARD: Phân quyền bắt buộc Customer
-        function checkCustomerAuthGuard() {
-            const rawUser = localStorage.getItem('current_user');
-            const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
-
-            if (!rawUser || !token) {
-                try {
-                    sessionStorage.setItem('auth_redirect_msg', 'Vui lòng đăng nhập với tài khoản Khách hàng (Customer) để xem kho voucher ưu đãi.');
-                } catch (e) {}
-                window.location.replace('/Auth/Login?returnUrl=' + encodeURIComponent(window.location.pathname));
-                return false;
-            }
-
-            try {
-                const user = JSON.parse(rawUser);
-                const rawRole = (user.role || user.roleName || '').toString().toLowerCase();
-                const isCustomer = (rawRole === 'customer') || (!rawRole.includes('admin') && !rawRole.includes('staff'));
-
-                if (!isCustomer) {
-                    alert('Kho Voucher chỉ dành riêng cho tài khoản Khách hàng (Customer).');
-                    if (rawRole.includes('admin')) {
-                        window.location.replace('/Admin/Vouchers');
-                    } else {
-                        window.location.replace('/Staff/Orders');
-                    }
-                    return false;
-                }
-            } catch (err) {
-                window.location.replace('/Auth/Login?returnUrl=' + encodeURIComponent(window.location.pathname));
-                return false;
-            }
-
-            return true;
-        }
-
         async function fetchFromGateway(endpoint, options = {}) {
             const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
             const headers = {
@@ -403,9 +368,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            if (checkCustomerAuthGuard()) {
-                loadUserUsedVouchers();
-            }
+            loadUserUsedVouchers();
         });
     </script>
 }
