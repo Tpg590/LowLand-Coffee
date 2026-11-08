@@ -7,7 +7,7 @@ public class IndexModel : PageModel
     private readonly ILogger<IndexModel> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
 
-    public string ApiGatewayBaseUrl { get; private set; } = "http://localhost:8080";
+    public string ApiGatewayBaseUrl { get; private set; } = string.Empty;
 
     public IndexModel(ILogger<IndexModel> logger, IHttpClientFactory httpClientFactory)
     {
@@ -18,9 +18,6 @@ public class IndexModel : PageModel
     public void OnGet()
     {
         var client = _httpClientFactory.CreateClient("ApiGateway");
-        if (client.BaseAddress != null)
-        {
-            ApiGatewayBaseUrl = client.BaseAddress.ToString().TrimEnd('/');
-        }
+        ApiGatewayBaseUrl = client.BaseAddress!.ToString().TrimEnd('/');
     }
 }

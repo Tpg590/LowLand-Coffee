@@ -1,0 +1,24 @@
+@page
+@model CoffeeShop.WebRazorPages.Pages.Auth.LogoutModel
+@{
+    ViewData["Title"] = "Đang đăng xuất - LowLand Coffee";
+}
+
+<div class="w-full min-h-[60vh] flex items-center justify-center">
+    <div class="text-center space-y-4">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-red-highland border-t-transparent"></div>
+        <p class="text-base font-bold text-gray-700">Đang thực hiện đăng xuất an toàn...</p>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        localStorage.removeItem('current_user');
+        localStorage.removeItem('auth_token');
+        if (typeof showToast === 'function') {
+            showToast('Đăng xuất thành công', 'Bạn đã đăng xuất khỏi hệ thống.', 'info');
+        }
+        window.location.href = '/Auth/Login';
+    </script>
+}
+

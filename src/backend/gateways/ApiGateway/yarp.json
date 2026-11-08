@@ -68,7 +68,7 @@
         "ClusterId": "notification-cluster",
         "CorsPolicy": "GatewayCorsPolicy",
         "Match": {
-          "Path": "/hubs/notification/{**catch-all}"
+          "Path": "/hubs/{**catch-all}"
         }
       },
       "swagger-auth-route": {

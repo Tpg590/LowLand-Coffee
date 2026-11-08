@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using CoffeeShop.WebRazorPages.Services;
+using Yarp.ReverseProxy.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,13 +10,58 @@ builder.Services.AddRazorPages();
 // Add HttpContextAccessor
 builder.Services.AddHttpContextAccessor();
 
-// Configure HttpClient pointing to API Gateway
-var apiGatewayBaseUrl = builder.Configuration["ApiGateway:BaseUrl"] ?? "http://localhost:8080";
+// Configure HttpClients pointing to API Gateway
+var apiGatewayBaseUrl = builder.Configuration["ApiGateway:BaseUrl"]!;
+
 builder.Services.AddHttpClient("ApiGateway", client =>
 {
     client.BaseAddress = new Uri(apiGatewayBaseUrl);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
+
+builder.Services.AddHttpClient<IAuthHttpService, AuthHttpService>(client =>
+{
+    client.BaseAddress = new Uri(apiGatewayBaseUrl);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
+builder.Services.AddHttpClient<IUserHttpService, UserHttpService>(client =>
+{
+    client.BaseAddress = new Uri(apiGatewayBaseUrl);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
+// Configure Reverse Proxy forwards /api/* and /hubs/* to ApiGateway
+var proxyRoutes = new[]
+{
+    new RouteConfig
+    {
+        RouteId = "api-proxy-route",
+        ClusterId = "gateway-cluster",
+        Match = new RouteMatch { Path = "/api/{**catch-all}" }
+    },
+    new RouteConfig
+    {
+        RouteId = "hubs-proxy-route",
+        ClusterId = "gateway-cluster",
+        Match = new RouteMatch { Path = "/hubs/{**catch-all}" }
+    }
+};
+
+var proxyClusters = new[]
+{
+    new ClusterConfig
+    {
+        ClusterId = "gateway-cluster",
+        Destinations = new Dictionary<string, DestinationConfig>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "gateway-destination", new DestinationConfig { Address = apiGatewayBaseUrl } }
+        }
+    }
+};
+
+builder.Services.AddReverseProxy()
+    .LoadFromMemory(proxyRoutes, proxyClusters);
 
 // Register Application Services
 builder.Services.AddScoped<IEngagementHttpService, EngagementHttpService>();
@@ -60,5 +106,6 @@ app.MapGet("/Staff", () => Results.Redirect("/Staff/Orders"));
 app.MapGet("/Admin", () => Results.Redirect("/Admin/Users"));
 
 app.MapRazorPages();
+app.MapReverseProxy();
 
 app.Run();

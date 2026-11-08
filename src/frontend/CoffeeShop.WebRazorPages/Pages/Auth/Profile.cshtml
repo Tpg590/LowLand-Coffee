@@ -1,0 +1,347 @@
+@page
+@model CoffeeShop.WebRazorPages.Pages.Auth.ProfileModel
+@{
+    ViewData["Title"] = "Hồ sơ cá nhân - LowLand Coffee";
+    var toastMsg = Model.ToastMessage;
+    var toastType = Model.ToastType ?? "info";
+}
+
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <!-- Profile Header Card (Highlands Coffee Theme) -->
+    <div class="bg-gradient-to-r from-red-highland via-[#B32028] to-red-highland-dark rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+        <div class="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
+        <div class="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-amber-400/15 blur-xl pointer-events-none"></div>
+
+        <div class="relative z-10 flex flex-col sm:flex-row items-center gap-6">
+            <!-- Avatar Display -->
+            <div class="relative group">
+                @if (!string.IsNullOrEmpty(Model.UserProfile.AvatarUrl))
+                {
+                    <img id="header-avatar-preview" src="@Model.UserProfile.AvatarUrl" alt="@Model.UserProfile.FullName"
+                         class="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-amber-300 shadow-xl bg-white" />
+                }
+                else
+                {
+                    <div id="header-avatar-preview" class="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-amber-100 border-4 border-amber-300 shadow-xl flex items-center justify-center text-red-highland font-black text-3xl sm:text-4xl">
+                        @(!string.IsNullOrEmpty(Model.UserProfile.FullName) ? Model.UserProfile.FullName.Substring(0, 1).ToUpper() : "U")
+                    </div>
+                }
+            </div>
+
+            <!-- Profile Overview Info -->
+            <div class="text-center sm:text-left flex-1 space-y-2">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                    <h1 class="text-2xl sm:text-3xl font-black tracking-tight">@Model.UserProfile.FullName</h1>
+                    <span class="inline-block px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-300 text-red-highland self-center sm:self-auto shadow-sm">
+                        @(Model.UserProfile.RoleName ?? "Thành viên")
+                    </span>
+                </div>
+                <p class="text-sm text-amber-100 flex items-center justify-center sm:justify-start gap-2">
+                    <i class="fi fi-rr-envelope text-xs"></i>
+                    <span>@Model.UserProfile.Email</span>
+                </p>
+                <p class="text-xs text-amber-200/80">
+                    Thành viên từ: @(Model.UserProfile.CreatedAt.HasValue ? Model.UserProfile.CreatedAt.Value.ToString("dd/MM/yyyy") : DateTime.Now.ToString("dd/MM/yyyy"))
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Section 1: Cập nhật thông tin cá nhân -->
+        <div class="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-lg space-y-6">
+            <div class="flex items-center gap-3 pb-4 border-b border-gray-100">
+                <div class="w-10 h-10 rounded-xl bg-red-50 text-red-highland flex items-center justify-center shadow-sm">
+                    <i class="fi fi-rr-user-pen text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-black text-gray-900 tracking-tight">Thông tin cá nhân</h2>
+                    <p class="text-xs text-gray-500">Chỉnh sửa họ tên, số điện thoại, địa chỉ và ảnh đại diện</p>
+                </div>
+            </div>
+
+            <form method="post" asp-page-handler="UpdateProfile" enctype="multipart/form-data" id="profile-form" class="space-y-4" novalidate>
+                @Html.AntiForgeryToken()
+
+                <!-- Readonly Email -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                        Địa chỉ Email (Định danh tài khoản)
+                    </label>
+                    <div class="relative">
+                        <input type="text" value="@Model.UserProfile.Email" readonly disabled
+                               class="w-full bg-gray-100 border border-gray-200 rounded-xl pl-4 pr-11 py-3 text-sm font-semibold text-gray-500 cursor-not-allowed select-none outline-none" />
+                        <span class="absolute right-3.5 top-3 text-gray-400 flex items-center">
+                            <i class="fi fi-rr-lock text-base"></i>
+                        </span>
+                    </div>
+                    <span class="block min-h-[1.25rem]"></span>
+                </div>
+
+                <!-- Full Name Input -->
+                <div>
+                    <label asp-for="ProfileInput.FullName" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                        Họ và tên <span class="text-red-highland">*</span>
+                    </label>
+                    <div class="relative">
+                        <input asp-for="ProfileInput.FullName" id="profile-fullname"
+                               class="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl pl-4 pr-11 py-3 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland focus:bg-white placeholder-gray-400 transition outline-none"
+                               placeholder="Nhập họ và tên của bạn" />
+                        <span class="absolute right-3.5 top-3 text-gray-400 flex items-center pointer-events-none">
+                            <i class="fi fi-rr-user text-base"></i>
+                        </span>
+                    </div>
+                    <span asp-validation-for="ProfileInput.FullName" class="text-xs text-red-600 font-semibold mt-1 block min-h-[1.25rem] leading-tight"></span>
+                </div>
+
+                <!-- Phone Number Input -->
+                <div>
+                    <label asp-for="ProfileInput.PhoneNumber" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                        Số điện thoại <span class="text-red-highland">*</span>
+                    </label>
+                    <div class="relative">
+                        <input asp-for="ProfileInput.PhoneNumber" id="profile-phone"
+                               class="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl pl-4 pr-11 py-3 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland focus:bg-white placeholder-gray-400 transition outline-none"
+                               placeholder="0912345678" />
+                        <span class="absolute right-3.5 top-3 text-gray-400 flex items-center pointer-events-none">
+                            <i class="fi fi-rr-phone-call text-base"></i>
+                        </span>
+                    </div>
+                    <span asp-validation-for="ProfileInput.PhoneNumber" class="text-xs text-red-600 font-semibold mt-1 block min-h-[1.25rem] leading-tight"></span>
+                </div>
+
+                <!-- Address Input -->
+                <div>
+                    <label asp-for="ProfileInput.Address" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                        Địa chỉ nhận hàng mặc định
+                    </label>
+                    <div class="relative">
+                        <input asp-for="ProfileInput.Address" id="profile-address"
+                               class="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl pl-4 pr-11 py-3 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland focus:bg-white placeholder-gray-400 transition outline-none"
+                               placeholder="Số nhà, tên đường, phường/xã, quận/huyện..." />
+                        <span class="absolute right-3.5 top-3 text-gray-400 flex items-center pointer-events-none">
+                            <i class="fi fi-rr-marker text-base"></i>
+                        </span>
+                    </div>
+                    <span asp-validation-for="ProfileInput.Address" class="text-xs text-red-600 font-semibold mt-1 block min-h-[1.25rem] leading-tight"></span>
+                </div>
+
+                <!-- Avatar File Input -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                        Cập nhật ảnh đại diện mới
+                    </label>
+                    <input type="file" asp-for="AvatarFile" id="profile-avatar-file" accept="image/*"
+                           class="w-full text-xs text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-red-50 file:text-red-highland hover:file:bg-red-100 cursor-pointer" />
+                    <span class="block min-h-[1.25rem]"></span>
+                </div>
+
+                <!-- Submit Button Profile -->
+                <button type="submit" id="btn-save-profile"
+                        class="w-full py-3.5 rounded-xl bg-red-highland hover:bg-red-700 text-white font-extrabold text-sm uppercase tracking-wider shadow-md hover:shadow-red-900/20 transition-all flex items-center justify-center gap-2 active:scale-[0.98]">
+                    <i class="fi fi-rr-disk text-base"></i>
+                    <span>Lưu thay đổi hồ sơ</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Section 2: Đổi mật khẩu tài khoản -->
+        <div class="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-lg space-y-6">
+            <div class="flex items-center gap-3 pb-4 border-b border-gray-100">
+                <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shadow-sm">
+                    <i class="fi fi-rr-key text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-black text-gray-900 tracking-tight">Đổi mật khẩu</h2>
+                    <p class="text-xs text-gray-500">Bảo mật tài khoản với mật khẩu mạnh</p>
+                </div>
+            </div>
+
+            <form method="post" asp-page-handler="ChangePassword" id="password-form" class="space-y-4" novalidate>
+                @Html.AntiForgeryToken()
+
+                <!-- Current Password -->
+                <div>
+                    <label asp-for="PasswordInput.CurrentPassword" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                        Mật khẩu hiện tại <span class="text-red-highland">*</span>
+                    </label>
+                    <div class="relative">
+                        <input asp-for="PasswordInput.CurrentPassword" id="current-password" type="password" autocomplete="current-password"
+                               class="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl pl-4 pr-11 py-3 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland focus:bg-white placeholder-gray-400 transition outline-none"
+                               placeholder="Nhập mật khẩu hiện tại" />
+                        <button type="button" onclick="togglePasswordVisibility('current-password', 'eye-curr')"
+                                class="absolute right-3.5 top-3 text-gray-400 hover:text-gray-700 flex items-center focus:outline-none">
+                            <i id="eye-curr" class="fi fi-rr-eye text-base"></i>
+                        </button>
+                    </div>
+                    <span asp-validation-for="PasswordInput.CurrentPassword" class="text-xs text-red-600 font-semibold mt-1 block min-h-[1.25rem] leading-tight"></span>
+                </div>
+
+                <!-- New Password -->
+                <div>
+                    <label asp-for="PasswordInput.NewPassword" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                        Mật khẩu mới <span class="text-red-highland">*</span>
+                    </label>
+                    <div class="relative">
+                        <input asp-for="PasswordInput.NewPassword" id="new-password" type="password" autocomplete="new-password"
+                               class="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl pl-4 pr-11 py-3 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland focus:bg-white placeholder-gray-400 transition outline-none"
+                               placeholder="Tối thiểu 6 ký tự" />
+                        <button type="button" onclick="togglePasswordVisibility('new-password', 'eye-new')"
+                                class="absolute right-3.5 top-3 text-gray-400 hover:text-gray-700 flex items-center focus:outline-none">
+                            <i id="eye-new" class="fi fi-rr-eye text-base"></i>
+                        </button>
+                    </div>
+                    <span asp-validation-for="PasswordInput.NewPassword" class="text-xs text-red-600 font-semibold mt-1 block min-h-[1.25rem] leading-tight"></span>
+                </div>
+
+                <!-- Confirm New Password -->
+                <div>
+                    <label asp-for="PasswordInput.ConfirmPassword" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                        Xác nhận mật khẩu mới <span class="text-red-highland">*</span>
+                    </label>
+                    <div class="relative">
+                        <input asp-for="PasswordInput.ConfirmPassword" id="confirm-password" type="password" autocomplete="new-password"
+                               class="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl pl-4 pr-11 py-3 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland focus:bg-white placeholder-gray-400 transition outline-none"
+                               placeholder="Nhập lại mật khẩu mới" />
+                        <button type="button" onclick="togglePasswordVisibility('confirm-password', 'eye-conf')"
+                                class="absolute right-3.5 top-3 text-gray-400 hover:text-gray-700 flex items-center focus:outline-none">
+                            <i id="eye-conf" class="fi fi-rr-eye text-base"></i>
+                        </button>
+                    </div>
+                    <span asp-validation-for="PasswordInput.ConfirmPassword" class="text-xs text-red-600 font-semibold mt-1 block min-h-[1.25rem] leading-tight"></span>
+                </div>
+
+                <!-- Submit Button Password (Khóa nút đến khi hợp lệ) -->
+                <button type="submit" id="btn-change-password" disabled
+                        class="w-full py-3.5 rounded-xl bg-red-highland text-white font-extrabold text-sm uppercase tracking-wider shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none hover:bg-red-700 active:scale-[0.98]">
+                    <i class="fi fi-rr-shield-check text-base"></i>
+                    <span>Cập nhật mật khẩu</span>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function togglePasswordVisibility(fieldId, iconId) {
+            const input = document.getElementById(fieldId);
+            const icon = document.getElementById(iconId);
+            if (!input) return;
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                if (icon) {
+                    icon.classList.remove('fi-rr-eye');
+                    icon.classList.add('fi-rr-eye-crossed');
+                }
+            } else {
+                input.type = 'password';
+                if (icon) {
+                    icon.classList.remove('fi-rr-eye-crossed');
+                    icon.classList.add('fi-rr-eye');
+                }
+            }
+        }
+
+        $(function () {
+            @if (!string.IsNullOrEmpty(toastMsg))
+            {
+                <text>
+                    if (typeof showToast === 'function') {
+                        showToast('Thông báo', @Html.Raw(System.Text.Json.JsonSerializer.Serialize(toastMsg)), @Html.Raw(System.Text.Json.JsonSerializer.Serialize(toastType)));
+                    }
+                </text>
+            }
+
+            function setFieldVisual(element, state) {
+                const $el = $(element);
+                $el.removeClass('border-gray-200 border-emerald-500 border-red-500 focus:ring-emerald-500 focus:ring-red-500 focus:ring-red-highland');
+                if (state === 'valid') {
+                    $el.addClass('border-emerald-500 focus:ring-emerald-500');
+                } else if (state === 'invalid') {
+                    $el.addClass('border-red-500 focus:ring-red-500');
+                } else {
+                    $el.addClass('border-gray-200 focus:ring-red-highland');
+                }
+            }
+
+            function attachDebouncedValidation(formSelector, btnSelector, isPasswordForm) {
+                const $form = $(formSelector);
+                const $btn = $(btnSelector);
+                const validator = $form.data('validator');
+
+                function updateBtnState() {
+                    if (isPasswordForm) {
+                        const curr = $('#current-password').val().trim();
+                        const next = $('#new-password').val().trim();
+                        const conf = $('#confirm-password').val().trim();
+                        if (curr && next.length >= 6 && next === conf) {
+                            $btn.prop('disabled', false);
+                        } else {
+                            $btn.prop('disabled', true);
+                        }
+                    } else {
+                        const name = $('#profile-fullname').val().trim();
+                        const phone = $('#profile-phone').val().trim();
+                        if (name && phone) {
+                            $btn.prop('disabled', false);
+                        } else {
+                            $btn.prop('disabled', true);
+                        }
+                    }
+                }
+
+                if (validator) {
+                    validator.settings.highlight = function (element) {
+                        setFieldVisual(element, 'invalid');
+                        updateBtnState();
+                    };
+                    validator.settings.unhighlight = function (element) {
+                        const val = $(element).val() ? $(element).val().trim() : '';
+                        if (val !== '') {
+                            setFieldVisual(element, 'valid');
+                        } else {
+                            setFieldVisual(element, 'neutral');
+                        }
+                        updateBtnState();
+                    };
+                }
+
+                const timers = {};
+                $form.find('input:not([type="file"])').on('input', function () {
+                    const input = this;
+                    const fieldName = input.name;
+                    const val = $(input).val() ? $(input).val().trim() : '';
+                    clearTimeout(timers[fieldName]);
+
+                    if (val === '') {
+                        if (validator) {
+                            $form.find(`[data-valmsg-for="${fieldName}"]`)
+                                .empty()
+                                .removeClass('field-validation-error')
+                                .addClass('field-validation-valid');
+                        }
+                        setFieldVisual(input, 'neutral');
+                        updateBtnState();
+                        return;
+                    }
+
+                    // Debounce 500ms
+                    timers[fieldName] = setTimeout(() => {
+                        if (validator) {
+                            const isValid = validator.element(input);
+                            setFieldVisual(input, isValid ? 'valid' : 'invalid');
+                            updateBtnState();
+                        }
+                    }, 500);
+                });
+            }
+
+            attachDebouncedValidation('#profile-form', '#btn-save-profile', false);
+            attachDebouncedValidation('#password-form', '#btn-change-password', true);
+        });
+    </script>
+}

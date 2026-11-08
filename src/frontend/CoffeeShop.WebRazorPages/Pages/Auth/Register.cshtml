@@ -1,62 +1,174 @@
-﻿@page
+@page
 @model CoffeeShop.WebRazorPages.Pages.Auth.RegisterModel
 @{
     ViewData["Title"] = "Đăng ký thành viên - LowLand Coffee";
 }
 
 <div class="w-full min-h-[calc(100vh-180px)] flex items-center justify-center px-4 sm:px-8 py-10">
-    <div class="w-full max-w-lg bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+    <div
+        class="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden transform transition duration-300">
         <!-- Header Banner -->
-        <div class="bg-gradient-to-r from-red-highland via-[#B32028] to-red-highland-dark text-white p-8 text-center relative overflow-hidden">
+        <div
+            class="bg-gradient-to-r from-red-highland via-[#B32028] to-red-highland-dark text-white p-8 text-center relative overflow-hidden">
             <div class="absolute -top-10 -left-10 w-32 h-32 rounded-full bg-white/10 blur-xl pointer-events-none"></div>
-            <img src="~/images/logo.jpg" alt="LowLand Coffee" class="w-16 h-16 mx-auto rounded-full object-contain bg-amber-50 shadow-md border-2 border-amber-200 mb-3" />
+            <div class="absolute -bottom-8 -right-8 w-28 h-28 rounded-full bg-amber-300/10 blur-lg pointer-events-none">
+            </div>
+
+            <a asp-page="/Index" class="inline-block group mb-3">
+                <img src="~/images/logo.jpg" alt="LowLand Coffee"
+                    class="w-16 h-16 mx-auto rounded-full object-contain bg-amber-50 shadow-md border-2 border-amber-200 group-hover:scale-105 transition-transform" />
+            </a>
             <h2 class="text-2xl font-black tracking-tight uppercase">Đăng ký thành viên</h2>
-            <p class="text-xs text-amber-200 mt-1 font-medium">Gia nhập cộng đồng LowLand Coffee để tích điểm & nhận ưu đãi</p>
+            <p class="text-xs text-amber-200 mt-1 font-medium">Gia nhập cộng đồng LowLand Coffee để tích điểm & nhận ưu
+                đãi độc quyền</p>
         </div>
 
         <!-- Form Body -->
         <div class="p-6 sm:p-8 space-y-6">
-            <form id="form-register" onsubmit="handleRegister(event)" class="space-y-4">
+            <!-- Server Error Alert -->
+            @if (!ViewData.ModelState.IsValid && ViewData.ModelState[string.Empty]?.Errors.Count > 0)
+            {
+                <div class="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-start gap-3">
+                    <i class="fi fi-rr-cross-circle text-red-600 text-lg mt-0.5 flex-shrink-0"></i>
+                    <div class="flex-1 text-xs sm:text-sm font-semibold">
+                        @foreach (var error in ViewData.ModelState[string.Empty]!.Errors)
+                        {
+                            <p>@error.ErrorMessage</p>
+                        }
+                    </div>
+                </div>
+            }
+
+            <form method="post" class="space-y-2.5" novalidate>
+                @Html.AntiForgeryToken()
+
+                <!-- Họ và tên -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Họ và tên *</label>
-                    <input type="text" id="reg-fullname" required class="w-full bg-[#F3F4F6] border-0 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 focus:ring-2 focus:ring-red-highland placeholder-gray-400" placeholder="Nguyễn Văn A" />
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Email *</label>
-                        <input type="email" id="reg-email" required class="w-full bg-[#F3F4F6] border-0 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 focus:ring-2 focus:ring-red-highland placeholder-gray-400" placeholder="customer@gmail.com" />
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Số điện thoại *</label>
-                        <input type="tel" id="reg-phone" required class="w-full bg-[#F3F4F6] border-0 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 focus:ring-2 focus:ring-red-highland placeholder-gray-400" placeholder="0912345678" />
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Địa chỉ</label>
-                    <input type="text" id="reg-address" class="w-full bg-[#F3F4F6] border-0 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 focus:ring-2 focus:ring-red-highland placeholder-gray-400" placeholder="109 Trương Văn Hải, TP. Thủ Đức" />
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Mật khẩu *</label>
-                        <input type="password" id="reg-password" required minlength="6" class="w-full bg-[#F3F4F6] border-0 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 focus:ring-2 focus:ring-red-highland placeholder-gray-400" placeholder="Tối thiểu 6 ký tự" />
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Xác nhận mật khẩu *</label>
-                        <input type="password" id="reg-confirm-password" required minlength="6" class="w-full bg-[#F3F4F6] border-0 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 focus:ring-2 focus:ring-red-highland placeholder-gray-400" placeholder="Nhập lại mật khẩu" />
-                    </div>
-                </div>
-
-                <div class="pt-2">
-                    <label class="flex items-start gap-2.5 cursor-pointer text-xs text-gray-600">
-                        <input type="checkbox" required class="w-4 h-4 mt-0.5 rounded text-red-highland focus:ring-red-highland" />
-                        <span>Tôi đồng ý với <a href="#" class="text-red-highland font-bold underline">Điều khoản dịch vụ</a> và <a href="#" class="text-red-highland font-bold underline">Chính sách bảo mật</a> của LowLand Coffee.</span>
+                    <label asp-for="Input.FullName"
+                        class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                        Họ và tên <span class="text-red-highland">*</span>
                     </label>
+                    <div class="relative">
+                        <input asp-for="Input.FullName"
+                            class="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl pl-4 pr-10 py-3 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland focus:bg-white placeholder-gray-400 transition outline-none"
+                            placeholder="Ví dụ: Nguyễn Văn An" />
+                        <span class="absolute right-3.5 top-3 text-gray-400 flex items-center pointer-events-none">
+                            <i class="fi fi-rr-id-badge text-base"></i>
+                        </span>
+                    </div>
+                    <span asp-validation-for="Input.FullName"
+                        class="text-xs text-red-600 font-semibold mt-1 block min-h-[1.25rem] leading-tight"></span>
                 </div>
 
-                <button type="submit" id="btn-register-submit" class="w-full py-3.5 rounded-xl bg-red-highland hover:bg-red-700 text-white font-extrabold text-sm uppercase tracking-wider shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-2 mt-4">
+                <!-- Email & SĐT -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                    <div>
+                        <label asp-for="Input.Email"
+                            class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                            Email <span class="text-red-highland">*</span>
+                        </label>
+                        <div class="relative">
+                            <input asp-for="Input.Email"
+                                class="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl pl-4 pr-10 py-3 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland focus:bg-white placeholder-gray-400 transition outline-none"
+                                placeholder="customer@domain.com" />
+                            <span class="absolute right-3.5 top-3 text-gray-400 flex items-center pointer-events-none">
+                                <i class="fi fi-rr-envelope text-base"></i>
+                            </span>
+                        </div>
+                        <span asp-validation-for="Input.Email"
+                            class="text-xs text-red-600 font-semibold mt-1 block min-h-[1.25rem] leading-tight"></span>
+                    </div>
+
+                    <div>
+                        <label asp-for="Input.PhoneNumber"
+                            class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                            Số điện thoại <span class="text-red-highland">*</span>
+                        </label>
+                        <div class="relative">
+                            <input asp-for="Input.PhoneNumber" id="reg-phone"
+                                class="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl pl-4 pr-10 py-3 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland focus:bg-white placeholder-gray-400 transition outline-none"
+                                placeholder="0912345678" />
+                            <span class="absolute right-3.5 top-3 text-gray-400 flex items-center pointer-events-none">
+                                <i class="fi fi-rr-phone-call text-base"></i>
+                            </span>
+                        </div>
+                        <span asp-validation-for="Input.PhoneNumber"
+                            class="text-xs text-red-600 font-semibold mt-1 block min-h-[1.25rem] leading-tight"></span>
+                    </div>
+                </div>
+
+                <!-- Địa chỉ nhận hàng -->
+                <div>
+                    <label asp-for="Input.Address"
+                        class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Địa chỉ</label>
+                    <div class="relative">
+                        <input asp-for="Input.Address"
+                            class="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl pl-4 pr-10 py-3 text-sm font-medium text-gray-900 focus:ring-2 focus:ring-red-highland focus:bg-white placeholder-gray-400 transition outline-none"
+                            placeholder="Địa chỉ giao hàng mặc định" />
+                        <span class="absolute right-3.5 top-3 text-gray-400 flex items-center pointer-events-none">
+                            <i class="fi fi-rr-marker text-base"></i>
+                        </span>
+                    </div>
+                    <span class="text-xs mt-1 block min-h-[1.25rem]" aria-hidden="true"></span>
+                </div>
+
+                <!-- Mật khẩu & Xác nhận mật khẩu -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                    <div>
+                        <label asp-for="Input.Password"
+                            class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                            Mật khẩu <span class="text-red-highland">*</span>
+                        </label>
+                        <div class="relative">
+                            <input asp-for="Input.Password" id="reg-password"
+                                class="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl pl-4 pr-10 py-3 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland focus:bg-white placeholder-gray-400 transition outline-none"
+                                placeholder="Tối thiểu 6 ký tự" />
+                            <button type="button"
+                                onclick="togglePasswordVisibility('reg-password', 'toggle-eye-reg-pass')"
+                                class="absolute right-3 top-3 text-gray-400 hover:text-gray-700">
+                                <i id="toggle-eye-reg-pass" class="fi fi-rr-eye text-base"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="Input.Password"
+                            class="text-xs text-red-600 font-semibold mt-1 block min-h-[1.25rem] leading-tight"></span>
+                    </div>
+
+                    <div>
+                        <label asp-for="Input.ConfirmPassword"
+                            class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                            Xác nhận mật khẩu <span class="text-red-highland">*</span>
+                        </label>
+                        <div class="relative">
+                            <input asp-for="Input.ConfirmPassword" id="reg-confirm-password"
+                                class="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl pl-4 pr-10 py-3 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland focus:bg-white placeholder-gray-400 transition outline-none"
+                                placeholder="Nhập lại mật khẩu" />
+                            <button type="button"
+                                onclick="togglePasswordVisibility('reg-confirm-password', 'toggle-eye-reg-confirm')"
+                                class="absolute right-3 top-3 text-gray-400 hover:text-gray-700">
+                                <i id="toggle-eye-reg-confirm" class="fi fi-rr-eye text-base"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="Input.ConfirmPassword"
+                            class="text-xs text-red-600 font-semibold mt-1 block min-h-[1.25rem] leading-tight"></span>
+                    </div>
+                </div>
+
+                <!-- Điều khoản -->
+                <div class="pt-1">
+                    <label class="flex items-start gap-2.5 cursor-pointer text-xs text-gray-600 select-none">
+                        <input asp-for="Input.AcceptTerms"
+                            class="w-4 h-4 mt-0.5 rounded text-red-highland focus:ring-red-highland accent-red-600 cursor-pointer" />
+                        <span>Tôi đồng ý với <a href="javascript:void(0)"
+                                class="text-red-highland font-bold underline">Điều khoản dịch vụ</a> và <a
+                                href="javascript:void(0)" class="text-red-highland font-bold underline">Chính sách bảo
+                                mật</a> của LowLand Coffee.</span>
+                    </label>
+                    <span asp-validation-for="Input.AcceptTerms"
+                        class="text-xs text-red-600 font-semibold mt-1 block min-h-[1.25rem] leading-tight"></span>
+                </div>
+
+                <button type="submit" id="btn-register-submit" disabled
+                    class="w-full py-4 rounded-xl bg-red-highland text-white font-black text-sm uppercase tracking-wider shadow-lg transition-all transform opacity-50 cursor-not-allowed flex items-center justify-center gap-2 mt-2">
                     <i class="fi fi-rr-user-add text-base"></i>
                     <span>Đăng ký tài khoản</span>
                 </button>
@@ -71,97 +183,203 @@
 </div>
 
 @section Scripts {
+    <partial name="_ValidationScriptsPartial" />
     <script>
-        async function handleRegister(e) {
-            e.preventDefault();
-            const btn = document.getElementById('btn-register-submit');
-            const fullName = document.getElementById('reg-fullname').value.trim();
-            const email = document.getElementById('reg-email').value.trim();
-            const phoneNumber = document.getElementById('reg-phone').value.trim();
-            const address = document.getElementById('reg-address').value.trim();
-            const password = document.getElementById('reg-password').value;
-            const confirmPassword = document.getElementById('reg-confirm-password').value;
+        function togglePasswordVisibility(fieldId, iconId) {
+            const input = document.getElementById(fieldId);
+            const icon = document.getElementById(iconId);
+            if (!input) return;
 
-            if (password !== confirmPassword) {
-                showToast('Mật khẩu không khớp', 'Mật khẩu xác nhận phải trùng khớp với mật khẩu đã nhập.', 'error');
-                return;
+            if (input.type === 'password') {
+                input.type = 'text';
+                if (icon) {
+                    icon.classList.remove('fi-rr-eye');
+                    icon.classList.add('fi-rr-eye-crossed');
+                }
+            } else {
+                input.type = 'password';
+                if (icon) {
+                    icon.classList.remove('fi-rr-eye-crossed');
+                    icon.classList.add('fi-rr-eye');
+                }
+            }
+        }
+
+        $(function () {
+            const $form = $('form');
+            const validator = $form.data('validator');
+            const $submitBtn = $('#btn-register-submit');
+
+            // 1. Khắc phục lỗi jQuery validate Range method cho boolean checkbox
+            // (ASP.NET Core sinh ra min="True", max="True", JS so sánh "true" <= "True" bị false)
+            if ($.validator && $.validator.methods) {
+                const originalRange = $.validator.methods.range;
+                $.validator.methods.range = function (value, element, param) {
+                    if (element.type === 'checkbox') {
+                        return $(element).is(':checked');
+                    }
+                    return originalRange.call(this, value, element, param);
+                };
             }
 
-            btn.disabled = true;
-            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Đang tạo tài khoản...`;
+            // 2. Cập nhật giao diện border của input: xanh khi đúng, đỏ khi sai, xám khi chưa nhập
+            function setFieldVisual(element, state) {
+                if (element.type === 'checkbox') return;
+                const $el = $(element);
+                $el.removeClass('border-gray-200 border-emerald-500 border-red-500 focus:ring-emerald-500 focus:ring-red-500 focus:ring-red-highland');
+                if (state === 'valid') {
+                    $el.addClass('border-emerald-500 focus:ring-emerald-500');
+                } else if (state === 'invalid') {
+                    $el.addClass('border-red-500 focus:ring-red-500');
+                } else {
+                    $el.addClass('border-gray-200 focus:ring-red-highland');
+                }
+            }
 
-            try {
-                // Gọi Auth.API POST /api/auth/register gửi trực tiếp vào SQL Server thật
-                const payload = {
-                    fullName: fullName,
-                    email: email,
-                    phoneNumber: phoneNumber || null,
-                    password: password,
-                    confirmPassword: confirmPassword
+            if (validator) {
+                validator.settings.highlight = function (element) {
+                    setFieldVisual(element, 'invalid');
                 };
-
-                const res = await fetch('http://localhost:8080/api/auth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                }).catch(() => null);
-
-                let apiCreatedId = null;
-                if (res) {
-                    if (!res.ok) {
-                        const errData = await res.json().catch(() => null);
-                        const msg = errData?.message || (errData?.errors && errData.errors[0]) || 'Email hoặc số điện thoại đã tồn tại trong CSDL.';
-                        btn.disabled = false;
-                        btn.innerHTML = `<span>Đăng ký tài khoản</span>`;
-                        showToast('Đăng ký không thành công', msg, 'error');
-                        return;
+                validator.settings.unhighlight = function (element) {
+                    const val = $(element).val() ? $(element).val().trim() : '';
+                    if (val !== '') {
+                        setFieldVisual(element, 'valid');
+                    } else {
+                        setFieldVisual(element, 'neutral');
                     }
-                    const data = await res.json().catch(() => null);
-                    if (data?.data?.user?.id) {
-                        apiCreatedId = data.data.user.id;
+                };
+            }
+
+            // 3. Hàm kiểm tra toàn bộ form để mở khóa/khóa nút Đăng ký
+            function updateSubmitButtonState() {
+                const fullName = $('input[name="Input.FullName"]').val()?.trim() || '';
+                const email = $('input[name="Input.Email"]').val()?.trim() || '';
+                const phone = $('input[name="Input.PhoneNumber"]').val()?.trim() || '';
+                const password = $('input[name="Input.Password"]').val() || '';
+                const confirmPassword = $('input[name="Input.ConfirmPassword"]').val() || '';
+                const acceptTerms = $('input[name="Input.AcceptTerms"]').is(':checked');
+
+                // Nút bị khóa nếu bất kỳ trường bắt buộc nào chưa nhập hoặc chưa đồng ý điều khoản
+                if (!fullName || !email || !phone || !password || !confirmPassword || !acceptTerms) {
+                    lockSubmitButton();
+                    return;
+                }
+
+                // Kiểm tra định dạng cơ bản
+                const emailRegex = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
+                const phoneRegex = /^(\+?84|0)[\s.-]?[35789](?:[\s.-]?[0-9]){8}$/;
+
+                const isAllValid = fullName.length <= 100 &&
+                                   emailRegex.test(email) &&
+                                   phoneRegex.test(phone) &&
+                                   password.length >= 6 &&
+                                   confirmPassword === password &&
+                                   acceptTerms;
+
+                if (isAllValid) {
+                    unlockSubmitButton();
+                } else {
+                    lockSubmitButton();
+                }
+            }
+
+            function lockSubmitButton() {
+                $submitBtn.prop('disabled', true)
+                    .addClass('opacity-50 cursor-not-allowed')
+                    .removeClass('hover:bg-red-700 active:scale-[0.98] cursor-pointer');
+            }
+
+            function unlockSubmitButton() {
+                $submitBtn.prop('disabled', false)
+                    .removeClass('opacity-50 cursor-not-allowed')
+                    .addClass('hover:bg-red-700 active:scale-[0.98] cursor-pointer');
+            }
+
+            // Đảm bảo nút bắt đầu ở trạng thái khoá
+            updateSubmitButtonState();
+
+            // 4. Bắt sự kiện change trên checkbox Điều khoản
+            $('input[name="Input.AcceptTerms"]').on('change', function () {
+                const isChecked = $(this).is(':checked');
+                if (isChecked) {
+                    $form.find('[data-valmsg-for="Input.AcceptTerms"]')
+                        .empty()
+                        .removeClass('field-validation-error')
+                        .addClass('field-validation-valid');
+                } else if (validator) {
+                    validator.element(this);
+                }
+                updateSubmitButtonState();
+            });
+
+            // 5. Debounce kiểm tra input: khi KHÔNG NHẬP GÌ thì KHÔNG BÁO LỖI
+            const debounceTimers = {};
+            $form.find('input:not([type="checkbox"])').on('input', function () {
+                const input = this;
+                const fieldName = input.name;
+
+                // Tự động bỏ khoảng trắng cho SĐT
+                if (fieldName && fieldName.indexOf('PhoneNumber') !== -1) {
+                    const raw = $(input).val();
+                    if (raw.startsWith(' ') || raw.endsWith(' ')) {
+                        $(input).val(raw.trim());
                     }
                 }
 
-                // Lưu tài khoản mới đồng bộ vào cả registered_users và admin_users_list
-                try {
-                    const todayStr = new Date().toISOString().slice(0, 10);
-                    const newUserObj = {
-                        id: apiCreatedId || ('cust-' + Date.now()),
-                        fullName: fullName,
-                        email: email,
-                        phoneNumber: phoneNumber || '---',
-                        address: address || 'TP. Hồ Chí Minh',
-                        role: 'Customer',
-                        isActive: true,
-                        createdAt: todayStr
-                    };
+                const val = $(input).val() ? $(input).val().trim() : '';
+                clearTimeout(debounceTimers[fieldName]);
 
-                    // 1. Lưu vào registered_users
-                    let regUsers = JSON.parse(localStorage.getItem('registered_users') || '[]');
-                    regUsers = regUsers.filter(u => u.email && u.email.toLowerCase() !== email.toLowerCase());
-                    regUsers.push(newUserObj);
-                    localStorage.setItem('registered_users', JSON.stringify(regUsers));
+                // Nếu không nhập gì (hoặc xóa rỗng): KHÔNG BÁO LỖI, xóa thông báo cũ, reset border về xám
+                if (val === '') {
+                    if (validator) {
+                        $form.find(`[data-valmsg-for="${fieldName}"]`)
+                            .empty()
+                            .removeClass('field-validation-error')
+                            .addClass('field-validation-valid');
+                    }
+                    setFieldVisual(input, 'neutral');
+                    updateSubmitButtonState();
+                    return;
+                }
 
-                    // 2. Lưu vào admin_users_list để hiển thị ngay trên bảng quản lý của Admin
-                    let adminUsers = JSON.parse(localStorage.getItem('admin_users_list') || '[]');
-                    adminUsers = adminUsers.filter(u => u.email && u.email.toLowerCase() !== email.toLowerCase());
-                    adminUsers.push(newUserObj);
-                    localStorage.setItem('admin_users_list', JSON.stringify(adminUsers));
+                // Nếu có nhập liệu: debounce 500ms kiểm tra tính hợp lệ
+                debounceTimers[fieldName] = setTimeout(() => {
+                    if (validator) {
+                        const isValid = validator.element(input);
+                        setFieldVisual(input, isValid ? 'valid' : 'invalid');
 
-                    // Lưu tạm email vừa đăng ký để trang Login tự động điền sẵn
-                    sessionStorage.setItem('last_registered_account', email || phoneNumber);
-                } catch (e) {}
+                        // Nếu nhập Password hoặc ConfirmPassword thì kiểm tra chéo nhau
+                        if (fieldName.indexOf('Password') !== -1) {
+                            const passVal = $('input[name="Input.Password"]').val();
+                            const confirmVal = $('input[name="Input.ConfirmPassword"]').val();
+                            if (passVal && confirmVal) {
+                                const isConfirmValid = validator.element('input[name="Input.ConfirmPassword"]');
+                                setFieldVisual($('input[name="Input.ConfirmPassword"]')[0], isConfirmValid ? 'valid' : 'invalid');
+                            }
+                        }
+                    }
+                    updateSubmitButtonState();
+                }, 400);
+            });
 
-                showToast('Đăng ký thành công', `Chào mừng ${fullName}! Tài khoản đã được lưu vào CSDL hệ thống.`, 'success', 3500);
-                setTimeout(() => {
-                    window.location.href = '/Auth/Login';
-                }, 1200);
-
-            } catch (err) {
-                btn.disabled = false;
-                btn.innerHTML = `<span>Đăng ký tài khoản</span>`;
-                showToast('Lỗi đăng ký', 'Không thể hoàn tất đăng ký. Vui lòng thử lại sau.', 'error');
-            }
-        }
+            // 6. Xử lý khi submit form: nếu người dùng cố tình mở khóa bằng DevTools mà bấm submit thì sẽ báo trường không để trống
+            $form.on('submit', function (e) {
+                if (validator) {
+                    const isValid = $form.valid();
+                    if (!isValid) {
+                        e.preventDefault();
+                        // Đánh dấu đỏ tất cả các trường bắt buộc đang bị để trống hoặc không hợp lệ
+                        $form.find('input[data-val-required]').each(function () {
+                            const val = $(this).val() ? $(this).val().trim() : '';
+                            if (!val) {
+                                setFieldVisual(this, 'invalid');
+                            }
+                        });
+                        lockSubmitButton();
+                        return false;
+                    }
+                }
+            });
+        });
     </script>
 }

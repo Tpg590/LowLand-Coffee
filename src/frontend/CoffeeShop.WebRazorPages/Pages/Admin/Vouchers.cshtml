@@ -259,8 +259,7 @@
 
 @section Scripts {
     <script>
-        const API_BASE = window.API_GATEWAY_URL || 'http://localhost:8080';
-        const DIRECT_ENGAGEMENT_API = 'http://localhost:5004';
+        const API_BASE = '';
 
         let adminVouchers = [];
         let pendingDeleteVoucherId = null;
@@ -273,24 +272,16 @@
                 ...(options.headers || {})
             };
 
-            // 1. Try API Gateway
+            // Gọi qua API Gateway thông qua Reverse Proxy tương đối
             try {
                 const res = await fetch(`${API_BASE}${endpoint}`, { credentials: 'omit', ...options, headers });
                 if (res.ok) {
                     return await res.json();
                 }
             } catch (e) {
-                console.warn('API Gateway failed, trying direct Engagement.API...', e);
+                console.warn('API Gateway request failed:', e);
             }
-
-            // 2. Direct fallback
-            try {
-                const fallbackRes = await fetch(`${DIRECT_ENGAGEMENT_API}${endpoint}`, { credentials: 'omit', ...options, headers });
-                return await fallbackRes.json().catch(() => null);
-            } catch (e2) {
-                console.error('Direct fallback failed:', e2);
-                return null;
-            }
+            return null;
         }
 
         async function loadAdminVouchers() {

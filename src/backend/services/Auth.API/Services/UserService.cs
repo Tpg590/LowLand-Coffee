@@ -78,11 +78,6 @@ public class UserService : IUserService
         var staffRole = await _roleRepository.GetByNameAsync("Staff", cancellationToken);
         if (staffRole == null)
         {
-            staffRole = await _roleRepository.GetByIdAsync(Guid.Parse("22222222-2222-2222-2222-222222222222"), cancellationToken);
-        }
-
-        if (staffRole == null)
-        {
             return ApiResponse<UserDto>.Fail("Không tìm thấy vai trò Staff trong hệ thống", 500);
         }
 
