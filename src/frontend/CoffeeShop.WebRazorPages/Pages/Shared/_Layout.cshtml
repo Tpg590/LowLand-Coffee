@@ -292,19 +292,25 @@
         var currentName = User.Identity?.Name ?? "";
         var currentRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
         var currentId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
+        var serializedToken = System.Text.Json.JsonSerializer.Serialize(currentToken);
+        var serializedUser = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            id = currentId,
+            fullName = currentName,
+            email = currentEmail,
+            role = currentRole,
+            roleName = currentRole
+        });
         <script>
             (function() {
                 try {
-                    if ('@currentToken') {
-                        localStorage.setItem('auth_token', '@currentToken');
+                    const tk = @Html.Raw(serializedToken);
+                    const usr = @Html.Raw(serializedUser);
+                    if (tk) {
+                        localStorage.setItem('auth_token', tk);
+                        localStorage.setItem('access_token', tk);
                     }
-                    localStorage.setItem('current_user', JSON.stringify({
-                        id: '@currentId',
-                        fullName: '@currentName',
-                        email: '@currentEmail',
-                        role: '@currentRole',
-                        roleName: '@currentRole'
-                    }));
+                    localStorage.setItem('current_user', JSON.stringify(usr));
                 } catch(e) {}
             })();
         </script>
@@ -315,9 +321,11 @@
             (function() {
                 try {
                     localStorage.removeItem('auth_token');
+                    localStorage.removeItem('access_token');
                     localStorage.removeItem('refresh_token');
                     localStorage.removeItem('current_user');
                     sessionStorage.removeItem('auth_token');
+                    sessionStorage.removeItem('access_token');
                     sessionStorage.removeItem('refresh_token');
                     sessionStorage.removeItem('current_user');
                     document.cookie = 'access_token=; Max-Age=0; path=/; SameSite=Lax';

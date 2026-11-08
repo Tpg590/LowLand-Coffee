@@ -19,7 +19,10 @@ public class VouchersModel : PageModel
     {
         try
         {
-            var res = await _engagementService.GetAllVouchersForAdminAsync();
+            var token = User.FindFirst(CoffeeShop.WebRazorPages.Constants.AuthConstants.AccessTokenClaimType)?.Value
+                     ?? HttpContext.Session.GetString(CoffeeShop.WebRazorPages.Constants.AuthConstants.JwtSessionKey)
+                     ?? Request.Cookies["access_token"];
+            var res = await _engagementService.GetAllVouchersForAdminAsync(token);
             if (res.IsSuccess && res.Data != null)
             {
                 Vouchers = res.Data;

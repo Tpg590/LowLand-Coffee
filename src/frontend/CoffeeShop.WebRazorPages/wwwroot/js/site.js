@@ -116,24 +116,39 @@ function isUserLoggedIn() {
 
 function getCart() {
     const cartKey = getUserCartKey();
-    if (!cartKey) {
-        return [];
-    }
     try {
-        const data = localStorage.getItem(cartKey);
-        return data ? JSON.parse(data) : [];
+        if (cartKey) {
+            const data = localStorage.getItem(cartKey);
+            if (data) {
+                const parsed = JSON.parse(data);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    return parsed;
+                }
+            }
+        }
+        const fallback = localStorage.getItem('lowland_cart');
+        if (fallback) {
+            const parsedFallback = JSON.parse(fallback);
+            if (Array.isArray(parsedFallback)) {
+                if (cartKey && parsedFallback.length > 0) {
+                    localStorage.setItem(cartKey, JSON.stringify(parsedFallback));
+                }
+                return parsedFallback;
+            }
+        }
+        return [];
     } catch {
         return [];
     }
 }
 
 function saveCart(cart) {
+    const safeCart = Array.isArray(cart) ? cart : [];
     const cartKey = getUserCartKey();
-    if (!cartKey) {
-        updateCartBadge();
-        return;
+    if (cartKey) {
+        localStorage.setItem(cartKey, JSON.stringify(safeCart));
     }
-    localStorage.setItem(cartKey, JSON.stringify(cart));
+    localStorage.setItem('lowland_cart', JSON.stringify(safeCart));
     updateCartBadge();
 }
 
@@ -142,6 +157,7 @@ function clearUserCart() {
     if (cartKey) {
         localStorage.removeItem(cartKey);
     }
+    localStorage.removeItem('lowland_cart');
     updateCartBadge();
 }
 

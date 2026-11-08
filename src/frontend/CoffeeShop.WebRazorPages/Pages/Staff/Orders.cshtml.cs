@@ -13,6 +13,7 @@ public class OrdersModel : PageModel
 {
     private readonly IOrderHttpService _orderHttpService;
     private readonly IEngagementHttpService _engagementHttpService;
+    private readonly IUserHttpService _userHttpService;
     private readonly ILogger<OrdersModel> _logger;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -23,10 +24,12 @@ public class OrdersModel : PageModel
     public OrdersModel(
         IOrderHttpService orderHttpService,
         IEngagementHttpService engagementHttpService,
+        IUserHttpService userHttpService,
         ILogger<OrdersModel> logger)
     {
         _orderHttpService = orderHttpService;
         _engagementHttpService = engagementHttpService;
+        _userHttpService = userHttpService;
         _logger = logger;
     }
 
@@ -205,31 +208,32 @@ public class OrdersModel : PageModel
             }
         }
 
-        // 5. Mở Modal QR VNPay nếu có PayOrderId
+        // 5. Chuyển hướng trực tiếp sang cổng thanh toán VNPay Sandbox nếu có PayOrderId
         if (PayOrderId.HasValue)
         {
             var returnUrl = $"{Request.Scheme}://{Request.Host}/Staff/Orders?view=orders";
             var qrRes = await _orderHttpService.GenerateVnPayUrlAsync(PayOrderId.Value, returnUrl, token);
-            if (qrRes.IsSuccess && qrRes.Data != null)
+            if (qrRes.IsSuccess && !string.IsNullOrWhiteSpace(qrRes.Data?.PaymentUrl))
             {
-                ActiveVnPayQr = qrRes.Data;
+                return Redirect(qrRes.Data.PaymentUrl);
             }
-            else
-            {
-                ErrorMessage = qrRes.Message ?? "Không thể khởi tạo mã QR VNPay cho đơn hàng này.";
-            }
+
+            ErrorMessage = qrRes.Message ?? "Không thể khởi tạo đường dẫn thanh toán VNPay cho đơn hàng này.";
         }
 
         return Page();
     }
 
     /// <summary>
-    /// [22. Create Order - Staff POS]: Nhân viên tạo đơn tại quầy
+    /// [22. Create Order - Staff POS]: Nhân viên tạo đơn tại quầy (hỗ trợ gắn SĐT khách hàng thành viên, áp dụng Voucher đủ ĐK & trừ Điểm thưởng)
     /// </summary>
     public async Task<IActionResult> OnPostCreatePosOrderAsync(
+        Guid? customerId,
+        string? customerPhone,
         string? customerName,
         string? note,
         string? voucherCode,
+        int pointsToRedeem,
         decimal discountAmount,
         string paymentMethod,
         bool collectCashNow,
@@ -278,32 +282,122 @@ public class OrdersModel : PageModel
             });
         }
 
+        // Nếu nhân viên có nhập SĐT nhưng chưa bấm tra cứu hoặc chưa truyền customerId, tự động tra cứu SĐT trong Auth.API
+        Guid? targetCustomerId = (customerId.HasValue && customerId.Value != Guid.Empty) ? customerId.Value : null;
+        if (!targetCustomerId.HasValue && !string.IsNullOrWhiteSpace(customerPhone))
+        {
+            var searchRes = await _userHttpService.SearchCustomersAsync(customerPhone.Trim(), token);
+            var matchedUser = searchRes.Data?.FirstOrDefault(u =>
+                string.Equals(u.PhoneNumber?.Trim(), customerPhone.Trim(), StringComparison.OrdinalIgnoreCase))
+                ?? searchRes.Data?.FirstOrDefault();
+
+            if (matchedUser != null && matchedUser.Id != Guid.Empty)
+            {
+                targetCustomerId = matchedUser.Id;
+                if (string.IsNullOrWhiteSpace(customerName))
+                {
+                    customerName = matchedUser.FullName;
+                }
+            }
+        }
+
+        // 1. Kiểm tra thông tin hạng thẻ thành viên (Tier Loyalty Benefit: Đồng 0%, Bạc 1%, Vàng 2%, Kim Cương 3%)
+        LoyaltyMemberProfileViewModel? memberProfile = null;
+        decimal tierDiscountPercent = 0m;
+        decimal tierDiscount = 0m;
+        if (targetCustomerId.HasValue)
+        {
+            var profileRes = await _engagementHttpService.GetMemberProfileByUserIdAsync(targetCustomerId.Value, token);
+            memberProfile = profileRes.Data;
+            tierDiscountPercent = memberProfile?.DiscountPercent ?? 0m;
+            if (tierDiscountPercent > 0m)
+            {
+                tierDiscount = Math.Round(subtotal * (tierDiscountPercent / 100m), 0, MidpointRounding.AwayFromZero);
+            }
+        }
+
+        // 2. Kiểm tra mã giảm giá (Voucher) cho khách hàng tại POS
+        decimal voucherDiscount = 0m;
+        Guid? validatedVoucherId = null;
         if (!string.IsNullOrWhiteSpace(voucherCode))
         {
             var vRes = await _engagementHttpService.ValidateVoucherAsync(new ValidateVoucherRequestViewModel
             {
                 VoucherCode = voucherCode.Trim().ToUpperInvariant(),
-                OrderSubtotal = subtotal
-            });
+                OrderSubtotal = subtotal,
+                UserId = targetCustomerId
+            }, token);
+
             if (vRes.IsSuccess && vRes.Data != null && vRes.Data.IsValid)
             {
-                discountAmount = vRes.Data.DiscountAmount;
+                voucherDiscount = vRes.Data.DiscountAmount;
+                validatedVoucherId = vRes.Data.VoucherId;
+            }
+            else
+            {
+                ErrorMessage = vRes.Data?.Message ?? vRes.Message ?? "Mã voucher không hợp lệ hoặc khách hàng đã sử dụng mã này.";
+                return RedirectToPage("/Staff/Orders", new { View = "pos" });
             }
         }
+
+        // 3. Kiểm tra & quy đổi điểm thưởng khách hàng tại POS (1 điểm = 1.000đ)
+        int actualPointsToRedeem = 0;
+        decimal pointsDiscount = 0m;
+        if (pointsToRedeem > 0)
+        {
+            if (!targetCustomerId.HasValue)
+            {
+                ErrorMessage = "Vui lòng kiểm tra SĐT tài khoản khách hàng thành viên trước khi sử dụng điểm thưởng.";
+                return RedirectToPage("/Staff/Orders", new { View = "pos" });
+            }
+
+            var availPoints = memberProfile?.CurrentPoints ?? 0;
+            if (pointsToRedeem > availPoints)
+            {
+                ErrorMessage = $"Khách hàng hiện có {availPoints} điểm, không đủ để trừ {pointsToRedeem} điểm.";
+                return RedirectToPage("/Staff/Orders", new { View = "pos" });
+            }
+
+            var remainingAfterTierAndVoucher = Math.Max(0m, subtotal - tierDiscount - voucherDiscount);
+            var maxPointsForOrder = (int)Math.Floor(remainingAfterTierAndVoucher / 1000m);
+            actualPointsToRedeem = Math.Min(pointsToRedeem, maxPointsForOrder);
+            pointsDiscount = actualPointsToRedeem * 1000m;
+        }
+
+        decimal totalDiscount = Math.Min(subtotal, tierDiscount + voucherDiscount + pointsDiscount);
 
         var normalizedMethod = string.Equals(paymentMethod, "VNPAY", StringComparison.OrdinalIgnoreCase) ? "VNPAY" : "CASH";
         var finalCustomerName = string.IsNullOrWhiteSpace(customerName)
             ? $"Khách tại quầy #{DateTime.Now:HHmm}"
             : customerName.Trim();
 
+        var noteParts = new List<string> { "[POS]" };
+        if (!string.IsNullOrWhiteSpace(customerPhone))
+        {
+            noteParts.Add($"SĐT: {customerPhone.Trim()}");
+        }
+        if (tierDiscount > 0)
+        {
+            noteParts.Add($"Ưu đãi {memberProfile?.TierName ?? "Hạng thẻ"} (-{tierDiscountPercent:0.##}%: -{tierDiscount:N0}đ)");
+        }
+        if (actualPointsToRedeem > 0)
+        {
+            noteParts.Add($"Trừ {actualPointsToRedeem} điểm (-{pointsDiscount:N0}đ)");
+        }
+        if (!string.IsNullOrWhiteSpace(note))
+        {
+            noteParts.Add(note.Trim());
+        }
+
         var createReq = new CreateOrderInputViewModel
         {
+            CustomerId = targetCustomerId,
             CustomerName = finalCustomerName,
             Items = items,
-            DiscountAmount = discountAmount >= 0 ? discountAmount : 0m,
+            DiscountAmount = totalDiscount >= 0 ? totalDiscount : 0m,
             VoucherCode = string.IsNullOrWhiteSpace(voucherCode) ? null : voucherCode.Trim().ToUpperInvariant(),
             PaymentMethod = normalizedMethod,
-            Note = string.IsNullOrWhiteSpace(note) ? "Đơn tại quầy POS" : $"[POS] {note.Trim()}",
+            Note = string.Join(" | ", noteParts),
             ReturnUrl = $"{Request.Scheme}://{Request.Host}/Staff/Orders?view=orders"
         };
 
@@ -316,11 +410,62 @@ public class OrdersModel : PageModel
 
         var createdOrder = createRes.Data;
 
-        // Nếu nhân viên chọn VNPay -> chuyển sang tab Điều phối và mở ngay Modal QR VNPay
+        // Ghi nhận sử dụng Voucher vào Engagement.API nếu đơn POS có áp dụng mã hợp lệ
+        if (validatedVoucherId.HasValue && targetCustomerId.HasValue && voucherDiscount > 0)
+        {
+            try
+            {
+                await _engagementHttpService.ApplyVoucherUsageAsync(new ApplyVoucherUsageRequestViewModel
+                {
+                    VoucherId = validatedVoucherId.Value,
+                    UserId = targetCustomerId.Value,
+                    OrderId = createdOrder.Id,
+                    DiscountAmount = voucherDiscount
+                }, token);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Không thể ghi nhận lượt sử dụng voucher {VoucherId} cho đơn POS {OrderId}", validatedVoucherId, createdOrder.Id);
+            }
+        }
+
+        // Trừ điểm thưởng trong tài khoản khách hàng nếu nhân viên nhập điểm trừ tiền tại POS
+        if (actualPointsToRedeem > 0 && targetCustomerId.HasValue)
+        {
+            try
+            {
+                await _engagementHttpService.RedeemPointsAsync(new RedeemPointsRequestViewModel
+                {
+                    UserId = targetCustomerId.Value,
+                    OrderId = createdOrder.Id,
+                    PointsToRedeem = actualPointsToRedeem,
+                    Reason = $"Trừ {actualPointsToRedeem} điểm tại quầy POS cho đơn #{createdOrder.OrderCode}"
+                }, token);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Không thể trừ điểm thưởng cho khách hàng {CustomerId} ở đơn POS {OrderId}", targetCustomerId, createdOrder.Id);
+            }
+        }
+
+        // Nếu nhân viên chọn VNPay -> chuyển hướng trực tiếp sang cổng thanh toán VNPay Sandbox
         if (normalizedMethod == "VNPAY")
         {
-            SuccessMessage = $"Đã tạo đơn #{createdOrder.OrderCode} ({createdOrder.FinalAmount:N0}đ). Vui lòng cho khách quét mã QR VNPay để thanh toán.";
-            return RedirectToPage("/Staff/Orders", new { View = "orders", PayOrderId = createdOrder.Id });
+            var paymentUrl = createdOrder.VnPayPayment?.PaymentUrl;
+            if (string.IsNullOrWhiteSpace(paymentUrl))
+            {
+                var returnUrl = $"{Request.Scheme}://{Request.Host}/Staff/Orders?view=orders";
+                var qrRes = await _orderHttpService.GenerateVnPayUrlAsync(createdOrder.Id, returnUrl, token);
+                paymentUrl = qrRes.Data?.PaymentUrl;
+            }
+
+            if (!string.IsNullOrWhiteSpace(paymentUrl))
+            {
+                return Redirect(paymentUrl);
+            }
+
+            SuccessMessage = $"Đã tạo đơn #{createdOrder.OrderCode} ({createdOrder.FinalAmount:N0}đ). Bấm 'Thanh toán VNPay' trên đơn hàng để chuyển sang cổng VNPay.";
+            return RedirectToPage("/Staff/Orders", new { View = "orders" });
         }
 
         // Nếu nhân viên chọn Tiền mặt và tích chọn "Đã thu tiền mặt ngay tại quầy"
@@ -358,7 +503,14 @@ public class OrdersModel : PageModel
         var res = await _orderHttpService.UpdateOrderStatusAsync(orderId, nextStatus, note, token);
         if (res.IsSuccess && res.Data != null)
         {
-            SuccessMessage = $"Đã cập nhật trạng thái đơn #{res.Data.OrderCode} sang '{res.Data.StatusDisplayName}'.";
+            if (string.Equals(nextStatus, "COMPLETED", StringComparison.OrdinalIgnoreCase))
+            {
+                SuccessMessage = $"Đã hoàn thành đơn #{res.Data.OrderCode} và tự động cộng điểm thưởng vào tài khoản khách hàng!";
+            }
+            else
+            {
+                SuccessMessage = $"Đã cập nhật trạng thái đơn #{res.Data.OrderCode} sang '{res.Data.StatusDisplayName}'.";
+            }
         }
         else
         {
@@ -403,16 +555,55 @@ public class OrdersModel : PageModel
     }
 
     /// <summary>
-    /// [28. Generate VNPay QR]: Nhân viên mở / tạo lại mã QR VNPay cho đơn chưa thanh toán
+    /// [28. Generate VNPay URL & Redirect]: Nhân viên bấm thanh toán VNPay cho đơn chưa thanh toán -> dẫn thẳng tới VNPay Sandbox
     /// </summary>
-    public IActionResult OnPostGenerateQr(Guid orderId, string? returnStatus, string? returnSearch)
+    public async Task<IActionResult> OnPostGenerateQrAsync(Guid orderId, string? returnStatus, string? returnSearch)
     {
+        var token = GetAccessToken();
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return RedirectToPage("/Auth/Login", new { returnUrl = "/Staff/Orders" });
+        }
+
+        var returnUrl = $"{Request.Scheme}://{Request.Host}/Staff/Orders?view=orders";
+        var qrRes = await _orderHttpService.GenerateVnPayUrlAsync(orderId, returnUrl, token);
+        if (qrRes.IsSuccess && !string.IsNullOrWhiteSpace(qrRes.Data?.PaymentUrl))
+        {
+            return Redirect(qrRes.Data.PaymentUrl);
+        }
+
+        ErrorMessage = qrRes.Message ?? "Không thể mở cổng thanh toán VNPay cho đơn hàng này.";
         return RedirectToPage("/Staff/Orders", new
         {
             View = "orders",
             Status = string.IsNullOrWhiteSpace(returnStatus) ? "ALL" : returnStatus,
-            Search = returnSearch,
-            PayOrderId = orderId
+            Search = returnSearch
+        });
+    }
+
+    public async Task<IActionResult> OnPostSimulateVnPayAsync(Guid orderId, string? returnStatus, string? returnSearch)
+    {
+        var token = GetAccessToken();
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return RedirectToPage("/Auth/Login", new { returnUrl = "/Staff/Orders" });
+        }
+
+        var res = await _orderHttpService.SimulateVnPayPaymentAsync(orderId, token);
+        if (res.IsSuccess && res.Data != null && res.Data.IsSuccess)
+        {
+            SuccessMessage = $"Đã xác nhận thanh toán VNPay thành công cho đơn #{res.Data.OrderCode} ({res.Data.Amount:N0}đ)!";
+        }
+        else
+        {
+            ErrorMessage = res.Message ?? "Không thể xác nhận thanh toán VNPay.";
+        }
+
+        return RedirectToPage("/Staff/Orders", new
+        {
+            View = "orders",
+            Status = string.IsNullOrWhiteSpace(returnStatus) ? "ALL" : returnStatus,
+            Search = returnSearch
         });
     }
 
@@ -456,18 +647,95 @@ public class OrdersModel : PageModel
         });
     }
 
-    public async Task<IActionResult> OnGetValidateVoucherAsync(string code, decimal orderAmount)
+    /// <summary>
+    /// Tra cứu SĐT khách hàng tại quầy POS: Kiểm tra tài khoản tồn tại, lấy số điểm thưởng khả dụng và danh sách Voucher thỏa mãn điều kiện của khách đó
+    /// </summary>
+    public async Task<IActionResult> OnGetLookupCustomerAsync(string phone, decimal orderAmount = 0m)
+    {
+        if (string.IsNullOrWhiteSpace(phone))
+        {
+            return new JsonResult(new { isSuccess = false, message = "Vui lòng nhập số điện thoại khách hàng để kiểm tra." });
+        }
+
+        var token = GetAccessToken();
+        var cleanPhone = phone.Trim();
+
+        var searchRes = await _userHttpService.SearchCustomersAsync(cleanPhone, token);
+        var users = searchRes.Data?.ToList() ?? new List<CoffeeShop.WebRazorPages.ViewModels.Auth.UserViewModel>();
+
+        var matchedUser = users.FirstOrDefault(u =>
+            string.Equals(u.PhoneNumber?.Trim(), cleanPhone, StringComparison.OrdinalIgnoreCase))
+            ?? users.FirstOrDefault();
+
+        if (matchedUser == null || matchedUser.Id == Guid.Empty)
+        {
+            return new JsonResult(new
+            {
+                isSuccess = false,
+                message = $"Không tìm thấy tài khoản thành viên nào với SĐT '{cleanPhone}'."
+            });
+        }
+
+        // Lấy hồ sơ tích điểm của khách hàng
+        var profileRes = await _engagementHttpService.GetMemberProfileByUserIdAsync(matchedUser.Id, token);
+        var profile = profileRes.Data;
+
+        // Lấy danh sách voucher khách hàng này đã sử dụng để lọc ra những voucher còn dùng được
+        var usedRes = await _engagementHttpService.GetUserUsedVoucherIdsAsync(matchedUser.Id, token);
+        var usedIds = usedRes.Data?.ToHashSet() ?? new HashSet<Guid>();
+
+        var activeVouchersRes = await _engagementHttpService.GetActiveVouchersAsync();
+        var availableVouchers = (activeVouchersRes.Data ?? Enumerable.Empty<VoucherViewModel>())
+            .Where(v => v.IsValidNow && !usedIds.Contains(v.Id))
+            .OrderBy(v => v.MinOrderValue)
+            .Select(v => new
+            {
+                id = v.Id,
+                code = v.Code,
+                title = v.Title,
+                discountType = v.DiscountType,
+                discountValue = v.DiscountValue,
+                maxDiscountAmount = v.MaxDiscountAmount,
+                minOrderValue = v.MinOrderValue,
+                isEligible = orderAmount >= v.MinOrderValue
+            })
+            .ToList();
+
+        return new JsonResult(new
+        {
+            isSuccess = true,
+            message = $"Tìm thấy thành viên: {matchedUser.FullName} ({profile?.TierName ?? "Hạng Đồng"} • Giảm {profile?.DiscountPercent ?? 0m:0.##}% • Tích điểm x{profile?.PointMultiplier ?? 1.0m:0.##} • {profile?.CurrentPoints ?? 0} điểm)",
+            customer = new
+            {
+                id = matchedUser.Id,
+                fullName = matchedUser.FullName,
+                phoneNumber = matchedUser.PhoneNumber ?? cleanPhone,
+                email = matchedUser.Email,
+                tierName = profile?.TierName ?? "Hạng Đồng",
+                currentPoints = profile?.CurrentPoints ?? 0,
+                totalAccumulatedPoints = profile?.TotalAccumulatedPoints ?? 0,
+                pointMultiplier = profile?.PointMultiplier ?? 1.0m,
+                discountPercent = profile?.DiscountPercent ?? 0m,
+                benefitsDescription = profile?.BenefitsDescription
+            },
+            vouchers = availableVouchers
+        });
+    }
+
+    public async Task<IActionResult> OnGetValidateVoucherAsync(string code, decimal orderAmount, Guid? customerId = null)
     {
         if (string.IsNullOrWhiteSpace(code))
         {
             return new JsonResult(new { isSuccess = false, message = "Vui lòng nhập mã giảm giá." });
         }
 
+        var token = GetAccessToken();
         var res = await _engagementHttpService.ValidateVoucherAsync(new ValidateVoucherRequestViewModel
         {
             VoucherCode = code.Trim().ToUpperInvariant(),
-            OrderSubtotal = orderAmount
-        });
+            OrderSubtotal = orderAmount,
+            UserId = (customerId.HasValue && customerId.Value != Guid.Empty) ? customerId.Value : null
+        }, token);
 
         if (res.IsSuccess && res.Data != null && res.Data.IsValid)
         {

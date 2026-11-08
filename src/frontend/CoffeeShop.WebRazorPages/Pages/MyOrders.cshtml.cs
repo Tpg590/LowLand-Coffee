@@ -84,7 +84,7 @@ public class MyOrdersModel : PageModel
                 }
                 else
                 {
-                    ErrorMessage = $"Đơn hàng #{VnPayReturnResult.OrderCode} chưa hoàn tất thanh toán ({VnPayReturnResult.Message}). Bạn có thể bấm nút 'Thanh toán QR VNPay' bên dưới để thanh toán lại bất cứ lúc nào.";
+                    ErrorMessage = $"Đơn hàng #{VnPayReturnResult.OrderCode} chưa hoàn tất thanh toán ({VnPayReturnResult.Message}). Bạn có thể bấm nút 'Thanh toán VNPay' bên dưới để thanh toán lại bất cứ lúc nào.";
                 }
             }
             else
@@ -98,7 +98,7 @@ public class MyOrdersModel : PageModel
                 }
                 else
                 {
-                    ErrorMessage = $"Giao dịch thanh toán VNPay cho đơn #{orderCode} chưa hoàn tất (Mã phản hồi: {responseCode}). Bạn có thể bấm nút 'Thanh toán QR VNPay' trên đơn hàng để thanh toán lại.";
+                    ErrorMessage = $"Giao dịch thanh toán VNPay cho đơn #{orderCode} chưa hoàn tất (Mã phản hồi: {responseCode}). Bạn có thể bấm nút 'Thanh toán VNPay' trên đơn hàng để thanh toán lại.";
                 }
             }
         }
@@ -162,19 +162,17 @@ public class MyOrdersModel : PageModel
             }
         }
 
-        // 5. Nếu người dùng bấm Thanh toán QR VNPay (hoặc vừa chuyển hướng từ trang Đặt hàng sang)
+        // 5. Nếu người dùng bấm Thanh toán VNPay (hoặc vừa chuyển hướng từ trang Đặt hàng sang) -> chuyển hướng thẳng sang VNPay Sandbox
         if (PayOrderId.HasValue)
         {
             var returnUrl = $"{Request.Scheme}://{Request.Host}/MyOrders";
             var qrRes = await _orderHttpService.GenerateVnPayUrlAsync(PayOrderId.Value, returnUrl, token);
-            if (qrRes.IsSuccess && qrRes.Data != null)
+            if (qrRes.IsSuccess && !string.IsNullOrWhiteSpace(qrRes.Data?.PaymentUrl))
             {
-                ActiveVnPayQr = qrRes.Data;
+                return Redirect(qrRes.Data.PaymentUrl);
             }
-            else
-            {
-                ErrorMessage = qrRes.Message ?? "Không thể khởi tạo mã thanh toán VNPay cho đơn hàng này.";
-            }
+
+            ErrorMessage = qrRes.Message ?? "Không thể khởi tạo đường dẫn thanh toán VNPay cho đơn hàng này.";
         }
 
         return Page();
@@ -209,13 +207,51 @@ public class MyOrdersModel : PageModel
         });
     }
 
-    public IActionResult OnPostGenerateQr(Guid orderId, string? returnStatus, string? returnSearch)
+    public async Task<IActionResult> OnPostGenerateQrAsync(Guid orderId, string? returnStatus, string? returnSearch)
     {
+        var token = GetAccessToken();
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return RedirectToPage("/Auth/Login", new { returnUrl = "/MyOrders" });
+        }
+
+        var returnUrl = $"{Request.Scheme}://{Request.Host}/MyOrders";
+        var qrRes = await _orderHttpService.GenerateVnPayUrlAsync(orderId, returnUrl, token);
+        if (qrRes.IsSuccess && !string.IsNullOrWhiteSpace(qrRes.Data?.PaymentUrl))
+        {
+            return Redirect(qrRes.Data.PaymentUrl);
+        }
+
+        ErrorMessage = qrRes.Message ?? "Không thể khởi tạo cổng thanh toán VNPay cho đơn hàng này.";
         return RedirectToPage("/MyOrders", new
         {
             Status = string.IsNullOrWhiteSpace(returnStatus) ? "ALL" : returnStatus,
-            Search = returnSearch,
-            PayOrderId = orderId
+            Search = returnSearch
+        });
+    }
+
+    public async Task<IActionResult> OnPostSimulateVnPayAsync(Guid orderId, string? returnStatus, string? returnSearch)
+    {
+        var token = GetAccessToken();
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return RedirectToPage("/Auth/Login", new { returnUrl = "/MyOrders" });
+        }
+
+        var response = await _orderHttpService.SimulateVnPayPaymentAsync(orderId, token);
+        if (response.IsSuccess && response.Data != null && response.Data.IsSuccess)
+        {
+            SuccessMessage = $"Thanh toán VNPay thành công cho đơn #{response.Data.OrderCode} ({response.Data.Amount:N0}đ)! Đơn hàng đã chuyển sang trạng thái Đang pha chế.";
+        }
+        else
+        {
+            ErrorMessage = response.Message ?? "Không thể xác nhận thanh toán VNPay cho đơn hàng này.";
+        }
+
+        return RedirectToPage("/MyOrders", new
+        {
+            Status = string.IsNullOrWhiteSpace(returnStatus) ? "ALL" : returnStatus,
+            Search = returnSearch
         });
     }
 }

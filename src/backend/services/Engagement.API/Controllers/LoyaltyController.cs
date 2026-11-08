@@ -9,6 +9,7 @@ namespace Engagement.API.Controllers;
 
 [ApiController]
 [Route("api/loyalty")]
+[Authorize]
 public class LoyaltyController : ControllerBase
 {
     private readonly ILoyaltyService _loyaltyService;
@@ -19,7 +20,7 @@ public class LoyaltyController : ControllerBase
     }
 
     /// <summary>
-    /// Lấy danh sách 4 Hạng thẻ thành viên và các đặc quyền
+    /// Lấy danh sách 4 Hạng thẻ thành viên và các đặc quyền (Public / Customer / Staff / Admin)
     /// </summary>
     [HttpGet("tiers")]
     [AllowAnonymous]
@@ -34,7 +35,7 @@ public class LoyaltyController : ControllerBase
     /// Hỗ trợ endpoint: GET /api/loyalty/me
     /// </summary>
     [HttpGet("me")]
-    [Authorize]
+    [Authorize(Roles = "Customer,Staff,Admin")]
     public async Task<ActionResult<ApiResponse<LoyaltyMemberProfileDto>>> GetMyTier()
     {
         var userId = GetCurrentUserId();
@@ -48,9 +49,10 @@ public class LoyaltyController : ControllerBase
     }
 
     /// <summary>
-    /// Xem điểm tích lũy & hạng thẻ theo UserId cụ thể (Dành cho Staff/Admin/Internal)
+    /// Xem điểm tích lũy & hạng thẻ theo UserId cụ thể (Dành cho Staff POS tra cứu khách / Order.API / Admin)
     /// </summary>
     [HttpGet("user/{userId:guid}")]
+    [Authorize(Roles = "Customer,Staff,Admin")]
     public async Task<ActionResult<ApiResponse<LoyaltyMemberProfileDto>>> GetUserProfile(Guid userId)
     {
         var profile = await _loyaltyService.GetMemberProfileAsync(userId);
@@ -59,8 +61,10 @@ public class LoyaltyController : ControllerBase
 
     /// <summary>
     /// Tích điểm thành viên khi đơn hàng hoàn thành (Gọi từ Order.API hoặc Nhân viên quầy)
+    /// Nhân hệ số điểm (PointMultiplier) tự động theo hạng thẻ của khách (Đồng x1.0, Bạc x1.1, Vàng x1.2, Kim Cương x1.3)
     /// </summary>
     [HttpPost("add-points")]
+    [Authorize(Roles = "Customer,Staff,Admin")]
     public async Task<ActionResult<ApiResponse<AddPointsResponse>>> AddPoints([FromBody] AddPointsRequest request)
     {
         if (!ModelState.IsValid)
@@ -87,6 +91,7 @@ public class LoyaltyController : ControllerBase
     /// Quy đổi điểm tích lũy để trừ tiền hóa đơn tại quầy hoặc lúc Checkout (1 điểm = 1.000 VNĐ)
     /// </summary>
     [HttpPost("redeem")]
+    [Authorize(Roles = "Customer,Staff,Admin")]
     public async Task<ActionResult<ApiResponse<RedeemPointsResponse>>> RedeemPoints([FromBody] RedeemPointsRequest request)
     {
         if (!ModelState.IsValid)
@@ -94,7 +99,7 @@ public class LoyaltyController : ControllerBase
             return BadRequest(ApiResponse<RedeemPointsResponse>.Failure("Dữ liệu không hợp lệ", 400, ModelState));
         }
 
-        if (User.Identity?.IsAuthenticated == true)
+        if (request.UserId == Guid.Empty && User.Identity?.IsAuthenticated == true)
         {
             var tokenUserId = GetCurrentUserId();
             if (tokenUserId.HasValue)
@@ -122,7 +127,7 @@ public class LoyaltyController : ControllerBase
     /// Lấy lịch sử giao dịch điểm tích lũy của người dùng hiện tại
     /// </summary>
     [HttpGet("transactions")]
-    [Authorize]
+    [Authorize(Roles = "Customer,Staff,Admin")]
     public async Task<ActionResult<ApiResponse<IEnumerable<PointTransactionDto>>>> GetMyPointTransactions([FromQuery] int limit = 20)
     {
         var userId = GetCurrentUserId();
@@ -139,6 +144,7 @@ public class LoyaltyController : ControllerBase
     /// Lấy lịch sử giao dịch điểm theo UserId cụ thể (Staff / Admin)
     /// </summary>
     [HttpGet("transactions/{userId:guid}")]
+    [Authorize(Roles = "Staff,Admin")]
     public async Task<ActionResult<ApiResponse<IEnumerable<PointTransactionDto>>>> GetUserPointTransactions(Guid userId, [FromQuery] int limit = 20)
     {
         var transactions = await _loyaltyService.GetPointTransactionsAsync(userId, limit);
@@ -147,7 +153,8 @@ public class LoyaltyController : ControllerBase
 
     private Guid? GetCurrentUserId()
     {
-        var claimValue = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+        var claimValue = Request.Headers["X-User-Id"].FirstOrDefault()
+                      ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
                       ?? User.FindFirst("sub")?.Value
                       ?? User.FindFirst("id")?.Value
                       ?? User.FindFirst("userId")?.Value

@@ -18,7 +18,7 @@
         </div>
 
         <div class="flex items-center gap-3">
-            <a asp-page="/Products" class="px-4 py-2.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white border border-white/30 text-xs font-extrabold transition flex items-center gap-2">
+            <a href="/Index#menu" class="px-4 py-2.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white border border-white/30 text-xs font-extrabold transition flex items-center gap-2">
                 <i class="fi fi-rr-arrow-left"></i>
                 <span>Chọn thêm món</span>
             </a>
@@ -166,10 +166,10 @@
                             <input type="radio" asp-for="CheckoutInput.PaymentMethod" value="VNPAY" class="mt-1 text-blue-600 focus:ring-blue-600" />
                             <div>
                                 <div class="text-sm font-black text-gray-900 flex items-center gap-2">
-                                    <i class="fi fi-rr-qrcode text-blue-600"></i>
-                                    <span>VNPay QR / Ngân hàng</span>
+                                    <i class="fi fi-rr-credit-card text-blue-600"></i>
+                                    <span>Thanh toán VNPay</span>
                                 </div>
-                                <p class="text-xs text-gray-500 mt-1">Tạo mã QR VNPay hoặc thanh toán qua ứng dụng Ngân hàng / Thẻ ATM.</p>
+                                <p class="text-xs text-gray-500 mt-1">Chuyển hướng trực tiếp sang trang cổng thanh toán VNPay Sandbox.</p>
                             </div>
                         </label>
                     </div>
@@ -195,8 +195,14 @@
                     </div>
 
                     <!-- Mã khuyến mãi (Voucher) -->
-                    <div class="pt-3 border-t border-gray-100 space-y-2">
-                        <label class="block text-xs font-extrabold uppercase text-gray-600">Mã khuyến mãi (Voucher)</label>
+                    <div class="pt-3 border-t border-gray-100 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-extrabold uppercase text-gray-600 flex items-center gap-1.5">
+                                <i class="fi fi-rr-ticket text-red-highland"></i>
+                                <span>Mã khuyến mãi (Voucher)</span>
+                            </label>
+                            <a href="/Customer/Vouchers" class="text-[11px] font-bold text-red-highland hover:underline">Xem kho Voucher</a>
+                        </div>
                         <div class="flex gap-2">
                             <input asp-for="CheckoutInput.VoucherCode"
                                    id="voucherCodeInput"
@@ -212,18 +218,93 @@
 
                         @if (Model.AvailableVouchers.Count > 0)
                         {
-                            <div class="flex flex-wrap gap-1.5 pt-1">
-                                @foreach (var v in Model.AvailableVouchers)
-                                {
-                                    <button type="button"
-                                            onclick="selectSuggestedVoucher('@v.Code')"
-                                            class="px-3 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 text-xs font-extrabold transition flex items-center gap-1">
-                                        <i class="fi fi-rr-ticket text-amber-600"></i>
-                                        <span>@v.Code (-@(v.DiscountType == "PERCENTAGE" ? $"{v.DiscountValue:N0}%" : $"{v.DiscountValue:N0}đ"))</span>
-                                    </button>
-                                }
+                            <div class="space-y-1.5 pt-1">
+                                <div class="text-[11px] font-bold text-gray-500">Voucher khả dụng cho tài khoản của bạn:</div>
+                                <div class="grid grid-cols-1 gap-1.5 max-h-40 overflow-y-auto pr-1" id="customerVoucherSuggestions">
+                                    @foreach (var v in Model.AvailableVouchers)
+                                    {
+                                        var discountText = v.DiscountType == "PERCENTAGE"
+                                            ? $"Giảm {v.DiscountValue:N0}%" + (v.MaxDiscountAmount.HasValue ? $" (tối đa {v.MaxDiscountAmount.Value:N0}đ)" : "")
+                                            : $"Giảm {v.DiscountValue:N0}đ";
+                                        <button type="button"
+                                                data-min-order="@v.MinOrderValue"
+                                                data-voucher-code="@v.Code"
+                                                onclick="selectSuggestedVoucher('@v.Code')"
+                                                class="customer-voucher-btn w-full text-left px-3 py-2 rounded-2xl bg-amber-50/70 hover:bg-amber-100/80 border border-amber-300 transition flex items-center justify-between gap-2">
+                                            <div class="min-w-0">
+                                                <div class="text-xs font-black text-amber-950 flex items-center gap-1.5">
+                                                    <i class="fi fi-rr-ticket text-amber-600"></i>
+                                                    <span>@v.Code</span>
+                                                    <span class="px-2 py-0.5 rounded-lg bg-red-highland text-white text-[10px] font-extrabold">@discountText</span>
+                                                </div>
+                                                <div class="text-[11px] text-gray-600 truncate mt-0.5">
+                                                    Đơn tối thiểu: <strong>@v.MinOrderValue.ToString("N0")đ</strong>
+                                                </div>
+                                            </div>
+                                            <span class="voucher-eligibility-badge shrink-0 px-2.5 py-1 rounded-xl bg-amber-200/80 text-amber-950 text-[10px] font-extrabold">
+                                                Dùng ngay
+                                            </span>
+                                        </button>
+                                    }
+                                </div>
                             </div>
                         }
+                    </div>
+
+                    <!-- Điểm thưởng thành viên & Đặc quyền Hạng thẻ (Loyalty Tier & Points) -->
+                    @{
+                        var availPoints = Model.MemberProfile?.CurrentPoints ?? 0;
+                        var tierName = Model.MemberProfile?.TierName ?? "Hạng Đồng";
+                        var multiplier = Model.MemberProfile?.PointMultiplier ?? 1.0m;
+                        var tierDiscountPct = Model.MemberProfile?.DiscountPercent ?? 0m;
+                    }
+                    <div class="pt-3 border-t border-gray-100 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-extrabold uppercase text-gray-600 flex items-center gap-1.5">
+                                <i class="fi fi-sr-medal text-amber-500"></i>
+                                <span>Hạng thẻ &amp; Điểm thưởng</span>
+                            </label>
+                            <span class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-[11px] font-extrabold">
+                                @tierName • <strong>@availPoints</strong> điểm khả dụng
+                            </span>
+                        </div>
+
+                        <div class="p-3.5 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/80 space-y-2">
+                            <div class="flex flex-wrap items-center justify-between gap-1 text-xs text-blue-900 bg-blue-50/90 border border-blue-200 rounded-xl px-3 py-1.5 font-bold">
+                                <span>🎁 Đặc quyền @tierName: Giảm <strong>@tierDiscountPct.ToString("0.##")%</strong> hóa đơn</span>
+                                <span>⚡ Tích điểm: <strong>x@multiplier.ToString("0.##")</strong></span>
+                            </div>
+                            <div class="flex items-center justify-between text-xs text-amber-950">
+                                <span>Quy đổi: <strong>1 điểm = 1.000 đ</strong> (Tối đa: @((availPoints * 1000).ToString("N0")) đ)</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <input asp-for="CheckoutInput.PointsToRedeem"
+                                       type="number"
+                                       id="pointsToRedeemInput"
+                                       min="0"
+                                       max="@availPoints"
+                                       step="1"
+                                       oninput="onCustomerPointsChange()"
+                                       placeholder="Nhập số điểm muốn dùng..."
+                                       class="flex-1 bg-white border border-amber-300 rounded-xl px-3.5 py-2 text-sm font-black text-gray-900 focus:ring-2 focus:ring-amber-500" />
+                                <button type="button"
+                                        onclick="applyMaxCustomerPoints()"
+                                        @(availPoints <= 0 ? "disabled" : "")
+                                        class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:bg-gray-300 text-white text-xs font-extrabold transition">
+                                    Dùng tối đa
+                                </button>
+                            </div>
+                            <div id="pointsFeedback" class="text-[11px] text-amber-800 font-semibold">
+                                @if (availPoints > 0)
+                                {
+                                    <span>Bạn có <strong>@availPoints điểm</strong> có thể dùng để trừ trực tiếp vào hóa đơn.</span>
+                                }
+                                else
+                                {
+                                    <span>Bạn hiện có 0 điểm. Hoàn thành đơn hàng này để được cộng điểm thưởng tự động (x@multiplier.ToString("0.##"))!</span>
+                                }
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Bảng tổng kết tiền -->
@@ -232,13 +313,25 @@
                             <span>Tạm tính:</span>
                             <span id="subtotalDisplay" class="font-bold text-gray-900">0 đ</span>
                         </div>
+                        <div class="flex justify-between text-blue-700">
+                            <span>Đặc quyền @tierName (-@tierDiscountPct.ToString("0.##")%):</span>
+                            <span id="tierDiscountDisplay" class="font-bold">-0 đ</span>
+                        </div>
                         <div class="flex justify-between text-emerald-700">
                             <span>Giảm giá Voucher:</span>
                             <span id="discountDisplay" class="font-bold">-0 đ</span>
                         </div>
+                        <div class="flex justify-between text-amber-700">
+                            <span>Giảm điểm thưởng:</span>
+                            <span id="pointsDiscountDisplay" class="font-bold">-0 đ</span>
+                        </div>
                         <div class="flex justify-between pt-2 border-t border-amber-200 text-base font-black text-red-highland">
                             <span>Tổng thanh toán:</span>
                             <span id="finalTotalDisplay" class="text-xl">0 đ</span>
+                        </div>
+                        <div class="flex justify-between pt-1 text-xs font-bold text-amber-800">
+                            <span>Điểm thưởng tích lũy khi hoàn thành (x@multiplier.ToString("0.##")):</span>
+                            <span id="estimatedPointsEarnDisplay">+1 điểm</span>
                         </div>
                     </div>
 
@@ -257,11 +350,31 @@
 @section Scripts {
     <script>
         let currentCart = [];
-        let currentDiscount = parseFloat(document.getElementById('discountAmountInput').value || '0') || 0;
+        let currentVoucherDiscount = parseFloat(document.getElementById('discountAmountInput').value || '0') || 0;
+        const memberMaxPoints = @(Model.MemberProfile?.CurrentPoints ?? 0);
+        const memberMultiplier = @((Model.MemberProfile?.PointMultiplier ?? 1.0m).ToString(System.Globalization.CultureInfo.InvariantCulture));
+        const memberTierDiscountPercent = @((Model.MemberProfile?.DiscountPercent ?? 0m).ToString(System.Globalization.CultureInfo.InvariantCulture));
 
         document.addEventListener('DOMContentLoaded', () => {
             loadCartFromStorage();
             toggleDeliveryType();
+            const prefilledVoucher = (document.getElementById('voucherCodeInput')?.value || '').trim();
+            if (prefilledVoucher && currentCart.length > 0) {
+                applyVoucherViaPageHandler();
+            }
+
+            const form = document.getElementById('checkoutRazorForm');
+            if (form) {
+                form.addEventListener('submit', () => {
+                    document.getElementById('cartJsonInput').value = JSON.stringify(currentCart);
+                    setTimeout(() => {
+                        if (typeof clearUserCart === 'function') {
+                            clearUserCart();
+                        }
+                        localStorage.removeItem('lowland_cart');
+                    }, 150);
+                });
+            }
         });
 
         function toggleDeliveryType() {
@@ -272,7 +385,11 @@
 
         function loadCartFromStorage() {
             try {
-                currentCart = JSON.parse(localStorage.getItem('lowland_cart') || '[]');
+                if (typeof getCart === 'function') {
+                    currentCart = getCart() || [];
+                } else {
+                    currentCart = JSON.parse(localStorage.getItem('lowland_cart') || '[]');
+                }
             } catch {
                 currentCart = [];
             }
@@ -291,7 +408,7 @@
                             <i class="fi fi-rr-shopping-cart"></i>
                         </div>
                         <p class="text-sm font-bold text-gray-500">Giỏ hàng của bạn đang trống.</p>
-                        <a href="/Products" class="inline-block px-4 py-2 rounded-xl bg-red-highland text-white text-xs font-extrabold">Chọn món ngay</a>
+                        <a href="/Index#menu" class="inline-block px-4 py-2 rounded-xl bg-red-highland text-white text-xs font-extrabold">Chọn món ngay</a>
                     </div>`;
                 submitBtn.disabled = true;
                 updateTotals(0);
@@ -307,12 +424,14 @@
                 const price = parseFloat(item.price || 0);
                 const lineTotal = qty * price;
                 subtotal += lineTotal;
+                const rawSize = (item.size || 'M').toString().trim();
+                const displaySize = rawSize.toLowerCase().startsWith('size') ? rawSize : `Size ${rawSize}`;
 
                 html += `
                     <div class="py-3 flex items-center justify-between gap-3">
                         <div class="min-w-0 flex-1">
                             <div class="text-sm font-extrabold text-gray-900 truncate">${item.name}</div>
-                            <div class="text-xs text-gray-500">Size ${item.size || 'M'} • ${price.toLocaleString('vi-VN')} đ</div>
+                            <div class="text-xs text-gray-500">${displaySize} • ${price.toLocaleString('vi-VN')} đ</div>
                         </div>
                         <div class="flex items-center gap-2">
                             <div class="inline-flex items-center rounded-xl border border-gray-200 bg-gray-50">
@@ -335,29 +454,114 @@
             if (currentCart[index].quantity <= 0) {
                 currentCart.splice(index, 1);
             }
-            localStorage.setItem('lowland_cart', JSON.stringify(currentCart));
+            if (typeof saveCart === 'function') {
+                saveCart(currentCart);
+            } else {
+                localStorage.setItem('lowland_cart', JSON.stringify(currentCart));
+            }
             window.dispatchEvent(new Event('storage'));
             syncAndRenderCart();
         }
 
         function clearCheckoutCart() {
             currentCart = [];
-            currentDiscount = 0;
+            currentVoucherDiscount = 0;
             document.getElementById('discountAmountInput').value = '0';
-            localStorage.removeItem('lowland_cart');
+            const ptsInput = document.getElementById('pointsToRedeemInput');
+            if (ptsInput) ptsInput.value = '0';
+            if (typeof clearUserCart === 'function') {
+                clearUserCart();
+            } else {
+                localStorage.removeItem('lowland_cart');
+            }
             window.dispatchEvent(new Event('storage'));
             syncAndRenderCart();
         }
 
-        function updateTotals(subtotal) {
-            if (currentDiscount > subtotal) {
-                currentDiscount = subtotal;
+        function updateVoucherEligibilityBadges(subtotal) {
+            document.querySelectorAll('.customer-voucher-btn').forEach(btn => {
+                const minOrder = parseFloat(btn.getAttribute('data-min-order') || '0');
+                const badge = btn.querySelector('.voucher-eligibility-badge');
+                if (subtotal >= minOrder) {
+                    btn.classList.remove('opacity-60');
+                    if (badge) {
+                        badge.textContent = 'Đủ điều kiện';
+                        badge.className = 'voucher-eligibility-badge shrink-0 px-2.5 py-1 rounded-xl bg-emerald-100 text-emerald-800 text-[10px] font-extrabold';
+                    }
+                } else {
+                    btn.classList.add('opacity-60');
+                    if (badge) {
+                        badge.textContent = 'Chưa đủ ĐK';
+                        badge.className = 'voucher-eligibility-badge shrink-0 px-2.5 py-1 rounded-xl bg-gray-200 text-gray-600 text-[10px] font-extrabold';
+                    }
+                }
+            });
+        }
+
+        function onCustomerPointsChange() {
+            const subtotal = currentCart.reduce((s, i) => s + (parseFloat(i.price || 0) * parseInt(i.quantity || 1)), 0);
+            updateTotals(subtotal);
+        }
+
+        function applyMaxCustomerPoints() {
+            const subtotal = currentCart.reduce((s, i) => s + (parseFloat(i.price || 0) * parseInt(i.quantity || 1)), 0);
+            const tierDiscount = Math.round(subtotal * (memberTierDiscountPercent / 100));
+            const remaining = Math.max(0, subtotal - tierDiscount - currentVoucherDiscount);
+            const maxForOrder = Math.floor(remaining / 1000);
+            const pointsToUse = Math.min(memberMaxPoints, maxForOrder);
+            const ptsInput = document.getElementById('pointsToRedeemInput');
+            if (ptsInput) {
+                ptsInput.value = pointsToUse;
             }
-            const finalTotal = Math.max(0, subtotal - currentDiscount);
+            updateTotals(subtotal);
+        }
+
+        function updateTotals(subtotal) {
+            updateVoucherEligibilityBadges(subtotal);
+
+            const tierDiscount = Math.round(subtotal * (memberTierDiscountPercent / 100));
+            const remainingAfterTier = Math.max(0, subtotal - tierDiscount);
+
+            if (currentVoucherDiscount > remainingAfterTier) {
+                currentVoucherDiscount = remainingAfterTier;
+            }
+
+            const ptsInput = document.getElementById('pointsToRedeemInput');
+            let requestedPoints = parseInt(ptsInput?.value || '0') || 0;
+            if (requestedPoints < 0) requestedPoints = 0;
+            if (requestedPoints > memberMaxPoints) requestedPoints = memberMaxPoints;
+
+            const remainingAfterVoucher = Math.max(0, remainingAfterTier - currentVoucherDiscount);
+            const maxPointsForOrder = Math.floor(remainingAfterVoucher / 1000);
+            if (requestedPoints > maxPointsForOrder) {
+                requestedPoints = maxPointsForOrder;
+            }
+            if (ptsInput && parseInt(ptsInput.value || '0') !== requestedPoints) {
+                ptsInput.value = requestedPoints;
+            }
+
+            const pointsDiscount = requestedPoints * 1000;
+            const totalDiscount = Math.min(subtotal, tierDiscount + currentVoucherDiscount + pointsDiscount);
+            const finalTotal = Math.max(0, subtotal - totalDiscount);
+
             document.getElementById('subtotalDisplay').textContent = subtotal.toLocaleString('vi-VN') + ' đ';
-            document.getElementById('discountDisplay').textContent = '-' + currentDiscount.toLocaleString('vi-VN') + ' đ';
+            const tierDisplay = document.getElementById('tierDiscountDisplay');
+            if (tierDisplay) {
+                tierDisplay.textContent = '-' + tierDiscount.toLocaleString('vi-VN') + ' đ';
+            }
+            document.getElementById('discountDisplay').textContent = '-' + currentVoucherDiscount.toLocaleString('vi-VN') + ' đ';
+            const ptsDisplay = document.getElementById('pointsDiscountDisplay');
+            if (ptsDisplay) {
+                ptsDisplay.textContent = '-' + pointsDiscount.toLocaleString('vi-VN') + ' đ (' + requestedPoints + ' điểm)';
+            }
             document.getElementById('finalTotalDisplay').textContent = finalTotal.toLocaleString('vi-VN') + ' đ';
-            document.getElementById('discountAmountInput').value = currentDiscount;
+            document.getElementById('discountAmountInput').value = totalDiscount;
+
+            const estPoints = subtotal > 0 ? Math.max(1, Math.round((finalTotal / 10000) * memberMultiplier)) : 0;
+            const estEl = document.getElementById('estimatedPointsEarnDisplay');
+            if (estEl) {
+                estEl.textContent = '+' + estPoints + ' điểm (x' + memberMultiplier + ')';
+            }
         }
 
         function selectSuggestedVoucher(code) {
@@ -371,7 +575,9 @@
             const subtotal = currentCart.reduce((s, i) => s + (parseFloat(i.price || 0) * parseInt(i.quantity || 1)), 0);
 
             if (!code) {
+                currentVoucherDiscount = 0;
                 feedback.innerHTML = '<span class="text-red-600 font-bold">Vui lòng nhập mã giảm giá.</span>';
+                updateTotals(subtotal);
                 return;
             }
 
@@ -379,10 +585,10 @@
                 const res = await fetch(`/Order?handler=ValidateVoucher&code=${encodeURIComponent(code)}&orderAmount=${subtotal}`);
                 const data = await res.json();
                 if (data.isSuccess) {
-                    currentDiscount = parseFloat(data.discountAmount || 0);
+                    currentVoucherDiscount = parseFloat(data.discountAmount || 0);
                     feedback.innerHTML = `<span class="text-emerald-700 font-bold">✓ ${data.message}</span>`;
                 } else {
-                    currentDiscount = 0;
+                    currentVoucherDiscount = 0;
                     feedback.innerHTML = `<span class="text-red-600 font-bold">✕ ${data.message}</span>`;
                 }
                 updateTotals(subtotal);

@@ -27,7 +27,7 @@
                 <i class="fi fi-rr-refresh"></i>
                 <span>Làm mới</span>
             </a>
-            <a asp-page="/Products"
+            <a href="/Index#menu"
                class="px-5 py-2.5 rounded-2xl bg-amber-300 hover:bg-amber-200 text-red-950 font-extrabold text-sm shadow-lg transition flex items-center gap-2">
                 <i class="fi fi-rr-plus-small text-base"></i>
                 <span>Đặt thêm món</span>
@@ -169,7 +169,7 @@
                 Không tìm thấy đơn hàng nào khớp với bộ lọc hiện tại. Hãy khám phá thực đơn LowLand Coffee và đặt món ngay!
             </p>
             <div class="pt-2">
-                <a asp-page="/Products" class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-red-highland hover:bg-red-highland-dark text-white font-extrabold text-sm shadow-md transition">
+                <a href="/Index#menu" class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-red-highland hover:bg-red-highland-dark text-white font-extrabold text-sm shadow-md transition">
                     <i class="fi fi-rr-shopping-cart-add"></i>
                     <span>Khám phá thực đơn</span>
                 </a>
@@ -275,7 +275,7 @@
                             {
                                 <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-amber-50 border border-dashed border-amber-400 text-amber-900 text-xs font-semibold">
                                     <i class="fi fi-rr-info text-amber-600"></i>
-                                    <span>Đơn hàng chưa hoàn tất thanh toán. Bạn có thể nhấn <strong>Thanh toán QR VNPay</strong> bên phải để thanh toán ngay.</span>
+                                    <span>Đơn hàng chưa hoàn tất thanh toán. Bạn có thể nhấn <strong>Thanh toán VNPay</strong> bên phải để chuyển tới cổng thanh toán VNPay ngay.</span>
                                 </div>
                             }
                         </div>
@@ -305,8 +305,8 @@
                                         <input type="hidden" name="returnSearch" value="@Model.Search" />
                                         <button type="submit"
                                                 class="px-4 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold shadow-sm transition flex items-center gap-1.5">
-                                            <i class="fi fi-rr-qrcode"></i>
-                                            <span>@(order.NormalizedPaymentStatus == "FAILED" ? "Thanh toán lại QR VNPay" : "Thanh toán QR VNPay")</span>
+                                            <i class="fi fi-rr-credit-card"></i>
+                                            <span>@(order.NormalizedPaymentStatus == "FAILED" ? "Thanh toán lại VNPay" : "Thanh toán VNPay")</span>
                                         </button>
                                     </form>
                                 }
@@ -440,8 +440,8 @@
                             <input type="hidden" name="returnStatus" value="@Model.Status" />
                             <input type="hidden" name="returnSearch" value="@Model.Search" />
                             <button type="submit" class="px-5 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold shadow-sm transition flex items-center gap-2">
-                                <i class="fi fi-rr-qrcode"></i>
-                                <span>Thanh toán ngay (QR VNPay)</span>
+                                <i class="fi fi-rr-credit-card"></i>
+                                <span>Thanh toán ngay (VNPay)</span>
                             </button>
                         </form>
                     }
@@ -450,59 +450,6 @@
                    class="px-5 py-2.5 rounded-2xl bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-extrabold transition">
                     Đóng
                 </a>
-            </div>
-        </div>
-    </div>
-}
-
-<!-- ========================================================================= -->
-<!-- MODAL 2: THANH TOÁN MÃ QR VNPAY (SERVER-SIDE RAZOR)                       -->
-<!-- ========================================================================= -->
-@if (Model.ActiveVnPayQr != null)
-{
-    var qr = Model.ActiveVnPayQr;
-    var qrSrc = !string.IsNullOrWhiteSpace(qr.QrCodeBase64) && qr.QrCodeBase64.StartsWith("data:image")
-        ? qr.QrCodeBase64
-        : $"https://api.qrserver.com/v1/create-qr-code/?size=280x280&data={Uri.EscapeDataString(qr.PaymentUrl ?? "")}";
-
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-        <div class="bg-white rounded-3xl shadow-2xl border border-gray-200 w-full max-w-md overflow-hidden my-8">
-            <div class="px-6 py-4 bg-blue-700 text-white flex items-center justify-between">
-                <div class="flex items-center gap-2.5">
-                    <i class="fi fi-rr-qrcode text-xl"></i>
-                    <h3 class="text-base font-black">Thanh Toán Cổng VNPay QR</h3>
-                </div>
-                <a asp-page="/MyOrders" asp-route-Status="@Model.Status" asp-route-Search="@Model.Search"
-                   class="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition">
-                    <i class="fi fi-rr-cross-small"></i>
-                </a>
-            </div>
-
-            <div class="p-6 text-center space-y-4">
-                <div>
-                    <div class="text-xs font-bold uppercase text-gray-400">Đơn hàng #@qr.OrderCode</div>
-                    <div class="text-2xl font-black text-red-highland mt-0.5">@qr.Amount.ToString("N0") VNĐ</div>
-                </div>
-
-                <div class="p-4 bg-white border-2 border-blue-100 rounded-3xl inline-block shadow-sm">
-                    <img src="@qrSrc" alt="VNPay QR Code" class="w-56 h-56 object-contain mx-auto rounded-xl" />
-                </div>
-
-                <p class="text-xs text-gray-500 leading-relaxed">
-                    Quét mã QR bằng ứng dụng Ngân hàng / Ví VNPay hoặc nhấn nút <strong>Mở cổng thanh toán VNPay</strong> bên dưới. Nếu bạn đóng cửa sổ này khi chưa thanh toán, nút thanh toán vẫn luôn hiển thị trên đơn hàng.
-                </p>
-
-                <div class="space-y-2.5 pt-2">
-                    <a href="@qr.PaymentUrl"
-                       class="w-full py-3 px-5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm shadow-md transition flex items-center justify-center gap-2">
-                        <i class="fi fi-rr-arrow-up-right-from-square"></i>
-                        <span>Mở cổng thanh toán VNPay</span>
-                    </a>
-                    <a asp-page="/MyOrders" asp-route-Status="@Model.Status" asp-route-Search="@Model.Search"
-                       class="block w-full py-2.5 px-5 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs transition">
-                        Để sau / Đóng cửa sổ
-                    </a>
-                </div>
             </div>
         </div>
     </div>
@@ -563,9 +510,12 @@
 
 @section Scripts {
     <script>
-        @if (Model.Created)
+        @if (Model.Created || Model.VnPayReturnResult != null || Request.Query.ContainsKey("vnp_ResponseCode"))
         {
             <text>
+            if (typeof clearUserCart === 'function') {
+                clearUserCart();
+            }
             localStorage.removeItem('lowland_cart');
             window.dispatchEvent(new Event('storage'));
             if (typeof updateCartBadge === 'function') {

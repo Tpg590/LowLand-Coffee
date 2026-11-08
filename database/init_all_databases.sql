@@ -238,6 +238,10 @@ BEGIN
         created_at DATETIME2 NOT NULL DEFAULT GETDATE()
     );
 END
+ELSE IF COL_LENGTH('dbo.loyalty_tiers', 'discount_percent') IS NULL
+BEGIN
+    ALTER TABLE dbo.loyalty_tiers ADD discount_percent DECIMAL(5,2) NOT NULL DEFAULT 0.00;
+END
 GO
 
 -- 4. BẢNG loyalty_members (Hồ sơ tích điểm của thành viên)

@@ -170,6 +170,22 @@ public class OrderHttpService : IOrderHttpService
         }
     }
 
+    public async Task<ApiResponse<VnPayReturnResultViewModel>> SimulateVnPayPaymentAsync(Guid orderId, string? accessToken = null)
+    {
+        try
+        {
+            var client = CreateClient(accessToken);
+            var response = await client.PostAsync($"/api/payments/{orderId}/vnpay-simulate", null);
+            var result = await response.Content.ReadFromJsonAsync<ApiResponse<VnPayReturnResultViewModel>>(JsonOptions);
+            return result ?? ApiResponse<VnPayReturnResultViewModel>.Failure("Không thể xác nhận thanh toán VNPay Sandbox.", (int)response.StatusCode);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi giả lập thanh toán VNPay cho đơn {OrderId}", orderId);
+            return ApiResponse<VnPayReturnResultViewModel>.Failure("Không thể kết nối tới dịch vụ Thanh toán VNPay.", 503);
+        }
+    }
+
     public async Task<ApiResponse<OrderPaymentViewModel>> ConfirmCashPaymentAsync(Guid orderId, string? transactionCode, string? note, string? accessToken = null)
     {
         try

@@ -214,6 +214,8 @@ public class CheckoutFormInputViewModel
 
     public decimal DiscountAmount { get; set; } = 0m;
 
+    public int PointsToRedeem { get; set; } = 0;
+
     public string CartJson { get; set; } = "[]";
 }
 

@@ -69,6 +69,12 @@ builder.Services.AddHttpClient("ProductApi", client =>
     client.BaseAddress = new Uri(productApiUrl);
     client.Timeout = TimeSpan.FromSeconds(5);
 });
+var engagementApiUrl = builder.Configuration["Services:EngagementApiUrl"] ?? "http://localhost:5004";
+builder.Services.AddHttpClient("EngagementApi", client =>
+{
+    client.BaseAddress = new Uri(engagementApiUrl);
+    client.Timeout = TimeSpan.FromSeconds(8);
+});
 
 // 4. Add CORS Policy
 builder.Services.AddCors(options =>

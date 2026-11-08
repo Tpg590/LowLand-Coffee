@@ -79,6 +79,13 @@ public class JwtValidationMiddleware
                 context.Request.Headers["Authorization"] = $"Bearer {rawToken}";
             }
         }
+        // 2b. Fallback lấy từ Cookie access_token nếu trình duyệt gọi qua Reverse Proxy mà chưa gắn Header
+        else if (context.Request.Cookies.TryGetValue("access_token", out var cookieToken) &&
+                 !string.IsNullOrWhiteSpace(cookieToken))
+        {
+            rawToken = cookieToken.Trim();
+            context.Request.Headers["Authorization"] = $"Bearer {rawToken}";
+        }
 
         string? tokenJti = null;
         DateTime tokenExpiresAt = DateTime.UtcNow.AddHours(1);

@@ -12,6 +12,7 @@ public interface ILoyaltyRepository
     Task<LoyaltyMembers> AddMemberAsync(LoyaltyMembers member);
     Task UpdateMemberAsync(LoyaltyMembers member);
     Task AddTransactionAsync(LoyaltyPointTransactions transaction);
+    Task<LoyaltyPointTransactions?> GetTransactionByOrderAndTypeAsync(Guid memberId, Guid orderId, string transactionType);
     Task<IEnumerable<LoyaltyPointTransactions>> GetTransactionsByMemberIdAsync(Guid memberId, int limit = 20);
     Task SaveChangesAsync();
 }

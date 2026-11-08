@@ -25,27 +25,10 @@ public class LoyaltyModel : PageModel
     public IEnumerable<LoyaltyTierViewModel> Tiers { get; set; } = new List<LoyaltyTierViewModel>();
 
     /// <summary>
-    /// Xử lý HTTP GET: Nạp danh mục hạng thẻ thành viên và kiểm tra phân quyền tài khoản.
+    /// Xử lý HTTP GET: Nạp danh mục hạng thẻ thành viên (Phân quyền được thực thi bằng [Authorize] Annotation tại Engagement.API Controller).
     /// </summary>
     public async Task<IActionResult> OnGetAsync()
     {
-        // Kiểm tra phân quyền: Nếu đã xác thực qua Server Cookie nhưng không phải Customer -> điều hướng sang trang tương ứng
-        if (User.Identity?.IsAuthenticated == true)
-        {
-            var role = User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
-            if (!string.IsNullOrEmpty(role) && !role.Equals("Customer", StringComparison.OrdinalIgnoreCase))
-            {
-                if (role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
-                {
-                    return RedirectToPage("/Admin/Users");
-                }
-                if (role.Equals("Staff", StringComparison.OrdinalIgnoreCase))
-                {
-                    return RedirectToPage("/Staff/Orders");
-                }
-            }
-        }
-
         try
         {
             var res = await _engagementService.GetTiersAsync();

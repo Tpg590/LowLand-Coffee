@@ -65,6 +65,12 @@ public class LoyaltyRepository : ILoyaltyRepository
         await _context.LoyaltyPointTransactions.AddAsync(transaction);
     }
 
+    public async Task<LoyaltyPointTransactions?> GetTransactionByOrderAndTypeAsync(Guid memberId, Guid orderId, string transactionType)
+    {
+        return await _context.LoyaltyPointTransactions
+            .FirstOrDefaultAsync(t => t.MemberId == memberId && t.OrderId == orderId && t.TransactionType == transactionType);
+    }
+
     public async Task<IEnumerable<LoyaltyPointTransactions>> GetTransactionsByMemberIdAsync(Guid memberId, int limit = 20)
     {
         return await _context.LoyaltyPointTransactions

@@ -13,6 +13,7 @@ public interface IOrderHttpService
     Task<ApiResponse<OrderDetailViewModel>> CancelOrderAsync(Guid orderId, string reason, string? accessToken = null);
     Task<ApiResponse<VnPayPaymentResponseViewModel>> GenerateVnPayUrlAsync(Guid orderId, string? returnUrl, string? accessToken = null);
     Task<ApiResponse<VnPayReturnResultViewModel>> ProcessVnPayReturnAsync(string rawQueryString);
+    Task<ApiResponse<VnPayReturnResultViewModel>> SimulateVnPayPaymentAsync(Guid orderId, string? accessToken = null);
     Task<ApiResponse<OrderPaymentViewModel>> ConfirmCashPaymentAsync(Guid orderId, string? transactionCode, string? note, string? accessToken = null);
     Task<List<PosProductItemViewModel>> GetPosProductsAsync();
     Task<List<PosCategoryItemViewModel>> GetPosCategoriesAsync();

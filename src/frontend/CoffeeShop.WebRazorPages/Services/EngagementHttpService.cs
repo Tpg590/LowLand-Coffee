@@ -153,9 +153,21 @@ public class EngagementHttpService : IEngagementHttpService
         return await SendAsync<ValidateVoucherResponseViewModel>(req);
     }
 
+    public async Task<ApiResponse<bool>> ApplyVoucherUsageAsync(ApplyVoucherUsageRequestViewModel request, string? token = null)
+    {
+        var req = CreateRequest(HttpMethod.Post, "/api/vouchers/apply-usage", token, request);
+        return await SendAsync<bool>(req);
+    }
+
     public async Task<ApiResponse<IEnumerable<Guid>>> GetMyUsedVoucherIdsAsync(string? token = null)
     {
         var req = CreateRequest(HttpMethod.Get, "/api/vouchers/my-used-ids", token);
+        return await SendAsync<IEnumerable<Guid>>(req);
+    }
+
+    public async Task<ApiResponse<IEnumerable<Guid>>> GetUserUsedVoucherIdsAsync(Guid userId, string? token = null)
+    {
+        var req = CreateRequest(HttpMethod.Get, $"/api/vouchers/used-ids/{userId}", token);
         return await SendAsync<IEnumerable<Guid>>(req);
     }
 
