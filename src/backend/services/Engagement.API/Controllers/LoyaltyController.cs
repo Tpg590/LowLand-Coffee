@@ -34,7 +34,7 @@ public class LoyaltyController : ControllerBase
     /// Hỗ trợ endpoint: GET /api/loyalty/me
     /// </summary>
     [HttpGet("me")]
-    [Authorize]
+    [Authorize(Roles = "Customer")]
     public async Task<ActionResult<ApiResponse<LoyaltyMemberProfileDto>>> GetMyTier()
     {
         var userId = GetCurrentUserId();
@@ -51,6 +51,7 @@ public class LoyaltyController : ControllerBase
     /// Xem điểm tích lũy & hạng thẻ theo UserId cụ thể (Dành cho Staff/Admin/Internal)
     /// </summary>
     [HttpGet("user/{userId:guid}")]
+    [Authorize(Roles = "Staff,Admin")]
     public async Task<ActionResult<ApiResponse<LoyaltyMemberProfileDto>>> GetUserProfile(Guid userId)
     {
         var profile = await _loyaltyService.GetMemberProfileAsync(userId);
@@ -61,6 +62,7 @@ public class LoyaltyController : ControllerBase
     /// Tích điểm thành viên khi đơn hàng hoàn thành (Gọi từ Order.API hoặc Nhân viên quầy)
     /// </summary>
     [HttpPost("add-points")]
+    [Authorize(Roles = "Staff,Admin")]
     public async Task<ActionResult<ApiResponse<AddPointsResponse>>> AddPoints([FromBody] AddPointsRequest request)
     {
         if (!ModelState.IsValid)
@@ -87,6 +89,7 @@ public class LoyaltyController : ControllerBase
     /// Quy đổi điểm tích lũy để trừ tiền hóa đơn tại quầy hoặc lúc Checkout (1 điểm = 1.000 VNĐ)
     /// </summary>
     [HttpPost("redeem")]
+    [Authorize(Roles = "Customer,Staff,Admin")]
     public async Task<ActionResult<ApiResponse<RedeemPointsResponse>>> RedeemPoints([FromBody] RedeemPointsRequest request)
     {
         if (!ModelState.IsValid)
@@ -122,7 +125,7 @@ public class LoyaltyController : ControllerBase
     /// Lấy lịch sử giao dịch điểm tích lũy của người dùng hiện tại
     /// </summary>
     [HttpGet("transactions")]
-    [Authorize]
+    [Authorize(Roles = "Customer")]
     public async Task<ActionResult<ApiResponse<IEnumerable<PointTransactionDto>>>> GetMyPointTransactions([FromQuery] int limit = 20)
     {
         var userId = GetCurrentUserId();
@@ -139,6 +142,7 @@ public class LoyaltyController : ControllerBase
     /// Lấy lịch sử giao dịch điểm theo UserId cụ thể (Staff / Admin)
     /// </summary>
     [HttpGet("transactions/{userId:guid}")]
+    [Authorize(Roles = "Staff,Admin")]
     public async Task<ActionResult<ApiResponse<IEnumerable<PointTransactionDto>>>> GetUserPointTransactions(Guid userId, [FromQuery] int limit = 20)
     {
         var transactions = await _loyaltyService.GetPointTransactionsAsync(userId, limit);

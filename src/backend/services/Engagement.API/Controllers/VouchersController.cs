@@ -151,6 +151,7 @@ public class VouchersController : ControllerBase
     /// Ghi nhận áp dụng lượt sử dụng Voucher khi đơn hàng thanh toán thành công
     /// </summary>
     [HttpPost("apply-usage")]
+    [Authorize(Roles = "Staff,Admin,Customer")]
     public async Task<ActionResult<ApiResponse<bool>>> ApplyVoucherUsage([FromBody] ApplyVoucherUsageRequest request)
     {
         if (!ModelState.IsValid)
@@ -171,7 +172,7 @@ public class VouchersController : ControllerBase
     /// Lấy danh sách ID các voucher mà người dùng hiện tại đã sử dụng.
     /// </summary>
     [HttpGet("my-used-ids")]
-    [Authorize]
+    [Authorize(Roles = "Customer")]
     public async Task<ActionResult<ApiResponse<IEnumerable<Guid>>>> GetMyUsedVoucherIds()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
