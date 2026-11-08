@@ -193,3 +193,9 @@ Content-Type: image/jpeg
 < ./docs/sample-avatar.png
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
+### =========================================================================
+### 17. ĐĂNG XUẤT TÀI KHOẢN (Logout & Revoke User Tokens)
+### =========================================================================
+POST {{Auth.API_HostAddress}}/api/auth/logout
+Authorization: Bearer {{customerToken}}
+

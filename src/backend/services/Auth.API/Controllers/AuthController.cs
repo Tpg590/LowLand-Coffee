@@ -235,6 +235,25 @@ public class AuthController : ControllerBase
         return StatusCode(result.StatusCode, result);
     }
 
+    /// <summary>
+    /// Chức năng: Đăng xuất người dùng & thu hồi Refresh Token
+    /// </summary>
+    [HttpPost("logout")]
+    [Authorize]
+    [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Logout(CancellationToken cancellationToken)
+    {
+        var userId = GetCurrentUserId();
+        if (!userId.HasValue)
+        {
+            return Unauthorized(ApiResponse<bool>.Fail("Không xác định được danh tính người dùng", 401));
+        }
+
+        var result = await _authService.LogoutAsync(userId.Value, cancellationToken);
+        return StatusCode(result.StatusCode, result);
+    }
+
     private Guid? GetCurrentUserId()
     {
         var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value

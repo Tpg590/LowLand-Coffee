@@ -65,31 +65,33 @@
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-bold-rounded/css/uicons-bold-rounded.css">
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css">
 
-    <!-- Auth Guard: Chỉ cho phép Quản trị viên truy cập -->
-    <script>
-        (function enforceAdminAuth() {
-            try {
-                const userStr = localStorage.getItem('current_user');
-                if (!userStr) {
-                    window.location.replace('/Auth/Login?returnUrl=' + encodeURIComponent(window.location.pathname));
-                    return;
-                }
-                const user = JSON.parse(userStr);
-                const role = (user.role || user.roleName || '').toString().toLowerCase();
-                const isEmailAdmin = user.email && user.email.toLowerCase().includes('admin');
-                const isNameAdmin = user.fullName && user.fullName.toLowerCase().includes('quản trị viên');
-                if (role !== 'admin' && !isEmailAdmin && !isNameAdmin) {
-                    if (role === 'staff' || (user.email && user.email.toLowerCase().includes('staff'))) {
-                        window.location.replace('/Staff/Orders');
-                    } else {
-                        window.location.replace('/Index');
+    <!-- Sync Auth to localStorage if needed by client utilities -->
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        var currentToken = User.FindFirst(CoffeeShop.WebRazorPages.Constants.AuthConstants.AccessTokenClaimType)?.Value
+                         ?? Context.Session.GetString(CoffeeShop.WebRazorPages.Constants.AuthConstants.JwtSessionKey)
+                         ?? Context.Request.Cookies["access_token"] ?? "";
+        var currentEmail = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "";
+        var currentName = User.Identity?.Name ?? "";
+        var currentRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+        var currentId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
+        <script>
+            (function() {
+                try {
+                    if ('@currentToken') {
+                        localStorage.setItem('auth_token', '@currentToken');
                     }
-                }
-            } catch (e) {
-                window.location.replace('/Auth/Login');
-            }
-        })();
-    </script>
+                    localStorage.setItem('current_user', JSON.stringify({
+                        id: '@currentId',
+                        fullName: '@currentName',
+                        email: '@currentEmail',
+                        role: '@currentRole',
+                        roleName: '@currentRole'
+                    }));
+                } catch(e) {}
+            })();
+        </script>
+    }
 
     <!-- Custom Global CSS -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -163,7 +165,7 @@
                         <i class="fi fi-sr-shield-check text-xl"></i>
                     </div>
                     <div class="overflow-hidden">
-                        <div class="text-sm font-bold text-white truncate" id="admin-display-name">Quản Trị Viên</div>
+                        <div class="text-sm font-bold text-white truncate" id="admin-display-name">@(User.Identity?.IsAuthenticated == true ? User.Identity.Name : "Quản Trị Viên")</div>
                         <div class="text-xs text-slate-400 font-medium">Toàn quyền Quản trị</div>
                     </div>
                 </div>
@@ -298,12 +300,7 @@
         function logoutAdmin() {
             localStorage.removeItem('current_user');
             localStorage.removeItem('auth_token');
-            if (typeof showToast === 'function') {
-                showToast('Đăng xuất thành công', 'Đã thoát tài khoản Quản trị viên.', 'info');
-            }
-            setTimeout(() => {
-                window.location.href = '/Auth/Login';
-            }, 500);
+            window.location.href = '/Auth/Logout';
         }
     </script>
 

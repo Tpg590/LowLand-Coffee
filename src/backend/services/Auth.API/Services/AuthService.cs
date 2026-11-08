@@ -291,4 +291,10 @@ public class AuthService : IAuthService
 
         return ApiResponse<bool>.Success(true, "Đổi mật khẩu thành công");
     }
+
+    public Task<ApiResponse<bool>> LogoutAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        _tokenStore.RevokeUserTokens(userId);
+        return Task.FromResult(ApiResponse<bool>.Success(true, "Đăng xuất thành công"));
+    }
 }

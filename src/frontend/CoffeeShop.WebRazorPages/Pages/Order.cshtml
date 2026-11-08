@@ -280,8 +280,8 @@
 
 @section Scripts {
     <script>
-        // Địa chỉ cổng API Gateway tập trung (YARP Reverse Proxy - Cổng 8080)
-        const API_GATEWAY_URL = 'http://localhost:8080';
+        // Đường dẫn tương đối gọi qua YARP Reverse Proxy
+        const API_GATEWAY_URL = '';
         // Biến lưu số tiền giảm giá thực tế sau khi kiểm tra mã voucher
         let appliedDiscount = 0;
         let currentDeliveryAddress = '';
@@ -522,19 +522,7 @@
                 });
                 data = await res.json().catch(() => null);
             } catch (e) {
-                console.warn('API Gateway failed, trying direct Engagement.API...', e);
-            }
-
-            // 2. Dự phòng gọi trực tiếp cổng Engagement.API (5004) nếu gateway chưa khởi động
-            if (!data) {
-                try {
-                    const fallbackRes = await fetch('http://localhost:5004/api/vouchers/validate', {
-                        method: 'POST',
-                        headers,
-                        body: JSON.stringify({ voucherCode: code, orderSubtotal: subtotal })
-                    });
-                    data = await fallbackRes.json().catch(() => null);
-                } catch (e2) {}
+                console.warn('API Gateway failed:', e);
             }
 
             if (data && data.isSuccess && data.data) {

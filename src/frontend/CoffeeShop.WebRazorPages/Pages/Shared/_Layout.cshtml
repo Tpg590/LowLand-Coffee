@@ -154,7 +154,11 @@
                                 </div>
                                 <ul class="py-1.5 text-sm text-gray-700 font-bold" id="dropdown-role-links"></ul>
                                 <div class="py-1">
-                                    <a href="#" onclick="logoutCustomer(); return false;" class="block px-5 py-2.5 text-sm font-bold text-red-highland hover:bg-red-50 flex items-center gap-2">
+                                    <a href="/Auth/Profile" class="block px-5 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                                        <i class="fi fi-rr-user-pen text-gray-500"></i>
+                                        <span>Hồ sơ cá nhân</span>
+                                    </a>
+                                    <a href="/Auth/Logout" class="block px-5 py-2.5 text-sm font-bold text-red-highland hover:bg-red-50 flex items-center gap-2">
                                         <i class="fi fi-rr-sign-out-alt"></i>
                                         <span>Đăng xuất</span>
                                     </a>
@@ -285,6 +289,33 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
 
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        var currentToken = User.FindFirst(CoffeeShop.WebRazorPages.Constants.AuthConstants.AccessTokenClaimType)?.Value
+                         ?? Context.Session.GetString(CoffeeShop.WebRazorPages.Constants.AuthConstants.JwtSessionKey)
+                         ?? Context.Request.Cookies["access_token"] ?? "";
+        var currentEmail = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "";
+        var currentName = User.Identity?.Name ?? "";
+        var currentRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+        var currentId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
+        <script>
+            (function() {
+                try {
+                    if ('@currentToken') {
+                        localStorage.setItem('auth_token', '@currentToken');
+                    }
+                    localStorage.setItem('current_user', JSON.stringify({
+                        id: '@currentId',
+                        fullName: '@currentName',
+                        email: '@currentEmail',
+                        role: '@currentRole',
+                        roleName: '@currentRole'
+                    }));
+                } catch(e) {}
+            })();
+        </script>
+    }
+
     <script>
         function checkNavAuth() {
             try {
@@ -392,9 +423,6 @@
         }
 
         (() => {
-            // Website gọi qua API Gateway. Gateway cần route /api/notifications và /hubs/notifications.
-            const API_BASE = "http://localhost:8080";
-
             const bell = document.getElementById("notification-bell");
             const dropdown = document.getElementById("notification-dropdown");
             const list = document.getElementById("notification-list");
@@ -585,7 +613,7 @@
                 }
 
                 try {
-                    const response = await fetch(`${API_BASE}/api/notifications/inbox`, {
+                    const response = await fetch('/api/notifications/inbox', {
                         headers: { Authorization: `Bearer ${token}` }
                     });
 
@@ -620,7 +648,7 @@
 
                 try {
                     const response = await fetch(
-                        `${API_BASE}/api/notifications/${encodeURIComponent(id)}/read`,
+                        `/api/notifications/${encodeURIComponent(id)}/read`,
                         {
                             method: "PATCH",
                             headers: { Authorization: `Bearer ${token}` }
@@ -666,7 +694,7 @@
 
                 try {
                     const response = await fetch(
-                        `${API_BASE}/api/notifications/${encodeURIComponent(id)}`,
+                        `/api/notifications/${encodeURIComponent(id)}`,
                         {
                             method: "DELETE",
                             headers: { Authorization: `Bearer ${token}` }
@@ -715,7 +743,7 @@
 
                 try {
                     const response = await fetch(
-                        `${API_BASE}/api/notifications/${encodeURIComponent(id)}`,
+                        `/api/notifications/${encodeURIComponent(id)}`,
                         {
                             method: "GET",
                             headers: {
@@ -815,7 +843,7 @@
                 }
 
                 connection = new signalR.HubConnectionBuilder()
-                    .withUrl(`${API_BASE}/hubs/notifications`, {
+                    .withUrl('/hubs/notifications', {
                         accessTokenFactory: () => getToken() || ""
                     })
                     .withAutomaticReconnect()
@@ -931,11 +959,7 @@
                 updateCartBadge();
             }
 
-            if (typeof showToast === 'function') {
-                showToast('Đăng xuất thành công', 'Bạn đã đăng xuất khỏi hệ thống.', 'info');
-            }
-
-            setTimeout(() => window.location.reload(), 400);
+            window.location.href = '/Auth/Logout';
         }
 
         document.addEventListener('DOMContentLoaded', checkNavAuth);

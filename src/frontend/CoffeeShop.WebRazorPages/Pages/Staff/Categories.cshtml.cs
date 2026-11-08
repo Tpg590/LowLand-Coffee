@@ -6,7 +6,7 @@ public class CategoriesModel : PageModel
 {
     private readonly IHttpClientFactory _httpClientFactory;
 
-    public string ApiGatewayBaseUrl { get; private set; } = "http://localhost:8080";
+    public string ApiGatewayBaseUrl { get; private set; } = string.Empty;
 
     public CategoriesModel(IHttpClientFactory httpClientFactory)
     {

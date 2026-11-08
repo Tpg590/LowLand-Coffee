@@ -65,27 +65,33 @@
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-bold-rounded/css/uicons-bold-rounded.css">
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css">
 
-    <!-- Auth Guard: Chỉ cho phép Nhân viên (Staff) và Quản trị viên (Admin) truy cập -->
-    <script>
-        (function enforceStaffAuth() {
-            try {
-                const userStr = localStorage.getItem('current_user');
-                if (!userStr) {
-                    window.location.replace('/Auth/Login?returnUrl=' + encodeURIComponent(window.location.pathname));
-                    return;
-                }
-                const user = JSON.parse(userStr);
-                const role = (user.role || user.roleName || '').toString().toLowerCase();
-                const isEmailStaffOrAdmin = user.email && (user.email.toLowerCase().includes('staff') || user.email.toLowerCase().includes('admin'));
-                const isNameStaffOrAdmin = user.fullName && (user.fullName.toLowerCase().includes('thu ngân') || user.fullName.toLowerCase().includes('quản trị viên'));
-                if (role !== 'staff' && role !== 'admin' && !isEmailStaffOrAdmin && !isNameStaffOrAdmin) {
-                    window.location.replace('/Index');
-                }
-            } catch (e) {
-                window.location.replace('/Auth/Login');
-            }
-        })();
-    </script>
+    <!-- Sync Auth to localStorage if needed by client utilities -->
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        var currentToken = User.FindFirst(CoffeeShop.WebRazorPages.Constants.AuthConstants.AccessTokenClaimType)?.Value
+                         ?? Context.Session.GetString(CoffeeShop.WebRazorPages.Constants.AuthConstants.JwtSessionKey)
+                         ?? Context.Request.Cookies["access_token"] ?? "";
+        var currentEmail = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "";
+        var currentName = User.Identity?.Name ?? "";
+        var currentRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+        var currentId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
+        <script>
+            (function() {
+                try {
+                    if ('@currentToken') {
+                        localStorage.setItem('auth_token', '@currentToken');
+                    }
+                    localStorage.setItem('current_user', JSON.stringify({
+                        id: '@currentId',
+                        fullName: '@currentName',
+                        email: '@currentEmail',
+                        role: '@currentRole',
+                        roleName: '@currentRole'
+                    }));
+                } catch(e) {}
+            })();
+        </script>
+    }
 
     <!-- Custom Global CSS -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -254,12 +260,7 @@
         function logoutStaff() {
             localStorage.removeItem('current_user');
             localStorage.removeItem('auth_token');
-            if (typeof showToast === 'function') {
-                showToast('Đăng xuất thành công', 'Đã đăng xuất khỏi tài khoản nhân viên.', 'info');
-            }
-            setTimeout(() => {
-                window.location.href = '/Auth/Login';
-            }, 600);
+            window.location.href = '/Auth/Logout';
         }
     </script>
 

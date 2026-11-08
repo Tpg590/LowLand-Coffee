@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model CoffeeShop.WebRazorPages.Pages.Admin.UsersModel
 @{
     Layout = "_AdminLayout";
@@ -28,32 +28,59 @@
         </div>
     </div>
 
-    <!-- Search & Filter Controls -->
-    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
+    <!-- Alert Messages -->
+    @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+    {
+        <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-start gap-3">
+            <i class="fi fi-rr-check-circle text-emerald-600 text-lg mt-0.5 flex-shrink-0"></i>
+            <div class="flex-1 font-semibold">@Model.SuccessMessage</div>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-start gap-3">
+            <i class="fi fi-rr-cross-circle text-red-600 text-lg mt-0.5 flex-shrink-0"></i>
+            <div class="flex-1 font-semibold">@Model.ErrorMessage</div>
+        </div>
+    }
+
+    <!-- Search & Filter Controls (Server-Side GET Form) -->
+    <form method="get" class="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
         <div class="w-full sm:w-96 relative">
-            <input type="text" id="search-input" onkeyup="filterUsers()" placeholder="Tìm theo tên, email, số điện thoại..." class="w-full bg-gray-50 border border-gray-300 rounded-xl pl-11 pr-4 py-3 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland placeholder-gray-400" />
+            <input type="text" name="Search" value="@Model.Search" placeholder="Tìm theo tên, email, số điện thoại..." class="w-full bg-gray-50 border border-gray-300 rounded-xl pl-11 pr-4 py-3 text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-red-highland placeholder-gray-400" />
             <span class="absolute left-3.5 top-3.5 text-gray-400 flex items-center">
                 <i class="fi fi-rr-search text-base"></i>
             </span>
         </div>
 
         <div class="flex items-center gap-3 w-full sm:w-auto">
-            <select id="role-filter" onchange="filterUsers()" class="bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-sm font-bold text-gray-800 focus:ring-2 focus:ring-red-highland">
-                <option value="ALL">Tất cả vai trò</option>
-                <option value="Admin">Admin (Quản trị viên)</option>
-                <option value="Staff">Nhân viên</option>
-                <option value="Customer">Khách hàng thành viên</option>
+            <select name="RoleName" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-sm font-bold text-gray-800 focus:ring-2 focus:ring-red-highland">
+                <option value="ALL" selected="@(string.IsNullOrEmpty(Model.RoleName) || Model.RoleName == "ALL")">Tất cả vai trò</option>
+                <option value="Admin" selected="@(Model.RoleName == "Admin")">Admin (Quản trị viên)</option>
+                <option value="Staff" selected="@(Model.RoleName == "Staff")">Nhân viên</option>
+                <option value="Customer" selected="@(Model.RoleName == "Customer")">Khách hàng thành viên</option>
             </select>
 
-            <select id="status-filter" onchange="filterUsers()" class="bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-sm font-bold text-gray-800 focus:ring-2 focus:ring-red-highland">
-                <option value="ALL">Tất cả trạng thái</option>
-                <option value="ACTIVE">Đang hoạt động</option>
-                <option value="INACTIVE">Đã khóa</option>
+            <select name="IsActive" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-sm font-bold text-gray-800 focus:ring-2 focus:ring-red-highland">
+                <option value="" selected="@(!Model.IsActive.HasValue)">Tất cả trạng thái</option>
+                <option value="true" selected="@(Model.IsActive == true)">Đang hoạt động</option>
+                <option value="false" selected="@(Model.IsActive == false)">Đã khóa</option>
             </select>
+
+            <button type="submit" class="px-5 py-3 rounded-xl bg-gray-900 hover:bg-black text-white font-bold text-sm transition">
+                Lọc
+            </button>
+            @if (!string.IsNullOrEmpty(Model.Search) || (!string.IsNullOrEmpty(Model.RoleName) && Model.RoleName != "ALL") || Model.IsActive.HasValue)
+            {
+                <a asp-page="/Admin/Users" class="px-4 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm transition">
+                    Đặt lại
+                </a>
+            }
         </div>
-    </div>
+    </form>
 
-    <!-- Users Table -->
+    <!-- Users Table (Server-side Rendered) -->
     <div class="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm text-gray-700">
@@ -68,26 +95,183 @@
                         <th class="py-4 px-6 text-right">Thao tác</th>
                     </tr>
                 </thead>
-                <tbody id="users-table-body" class="divide-y divide-gray-200 font-medium">
-                    <!-- Populated dynamically via JS -->
+                <tbody class="divide-y divide-gray-200 font-medium">
+                    @if (!Model.Users.Items.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-10 text-gray-400 font-medium text-sm">
+                                Không tìm thấy người dùng phù hợp.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var user in Model.Users.Items)
+                        {
+                            var role = !string.IsNullOrEmpty(user.RoleName) ? user.RoleName : (user.Role ?? "Customer");
+                            <tr class="hover:bg-gray-50 transition">
+                                <td class="py-4 px-6 font-bold text-gray-900 text-sm">
+                                    <div class="flex items-center gap-3">
+                                        @if (!string.IsNullOrEmpty(user.AvatarUrl))
+                                        {
+                                            <img src="@user.AvatarUrl" alt="@user.FullName" class="w-9 h-9 rounded-full object-cover border" />
+                                        }
+                                        else
+                                        {
+                                            <div class="w-9 h-9 rounded-full bg-red-50 text-red-highland font-black flex items-center justify-center text-sm border border-red-200">
+                                                @(!string.IsNullOrEmpty(user.FullName) ? user.FullName.Substring(0, 1).ToUpper() : "U")
+                                            </div>
+                                        }
+                                        <span>@user.FullName</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <div class="text-sm font-semibold text-gray-900">@user.Email</div>
+                                    <div class="text-xs text-gray-500 font-medium">@(user.PhoneNumber ?? "---")</div>
+                                </td>
+                                <td class="py-4 px-6 text-sm text-gray-600 max-w-xs truncate">
+                                    @(user.Address ?? "Chưa cập nhật")
+                                </td>
+                                <td class="py-4 px-6">
+                                    @if (string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200">Admin</span>
+                                    }
+                                    else if (string.Equals(role, "Staff", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-blue-100 text-blue-900 border border-blue-200">Nhân viên</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-100 text-emerald-900 border border-emerald-200">Khách hàng</span>
+                                    }
+                                </td>
+                                <td class="py-4 px-6">
+                                    @if (user.IsActive)
+                                    {
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>Hoạt động
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                            <span class="w-2 h-2 rounded-full bg-rose-500"></span>Đã khóa
+                                        </span>
+                                    }
+                                </td>
+                                <td class="py-4 px-6 text-xs text-gray-500 font-medium">
+                                    @(user.CreatedAt.HasValue ? user.CreatedAt.Value.ToString("dd/MM/yyyy") : "---")
+                                </td>
+                                <td class="py-4 px-6 text-right">
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        <!-- Chỉnh sửa -->
+                                        <button type="button"
+                                                onclick="openEditUserModal('@user.Id', '@Html.Raw(Html.Encode(user.FullName))', '@user.Email', '@user.PhoneNumber', '@Html.Raw(Html.Encode(user.Address ?? ""))')"
+                                                class="p-2 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition" title="Chỉnh sửa thông tin">
+                                            <i class="fi fi-rr-edit text-base"></i>
+                                        </button>
+
+                                        <!-- Khóa / Mở khóa (Server-side POST) -->
+                                        @if (!string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <form method="post" asp-page-handler="ToggleStatus" class="inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@user.Id" />
+                                                <input type="hidden" name="isActive" value="@((!user.IsActive).ToString().ToLower())" />
+                                                <button type="submit"
+                                                        class="p-2 rounded-xl @(user.IsActive ? "text-gray-600 hover:text-amber-600 hover:bg-amber-50" : "text-emerald-600 hover:bg-emerald-50") transition"
+                                                        title="@(user.IsActive ? "Khóa tài khoản" : "Mở khóa tài khoản")">
+                                                    <i class="fi @(user.IsActive ? "fi-rr-lock" : "fi-rr-unlock") text-base"></i>
+                                                </button>
+                                            </form>
+
+                                            <!-- Xóa -->
+                                            <button type="button"
+                                                    onclick="openDeleteModal('@user.Id', '@Html.Raw(Html.Encode(user.FullName))', '@user.Email')"
+                                                    class="p-2 rounded-xl text-gray-400 hover:text-red-highland hover:bg-red-50 transition" title="Xóa tài khoản">
+                                                <i class="fi fi-rr-trash text-base"></i>
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
                 </tbody>
             </table>
         </div>
 
         <!-- Table Footer Pagination -->
         <div class="p-4 sm:p-6 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between text-sm text-gray-600 gap-3">
-            <span id="pagination-info" class="font-semibold">Hiển thị 3 trên tổng 3 người dùng</span>
-            <div class="flex items-center gap-2">
-                <button type="button" class="px-4 py-2 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 font-bold disabled:opacity-50" disabled>Trang trước</button>
-                <button type="button" class="px-4 py-2 rounded-xl bg-red-highland text-white font-bold">1</button>
-                <button type="button" class="px-4 py-2 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 font-bold disabled:opacity-50" disabled>Trang sau</button>
-            </div>
+            <span class="font-semibold">
+                Hiển thị @Model.Users.Items.Count() trên tổng @Model.Users.TotalItems người dùng
+            </span>
+            @if (Model.Users.TotalPages > 1)
+            {
+                <div class="flex items-center gap-2">
+                    @if (Model.PageNumber > 1)
+                    {
+                        <a asp-page="/Admin/Users"
+                           asp-route-pageNumber="@(Model.PageNumber - 1)"
+                           asp-route-search="@Model.Search"
+                           asp-route-roleName="@Model.RoleName"
+                           asp-route-isActive="@Model.IsActive"
+                           class="px-4 py-2 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 font-bold">
+                            Trang trước
+                        </a>
+                    }
+                    else
+                    {
+                        <button type="button" class="px-4 py-2 rounded-xl border border-gray-300 bg-white font-bold opacity-50 cursor-not-allowed" disabled>
+                            Trang trước
+                        </button>
+                    }
+
+                    @for (int p = 1; p <= Model.Users.TotalPages; p++)
+                    {
+                        if (p == Model.PageNumber)
+                        {
+                            <span class="px-4 py-2 rounded-xl bg-red-highland text-white font-bold">@p</span>
+                        }
+                        else
+                        {
+                            <a asp-page="/Admin/Users"
+                               asp-route-pageNumber="@p"
+                               asp-route-search="@Model.Search"
+                               asp-route-roleName="@Model.RoleName"
+                               asp-route-isActive="@Model.IsActive"
+                               class="px-4 py-2 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 font-bold">
+                                @p
+                            </a>
+                        }
+                    }
+
+                    @if (Model.PageNumber < Model.Users.TotalPages)
+                    {
+                        <a asp-page="/Admin/Users"
+                           asp-route-pageNumber="@(Model.PageNumber + 1)"
+                           asp-route-search="@Model.Search"
+                           asp-route-roleName="@Model.RoleName"
+                           asp-route-isActive="@Model.IsActive"
+                           class="px-4 py-2 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 font-bold">
+                            Trang sau
+                        </a>
+                    }
+                    else
+                    {
+                        <button type="button" class="px-4 py-2 rounded-xl border border-gray-300 bg-white font-bold opacity-50 cursor-not-allowed" disabled>
+                            Trang sau
+                        </button>
+                    }
+                </div>
+            }
         </div>
     </div>
 </div>
 
 <!-- ========================================================================= -->
-<!-- Modal 1: Cấp tài khoản Staff mới (Create Staff Account) -->
+<!-- Modal 1: Cấp tài khoản Staff mới (Create Staff Account - Server POST) -->
 <!-- ========================================================================= -->
 <div id="modal-create-staff" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl space-y-6">
@@ -104,52 +288,55 @@
             <button type="button" onclick="closeCreateStaffModal()" class="text-gray-400 hover:text-gray-600 text-lg font-bold">✕</button>
         </div>
 
-        <form id="form-create-staff" onsubmit="handleCreateStaff(event)" class="space-y-4">
+        <form method="post" asp-page-handler="CreateStaff" class="space-y-4">
+            @Html.AntiForgeryToken()
             <div>
-                <label class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Họ và tên nhân viên *</label>
-                <input type="text" id="staff-name" required class="w-full bg-[#F3F4F6] border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-red-highland font-semibold" placeholder="Nguyễn Thu Ngân" />
+                <label asp-for="CreateStaffInput.FullName" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Họ và tên nhân viên *</label>
+                <input asp-for="CreateStaffInput.FullName" required class="w-full bg-[#F3F4F6] border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-red-highland font-semibold" placeholder="Nguyễn Thu Ngân" />
+                <span asp-validation-for="CreateStaffInput.FullName" class="text-xs text-red-600 font-semibold mt-1 block"></span>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Email *</label>
-                    <input type="email" id="staff-email" required class="w-full bg-[#F3F4F6] border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-red-highland font-semibold" placeholder="staff2@lowlandcoffee.com" />
+                    <label asp-for="CreateStaffInput.Email" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Email *</label>
+                    <input asp-for="CreateStaffInput.Email" type="email" required class="w-full bg-[#F3F4F6] border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-red-highland font-semibold" placeholder="staff2@lowlandcoffee.com" />
+                    <span asp-validation-for="CreateStaffInput.Email" class="text-xs text-red-600 font-semibold mt-1 block"></span>
                 </div>
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Số điện thoại *</label>
-                    <input type="tel" id="staff-phone" required class="w-full bg-[#F3F4F6] border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-red-highland font-semibold" placeholder="0902233999" />
+                    <label asp-for="CreateStaffInput.PhoneNumber" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Số điện thoại *</label>
+                    <input asp-for="CreateStaffInput.PhoneNumber" type="tel" required class="w-full bg-[#F3F4F6] border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-red-highland font-semibold" placeholder="0902233999" />
+                    <span asp-validation-for="CreateStaffInput.PhoneNumber" class="text-xs text-red-600 font-semibold mt-1 block"></span>
                 </div>
             </div>
 
             <div>
-                <label class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Địa chỉ làm việc</label>
-                <input type="text" id="staff-address" class="w-full bg-[#F3F4F6] border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-red-highland font-semibold" placeholder="Cửa hàng LowLand Coffee Thủ Đức" />
+                <label asp-for="CreateStaffInput.Address" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Địa chỉ làm việc</label>
+                <input asp-for="CreateStaffInput.Address" class="w-full bg-[#F3F4F6] border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-red-highland font-semibold" placeholder="Cửa hàng LowLand Coffee Thủ Đức" />
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Mật khẩu tài khoản *</label>
-                    <div class="relative">
-                        <input type="text" id="staff-password" required minlength="6" value="Admin@123" placeholder="Nhập mật khẩu (mặc định: Admin@123)" class="w-full bg-[#F3F4F6] border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-red-highland font-semibold" />
-                    </div>
-                    <p class="text-xs text-gray-500 mt-1">Được phép nhập mật khẩu tùy chỉnh hoặc để mặc định Admin@123 (tối thiểu 6 ký tự).</p>
+                    <label asp-for="CreateStaffInput.Password" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Mật khẩu tài khoản *</label>
+                    <input asp-for="CreateStaffInput.Password" required minlength="6" class="w-full bg-[#F3F4F6] border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-red-highland font-semibold" />
+                    <p class="text-xs text-gray-500 mt-1">Mặc định: Admin@123 (tối thiểu 6 ký tự).</p>
+                    <span asp-validation-for="CreateStaffInput.Password" class="text-xs text-red-600 font-semibold mt-1 block"></span>
                 </div>
                 <div>
                     <label class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Vai trò được cấp</label>
-                    <input type="text" readonly value="Nhân viên" class="w-full bg-gray-200 border-0 rounded-xl px-4 py-3 text-base text-gray-700 font-bold" />
+                    <input type="text" readonly value="Nhân viên (Staff)" class="w-full bg-gray-200 border-0 rounded-xl px-4 py-3 text-base text-gray-700 font-bold" />
                 </div>
             </div>
 
             <div class="flex gap-3 pt-4 border-t border-gray-100">
                 <button type="button" onclick="closeCreateStaffModal()" class="flex-1 py-3.5 rounded-xl bg-gray-100 text-gray-700 font-bold text-sm hover:bg-gray-200 transition">Hủy bỏ</button>
-                <button type="submit" id="btn-submit-staff" class="flex-1 py-3.5 rounded-xl bg-red-highland text-white font-bold text-sm hover:bg-red-700 transition">Cấp tài khoản ngay</button>
+                <button type="submit" class="flex-1 py-3.5 rounded-xl bg-red-highland text-white font-bold text-sm hover:bg-red-700 transition">Cấp tài khoản ngay</button>
             </div>
         </form>
     </div>
 </div>
 
 <!-- ========================================================================= -->
-<!-- Modal 2: Chỉnh sửa Người dùng (Update User) -->
+<!-- Modal 2: Chỉnh sửa Người dùng (Update User - Server POST) -->
 <!-- ========================================================================= -->
 <div id="modal-edit-user" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl space-y-6">
@@ -161,27 +348,31 @@
             <button type="button" onclick="closeEditUserModal()" class="text-gray-400 hover:text-gray-600 text-lg font-bold">✕</button>
         </div>
 
-        <form onsubmit="handleUpdateUser(event)" class="space-y-4">
-            <input type="hidden" id="edit-user-id" />
+        <form method="post" asp-page-handler="UpdateUser" class="space-y-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" id="edit-user-id" />
+
             <div>
-                <label class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Họ và tên *</label>
-                <input type="text" id="edit-fullname" required class="w-full bg-[#F3F4F6] border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-red-highland font-semibold" />
+                <label asp-for="UpdateUserInput.FullName" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Họ và tên *</label>
+                <input asp-for="UpdateUserInput.FullName" id="edit-fullname" required class="w-full bg-[#F3F4F6] border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-red-highland font-semibold" />
+                <span asp-validation-for="UpdateUserInput.FullName" class="text-xs text-red-600 font-semibold mt-1 block"></span>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Email</label>
-                    <input type="email" id="edit-email" readonly class="w-full bg-gray-200 border-0 rounded-xl px-4 py-3 text-base text-gray-600 font-bold" />
+                    <input type="email" id="edit-email" readonly class="w-full bg-gray-200 border-0 rounded-xl px-4 py-3 text-base text-gray-600 font-bold cursor-not-allowed" />
                 </div>
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Số điện thoại *</label>
-                    <input type="tel" id="edit-phone" required class="w-full bg-[#F3F4F6] border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-red-highland font-semibold" />
+                    <label asp-for="UpdateUserInput.PhoneNumber" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Số điện thoại</label>
+                    <input asp-for="UpdateUserInput.PhoneNumber" id="edit-phone" class="w-full bg-[#F3F4F6] border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-red-highland font-semibold" />
+                    <span asp-validation-for="UpdateUserInput.PhoneNumber" class="text-xs text-red-600 font-semibold mt-1 block"></span>
                 </div>
             </div>
 
             <div>
-                <label class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Địa chỉ</label>
-                <input type="text" id="edit-address" class="w-full bg-[#F3F4F6] border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-red-highland font-semibold" />
+                <label asp-for="UpdateUserInput.Address" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Địa chỉ</label>
+                <input asp-for="UpdateUserInput.Address" id="edit-address" class="w-full bg-[#F3F4F6] border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-red-highland font-semibold" />
             </div>
 
             <div class="flex gap-3 pt-4 border-t border-gray-100">
@@ -192,7 +383,9 @@
     </div>
 </div>
 
-<!-- Modal Xác nhận xóa người dùng (Thay thế hoàn toàn hộp thoại confirm() của trình duyệt) -->
+<!-- ========================================================================= -->
+<!-- Modal 3: Xác nhận xóa người dùng (Delete User - Server POST) -->
+<!-- ========================================================================= -->
 <div id="modal-confirm-delete" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-gray-100 text-center space-y-4">
         <div class="w-14 h-14 mx-auto rounded-2xl bg-red-100 text-red-highland flex items-center justify-center text-2xl shadow-sm">
@@ -204,401 +397,57 @@
                 Bạn có chắc chắn muốn xóa tài khoản này khỏi hệ thống?
             </p>
         </div>
-        <div class="flex gap-2.5 pt-2">
+        <form method="post" asp-page-handler="DeleteUser" class="flex gap-2.5 pt-2">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" id="delete-user-id" />
             <button type="button" onclick="closeDeleteConfirmModal()" class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 font-bold text-xs hover:bg-gray-200 transition">
                 Hủy bỏ
             </button>
-            <button type="button" onclick="executeDeleteUser()" class="flex-1 py-3 rounded-xl bg-red-highland text-white font-black text-xs hover:bg-red-700 shadow-md transition">
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-red-highland text-white font-black text-xs hover:bg-red-700 shadow-md transition">
                 Xóa ngay
             </button>
-        </div>
+        </form>
     </div>
 </div>
 
 @section Scripts {
+    <partial name="_ValidationScriptsPartial" />
     <script>
-        // Dữ liệu người dùng nạp 100% từ cơ sở dữ liệu Auth.API (Cổng 5001)
-        let initialUsers = [];
-
-        function getUnifiedUsersList() {
-            let list = [...initialUsers];
-
-            // 1. Gộp từ admin_users_list
-            try {
-                const adminSaved = JSON.parse(localStorage.getItem('admin_users_list') || '[]');
-                if (Array.isArray(adminSaved)) {
-                    adminSaved.forEach(u => {
-                        const existing = list.find(x => 
-                            (x.email && u.email && x.email.toLowerCase() === u.email.toLowerCase()) ||
-                            (x.phoneNumber && u.phoneNumber && x.phoneNumber !== '---' && x.phoneNumber === u.phoneNumber)
-                        );
-                        if (!existing) {
-                            list.push(u);
-                        } else {
-                            Object.assign(existing, u);
-                        }
-                    });
-                }
-            } catch (e) {}
-
-            // 2. Gộp từ registered_users (người dùng đã đăng ký hoặc đăng nhập)
-            try {
-                const regSaved = JSON.parse(localStorage.getItem('registered_users') || '[]');
-                if (Array.isArray(regSaved)) {
-                    regSaved.forEach(u => {
-                        const existing = list.find(x => 
-                            (x.email && u.email && x.email.toLowerCase() === u.email.toLowerCase()) ||
-                            (x.phoneNumber && (u.phoneNumber || u.phone) && x.phoneNumber !== '---' && x.phoneNumber === (u.phoneNumber || u.phone))
-                        );
-                        if (!existing) {
-                            list.push({
-                                id: u.id || 'cust-' + Date.now(),
-                                fullName: u.fullName || 'Khách hàng',
-                                email: u.email,
-                                phoneNumber: u.phoneNumber || u.phone || '---',
-                                address: u.address || 'Chưa cập nhật',
-                                role: u.role || 'Customer',
-                                isActive: u.isActive !== false,
-                                createdAt: u.createdAt || new Date().toISOString().slice(0, 10)
-                            });
-                        }
-                    });
-                }
-            } catch (e) {}
-
-            // 3. Gộp tài khoản đang đăng nhập hiện tại (current_user) nếu chưa có trong danh sách
-            try {
-                const currUser = JSON.parse(localStorage.getItem('current_user') || 'null');
-                if (currUser && (currUser.email || currUser.phoneNumber || currUser.phone)) {
-                    const existing = list.find(x => 
-                        (currUser.email && x.email && x.email.toLowerCase() === currUser.email.toLowerCase()) ||
-                        ((currUser.phoneNumber || currUser.phone) && x.phoneNumber !== '---' && x.phoneNumber === (currUser.phoneNumber || currUser.phone))
-                    );
-                    if (!existing) {
-                        list.push({
-                            id: currUser.id || 'usr-' + Date.now(),
-                            fullName: currUser.fullName || 'Người dùng mới',
-                            email: currUser.email || '',
-                            phoneNumber: currUser.phoneNumber || currUser.phone || '---',
-                            address: currUser.address || 'TP. Hồ Chí Minh',
-                            role: currUser.role || currUser.roleName || 'Customer',
-                            isActive: true,
-                            createdAt: new Date().toISOString().slice(0, 10)
-                        });
-                    }
-                }
-            } catch (e) {}
-
-            localStorage.setItem('admin_users_list', JSON.stringify(list));
-            return list;
-        }
-
-        let usersData = getUnifiedUsersList();
-
-        function saveUsersState() {
-            localStorage.setItem('admin_users_list', JSON.stringify(usersData));
-        }
-
-        // Tải danh sách người dùng trực tiếp từ Auth.API (Cổng 5001 - SQL Server thật)
-        async function loadUsersFromApi() {
-            try {
-                const token = localStorage.getItem('auth_token');
-                const res = await fetch('http://localhost:8080/api/users?pageSize=100', {
-                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    const items = data.data?.items || data.data || [];
-                    if (Array.isArray(items)) {
-                        usersData = items.map(apiU => ({
-                            id: apiU.id,
-                            fullName: apiU.fullName,
-                            email: apiU.email,
-                            phoneNumber: apiU.phoneNumber || '---',
-                            address: apiU.address || 'Chưa cập nhật',
-                            role: apiU.roleName || apiU.role || 'Customer',
-                            isActive: apiU.isActive !== false,
-                            createdAt: apiU.createdAt ? apiU.createdAt.slice(0, 10) : '2026-10-11'
-                        }));
-                        localStorage.removeItem('admin_users_list');
-                    }
-                }
-            } catch (e) {
-                console.error('Auth.API chưa khởi động hoặc lỗi mạng:', e);
-            }
-            filterUsers();
-        }
-
-        function renderUsersTable(usersToRender) {
-            const tbody = document.getElementById('users-table-body');
-            tbody.innerHTML = '';
-
-            if (usersToRender.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-gray-400 font-medium text-sm">Không tìm thấy người dùng phù hợp.</td></tr>`;
-                document.getElementById('pagination-info').textContent = `Hiển thị 0 người dùng`;
-                return;
-            }
-
-            usersToRender.forEach(user => {
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-gray-50 transition';
-
-                const roleBadge = user.role === 'Admin'
-                    ? '<span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200">Admin</span>'
-                    : user.role === 'Staff'
-                    ? '<span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-blue-100 text-blue-900 border border-blue-200">Nhân viên</span>'
-                    : '<span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-100 text-emerald-900 border border-emerald-200">Khách hàng</span>';
-
-                const statusBadge = user.isActive
-                    ? '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>Hoạt động</span>'
-                    : '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200"><span class="w-2 h-2 rounded-full bg-rose-500"></span>Đã khóa</span>';
-
-                tr.innerHTML = `
-                    <td class="py-4 px-6 font-bold text-gray-900 text-sm">
-                        <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-full bg-gray-100 text-gray-700 font-black flex items-center justify-center text-sm border">
-                                ${(user.fullName ? user.fullName[0] : 'U').toUpperCase()}
-                            </div>
-                            <span>${user.fullName}</span>
-                        </div>
-                    </td>
-                    <td class="py-4 px-6">
-                        <div class="text-sm font-semibold text-gray-900">${user.email}</div>
-                        <div class="text-xs text-gray-500 font-medium">${user.phoneNumber}</div>
-                    </td>
-                    <td class="py-4 px-6 text-sm text-gray-600 max-w-xs truncate">${user.address || 'Chưa cập nhật'}</td>
-                    <td class="py-4 px-6">${roleBadge}</td>
-                    <td class="py-4 px-6">${statusBadge}</td>
-                    <td class="py-4 px-6 text-xs text-gray-500 font-medium">${user.createdAt}</td>
-                    <td class="py-4 px-6 text-right">
-                        <div class="flex items-center justify-end gap-1.5">
-                            <button type="button" onclick="openEditUserModal('${user.id}')" class="p-2 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition" title="Chỉnh sửa thông tin">
-                                <i class="fi fi-rr-edit text-base"></i>
-                            </button>
-                            <button type="button" onclick="toggleUserStatus('${user.id}')" class="p-2 rounded-xl ${user.isActive ? 'text-gray-600 hover:text-amber-600 hover:bg-amber-50' : 'text-emerald-600 hover:bg-emerald-50'} transition" title="${user.isActive ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}">
-                                ${user.isActive
-                                    ? '<i class="fi fi-rr-lock text-base"></i>'
-                                    : '<i class="fi fi-rr-unlock text-base"></i>'
-                                }
-                            </button>
-                            ${user.role !== 'Admin' ? `
-                                <button type="button" onclick="deleteUser('${user.id}')" class="p-2 rounded-xl text-gray-400 hover:text-red-highland hover:bg-red-50 transition" title="Xóa tài khoản">
-                                    <i class="fi fi-rr-trash text-base"></i>
-                                </button>
-                            ` : ''}
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            document.getElementById('pagination-info').textContent = `Hiển thị ${usersToRender.length} trên tổng ${usersData.length} người dùng`;
-        }
-
-        function filterUsers() {
-            const keyword = document.getElementById('search-input').value.toLowerCase().trim();
-            const roleFilter = document.getElementById('role-filter').value;
-            const statusFilter = document.getElementById('status-filter').value;
-
-            const filtered = usersData.filter(u => {
-                const matchKeyword = u.fullName.toLowerCase().includes(keyword) ||
-                                     u.email.toLowerCase().includes(keyword) ||
-                                     u.phoneNumber.toLowerCase().includes(keyword);
-
-                const matchRole = roleFilter === 'ALL' || u.role === roleFilter;
-
-                const matchStatus = statusFilter === 'ALL' ||
-                                    (statusFilter === 'ACTIVE' && u.isActive) ||
-                                    (statusFilter === 'INACTIVE' && !u.isActive);
-
-                return matchKeyword && matchRole && matchStatus;
-            });
-
-            renderUsersTable(filtered);
-        }
-
         function openCreateStaffModal() {
-            document.getElementById('modal-create-staff').classList.remove('hidden');
-            document.getElementById('modal-create-staff').classList.add('flex');
+            const m = document.getElementById('modal-create-staff');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
         }
 
         function closeCreateStaffModal() {
-            document.getElementById('modal-create-staff').classList.add('hidden');
-            document.getElementById('modal-create-staff').classList.remove('flex');
+            const m = document.getElementById('modal-create-staff');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
         }
 
-        async function handleCreateStaff(e) {
-            e.preventDefault();
-            const fullName = document.getElementById('staff-name').value.trim();
-            const email = document.getElementById('staff-email').value.trim();
-            const phoneNumber = document.getElementById('staff-phone').value.trim();
-            const address = document.getElementById('staff-address').value.trim();
-            const password = document.getElementById('staff-password').value.trim() || 'Admin@123';
+        function openEditUserModal(id, fullName, email, phone, address) {
+            document.getElementById('edit-user-id').value = id;
+            document.getElementById('edit-fullname').value = fullName;
+            document.getElementById('edit-email').value = email;
+            document.getElementById('edit-phone').value = (phone && phone !== '---') ? phone : '';
+            document.getElementById('edit-address').value = (address && address !== 'Chưa cập nhật') ? address : '';
 
-            const btn = document.getElementById('btn-submit-staff');
-            btn.disabled = true;
-            btn.innerHTML = `<svg class="inline animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Đang cấp tài khoản...`;
-
-            try {
-                const token = localStorage.getItem('auth_token');
-                if (!token) {
-                    showToast('Lỗi xác thực', 'Bạn cần đăng nhập tài khoản Quản trị viên (Admin) để cấp tài khoản!', 'error');
-                    return;
-                }
-
-                const res = await fetch('http://localhost:8080/api/users/staff', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ fullName, email, phoneNumber, address, password })
-                });
-
-                const data = await res.json().catch(() => null);
-
-                if (!res.ok) {
-                    const errMsg = data?.message || (data?.errors && Object.values(data.errors).flat().join(', ')) || 'Không thể tạo tài khoản nhân viên.';
-                    showToast('Cấp tài khoản thất bại', errMsg, 'error');
-                    return;
-                }
-
-                closeCreateStaffModal();
-                const formEl = document.getElementById('form-create-staff');
-                if (formEl) formEl.reset();
-                const passInput = document.getElementById('staff-password');
-                if (passInput) passInput.value = 'Admin@123';
-                showToast('Cấp tài khoản thành công', `Đã tạo tài khoản cho nhân viên ${fullName} với mật khẩu: ${password}`, 'success');
-                await loadUsersFromApi();
-            } catch (err) {
-                console.error('Lỗi khi tạo nhân viên:', err);
-                showToast('Lỗi thao tác', err?.message || 'Không thể kết nối đến máy chủ Auth.API (Cổng 5001)', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'Cấp tài khoản ngay';
-            }
-        }
-
-        function openEditUserModal(id) {
-            const user = usersData.find(u => u.id === id);
-            if (!user) return;
-
-            document.getElementById('edit-user-id').value = user.id;
-            document.getElementById('edit-fullname').value = user.fullName;
-            document.getElementById('edit-email').value = user.email;
-            document.getElementById('edit-phone').value = user.phoneNumber;
-            document.getElementById('edit-address').value = user.address || '';
-
-            document.getElementById('modal-edit-user').classList.remove('hidden');
-            document.getElementById('modal-edit-user').classList.add('flex');
+            const m = document.getElementById('modal-edit-user');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
         }
 
         function closeEditUserModal() {
-            document.getElementById('modal-edit-user').classList.add('hidden');
-            document.getElementById('modal-edit-user').classList.remove('flex');
+            const m = document.getElementById('modal-edit-user');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
         }
 
-        async function handleUpdateUser(e) {
-            e.preventDefault();
-            const id = document.getElementById('edit-user-id').value;
-            const fullName = document.getElementById('edit-fullname').value.trim();
-            const phoneNumber = document.getElementById('edit-phone').value.trim();
-            const address = document.getElementById('edit-address').value.trim();
-
-            const user = usersData.find(u => u.id === id);
-            if (user) {
-                user.fullName = fullName;
-                user.phoneNumber = phoneNumber;
-                user.address = address;
-                saveUsersState();
-                filterUsers();
-                closeEditUserModal();
-
-                // Lưu cập nhật trực tiếp vào cơ sở dữ liệu Auth.API
-                try {
-                    const token = localStorage.getItem('auth_token');
-                    await fetch(`http://localhost:8080/api/users/${id}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': token ? `Bearer ${token}` : ''
-                        },
-                        body: JSON.stringify({ fullName, phoneNumber, address })
-                    });
-                } catch (apiErr) {
-                    console.warn('Lỗi lưu CSDL qua API:', apiErr);
-                }
-
-                // Cập nhật current_user nếu sửa chính tài khoản đang đăng nhập
-                try {
-                    const currUser = JSON.parse(localStorage.getItem('current_user') || 'null');
-                    if (currUser && (currUser.id === id || currUser.email === user.email)) {
-                        currUser.fullName = fullName;
-                        currUser.phoneNumber = phoneNumber;
-                        currUser.address = address;
-                        localStorage.setItem('current_user', JSON.stringify(currUser));
-                    }
-                } catch (e) {}
-
-                showToast('Cập nhật thành công', `Đã lưu thông tin tài khoản ${fullName}.`, 'success');
-            }
-        }
-
-        async function toggleUserStatus(id) {
-            const user = usersData.find(u => u.id === id);
-            if (!user) return;
-
-            if (user.role === 'Admin') {
-                showToast('Thao tác không được phép', 'Không thể khóa tài khoản Quản trị viên!', 'warning');
-                return;
-            }
-
-            const newStatus = !user.isActive;
-            const token = localStorage.getItem('auth_token');
-
-            try {
-                const res = await fetch(`http://localhost:8080/api/users/${id}/status`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': token ? `Bearer ${token}` : ''
-                    },
-                    body: JSON.stringify({ isActive: newStatus })
-                });
-
-                const data = await res.json().catch(() => null);
-
-                if (!res.ok) {
-                    const msg = (data && data.message) || 'Không thể cập nhật trạng thái người dùng.';
-                    showToast('Lỗi cập nhật', msg, 'error');
-                    return;
-                }
-
-                user.isActive = newStatus;
-                filterUsers();
-                const statusText = newStatus ? 'mở khóa' : 'khóa';
-                showToast('Thay đổi trạng thái', `Đã ${statusText} tài khoản ${user.fullName} thành công!`, 'success');
-            } catch (err) {
-                console.error('Lỗi khóa/mở khóa tài khoản:', err);
-                showToast('Lỗi kết nối', 'Không thể kết nối đến máy chủ Auth.API để thay đổi trạng thái', 'error');
-            }
-        }
-
-        let pendingDeleteUserId = null;
-
-        function deleteUser(id) {
-            const user = usersData.find(u => u.id === id);
-            if (!user) return;
-
-            if (user.role === 'Admin') {
-                showToast('Thao tác không được phép', 'Không thể xóa tài khoản Quản trị viên!', 'warning');
-                return;
-            }
-
-            pendingDeleteUserId = id;
+        function openDeleteModal(id, fullName, email) {
+            document.getElementById('delete-user-id').value = id;
             const textEl = document.getElementById('delete-confirm-text');
             if (textEl) {
-                textEl.innerHTML = `Bạn có chắc chắn muốn xóa tài khoản <strong>"${user.fullName}"</strong> (${user.email})?`;
+                textEl.innerHTML = `Bạn có chắc chắn muốn xóa tài khoản <strong>"${fullName}"</strong> (${email})?`;
             }
             const modal = document.getElementById('modal-confirm-delete');
             modal.classList.remove('hidden');
@@ -606,49 +455,9 @@
         }
 
         function closeDeleteConfirmModal() {
-            pendingDeleteUserId = null;
             const modal = document.getElementById('modal-confirm-delete');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
         }
-
-        async function executeDeleteUser() {
-            if (!pendingDeleteUserId) return;
-            const user = usersData.find(u => u.id === pendingDeleteUserId);
-            const userName = user ? user.fullName : '';
-            const idToDelete = pendingDeleteUserId;
-            const token = localStorage.getItem('auth_token');
-
-            try {
-                const res = await fetch(`http://localhost:8080/api/users/${idToDelete}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': token ? `Bearer ${token}` : ''
-                    }
-                });
-
-                const data = await res.json().catch(() => null);
-
-                if (!res.ok) {
-                    const msg = (data && data.message) || 'Không thể xóa tài khoản khỏi hệ thống.';
-                    showToast('Lỗi xóa tài khoản', msg, 'error');
-                    closeDeleteConfirmModal();
-                    return;
-                }
-
-                usersData = usersData.filter(u => u.id !== idToDelete);
-                closeDeleteConfirmModal();
-                filterUsers();
-                showToast('Đã xóa thành công', `Đã xóa tài khoản "${userName}" vĩnh viễn khỏi hệ thống.`, 'success');
-            } catch (err) {
-                console.error('Lỗi xóa tài khoản:', err);
-                closeDeleteConfirmModal();
-                showToast('Lỗi kết nối', 'Không thể kết nối đến máy chủ Auth.API để xóa tài khoản', 'error');
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            loadUsersFromApi();
-        });
     </script>
 }
