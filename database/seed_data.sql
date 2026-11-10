@@ -213,7 +213,7 @@ END
 IF NOT EXISTS (SELECT 1 FROM dbo.loyalty_members WHERE id = @Member1)
 BEGIN
     INSERT INTO dbo.loyalty_members (id, user_id, tier_id, current_points, total_accumulated_points, created_at, updated_at)
-    VALUES (@Member1, @CustomerIdEngage, @TierSilver, 120, 150, DATEADD(MONTH, -1, GETDATE()), GETDATE());
+    VALUES (@Member1, @CustomerIdEngage, @TierBronze, 120, 150, DATEADD(MONTH, -1, GETDATE()), GETDATE());
 
     INSERT INTO dbo.loyalty_point_transactions (id, member_id, order_id, transaction_type, points_changed, balance_after, reason, created_at)
     VALUES

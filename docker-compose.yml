@@ -9,6 +9,8 @@ services:
       - ACCEPT_EULA=Y
       - "MSSQL_SA_PASSWORD=${DB_PASSWORD:?DB_PASSWORD must be defined in .env}"
       - "MSSQL_PID=${MSSQL_PID:?MSSQL_PID must be defined in .env}"
+    ports:
+      - "1433:1433"
     volumes:
       - sqlserver-data:/var/opt/mssql
       - ./database:/database

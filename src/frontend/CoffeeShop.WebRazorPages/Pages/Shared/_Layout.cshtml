@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,7 +12,9 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap"
+        rel="stylesheet">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -53,9 +56,11 @@
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
+    <link rel="stylesheet"
+        href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-bold-rounded/css/uicons-bold-rounded.css">
-    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css">
+    <link rel="stylesheet"
+        href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-rounded/css/uicons-solid-rounded.css">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 
@@ -66,10 +71,12 @@
             <div class="w-full flex justify-between items-center">
                 <div class="flex items-center gap-2.5">
                     <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span class="text-sm sm:text-base font-semibold">Chào mừng bạn đến với LowLand Coffee - Tự hào cà phê Việt</span>
+                    <span class="text-sm sm:text-base font-semibold">Chào mừng bạn đến với LowLand Coffee - Tự hào cà
+                        phê Việt</span>
                 </div>
                 <div class="flex items-center gap-6 text-sm sm:text-base">
-                    <a href="#store-locator" class="flex items-center gap-2 hover:text-amber-200 transition font-semibold">
+                    <a href="#store-locator"
+                        class="flex items-center gap-2 hover:text-amber-200 transition font-semibold">
                         <i class="fi fi-rr-marker text-sm"></i>
                         <span>Tìm cửa hàng</span>
                     </a>
@@ -86,35 +93,37 @@
         <nav class="border-gray-200 px-4 sm:px-8 lg:px-12 py-3.5 w-full">
             <div class="flex flex-wrap justify-between items-center w-full">
                 <a asp-page="/Index" class="flex items-center gap-3.5 group">
-                    <img src="~/images/logo.jpg" alt="LowLand Coffee" class="w-13 h-13 sm:w-14 sm:h-14 object-contain rounded-full shadow-lg border-2 border-amber-100 bg-amber-50 group-hover:scale-105 transition-transform" />
+                    <img src="~/images/logo.jpg" alt="LowLand Coffee"
+                        class="w-13 h-13 sm:w-14 sm:h-14 object-contain rounded-full shadow-lg border-2 border-amber-100 bg-amber-50 group-hover:scale-105 transition-transform" />
                     <div class="flex flex-col">
-                        <span class="self-center text-2xl sm:text-3xl font-black whitespace-nowrap text-white tracking-wide">LOWLAND</span>
-                        <span class="text-xs uppercase font-black tracking-widest text-amber-200 -mt-0.5">Coffee &amp; Tea</span>
+                        <span
+                            class="self-center text-2xl sm:text-3xl font-black whitespace-nowrap text-white tracking-wide">LOWLAND</span>
+                        <span class="text-xs uppercase font-black tracking-widest text-amber-200 -mt-0.5">Coffee &amp;
+                            Tea</span>
                     </div>
                 </a>
 
                 <div class="flex items-center lg:order-2 gap-3.5">
                     <!-- Notification Bell -->
                     <div id="notification-wrapper" class="relative">
-                        <button id="notification-bell"
-                                type="button"
-                                class="relative p-3 rounded-full bg-red-700/70 hover:bg-red-700 text-white transition flex items-center justify-center shadow-md"
-                                aria-label="Thông báo"
-                                aria-expanded="false"
-                                title="Thông báo">
+                        <button id="notification-bell" type="button"
+                            class="relative p-3 rounded-full bg-red-700/70 hover:bg-red-700 text-white transition flex items-center justify-center shadow-md"
+                            aria-label="Thông báo" aria-expanded="false" title="Thông báo">
                             <i class="fi fi-rr-bell text-xl"></i>
                             <span id="notification-unread-count"
-                                  class="hidden absolute -top-1 -right-1 min-w-5 h-5 px-1 bg-amber-300 text-red-950 text-xs font-black rounded-full items-center justify-center shadow-md">0</span>
+                                class="hidden absolute -top-1 -right-1 min-w-5 h-5 px-1 bg-amber-300 text-red-950 text-xs font-black rounded-full items-center justify-center shadow-md">0</span>
                         </button>
 
                         <div id="notification-dropdown"
-                             class="hidden absolute right-0 top-full mt-3 w-[min(90vw,380px)] bg-white rounded-2xl shadow-2xl border border-gray-100 z-[60] overflow-hidden">
+                            class="hidden absolute right-0 top-full mt-3 w-[min(90vw,380px)] bg-white rounded-2xl shadow-2xl border border-gray-100 z-[60] overflow-hidden">
                             <div class="flex items-center justify-between px-4 py-3 border-b bg-gray-50">
                                 <div>
                                     <h3 class="font-black text-gray-900">Thông báo</h3>
-                                    <p id="notification-subtitle" class="text-xs text-gray-500 mt-0.5">Các cập nhật mới nhất</p>
+                                    <p id="notification-subtitle" class="text-xs text-gray-500 mt-0.5">Các cập nhật mới
+                                        nhất</p>
                                 </div>
-                                <button id="notification-refresh" type="button" class="text-sm font-bold text-red-highland hover:underline">Làm mới</button>
+                                <button id="notification-refresh" type="button"
+                                    class="text-sm font-bold text-red-highland hover:underline">Làm mới</button>
                             </div>
 
                             <div id="notification-list" class="max-h-[380px] overflow-y-auto divide-y divide-gray-100">
@@ -122,43 +131,58 @@
                             </div>
 
                             <div class="px-4 py-3 border-t bg-gray-50 text-center">
-                                <span id="notification-connection-status" class="text-xs text-gray-500">Đang kết nối...</span>
+                                <span id="notification-connection-status" class="text-xs text-gray-500">Đang kết
+                                    nối...</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Cart Button -->
-                    <a asp-page="/Order" class="relative p-3 rounded-full bg-red-700/70 hover:bg-red-700 text-white transition flex items-center justify-center shadow-md" title="Xem giỏ hàng &amp; Đặt hàng">
+                    <a asp-page="/Order"
+                        class="relative p-3 rounded-full bg-red-700/70 hover:bg-red-700 text-white transition flex items-center justify-center shadow-md"
+                        title="Xem giỏ hàng &amp; Đặt hàng">
                         <i class="fi fi-rr-shopping-bag text-xl"></i>
-                        <span class="cart-badge absolute -top-1 -right-1 bg-amber-300 text-red-900 text-xs font-black w-5 h-5 rounded-full flex items-center justify-center shadow-md" style="display: none;">0</span>
+                        <span
+                            class="cart-badge absolute -top-1 -right-1 bg-amber-300 text-red-900 text-xs font-black w-5 h-5 rounded-full flex items-center justify-center shadow-md"
+                            style="display: none;">0</span>
                     </a>
 
                     <!-- Account / User Dropdown -->
                     <div id="nav-auth-container" class="relative">
-                        <a asp-page="/Auth/Login" id="btn-nav-login" class="inline-flex items-center gap-2.5 text-white bg-red-800/90 hover:bg-red-800 font-extrabold rounded-full text-base px-5 py-2.5 text-center transition shadow-md">
+                        <a asp-page="/Auth/Login" id="btn-nav-login"
+                            class="inline-flex items-center gap-2.5 text-white bg-red-800/90 hover:bg-red-800 font-extrabold rounded-full text-base px-5 py-2.5 text-center transition shadow-md">
                             <i class="fi fi-rr-user text-base"></i>
                             <span>Tài khoản / Đăng nhập</span>
                         </a>
 
                         <div id="nav-user-badge" class="hidden items-center gap-2">
-                            <button id="userDropdownButton" data-dropdown-toggle="userDropdown" class="inline-flex items-center gap-2.5 text-white bg-red-800 hover:bg-red-900 font-extrabold rounded-full text-base px-5 py-2.5 shadow-md border border-red-600 transition" type="button">
-                                <span class="w-7 h-7 rounded-full bg-amber-300 text-red-900 font-black flex items-center justify-center text-sm shadow-sm" id="user-avatar-initial">U</span>
+                            <button id="userDropdownButton" data-dropdown-toggle="userDropdown"
+                                class="inline-flex items-center gap-2.5 text-white bg-red-800 hover:bg-red-900 font-extrabold rounded-full text-base px-5 py-2.5 shadow-md border border-red-600 transition"
+                                type="button">
+                                <span
+                                    class="w-7 h-7 rounded-full bg-amber-300 text-red-900 font-black flex items-center justify-center text-sm shadow-sm"
+                                    id="user-avatar-initial">U</span>
                                 <span id="nav-username" class="max-w-[130px] truncate text-base">Khách</span>
                                 <i class="fi fi-rr-angle-small-down text-base ml-0.5"></i>
                             </button>
 
-                            <div id="userDropdown" class="z-50 hidden my-4 text-base list-none bg-white divide-y divide-gray-100 rounded-2xl shadow-2xl w-64 border border-gray-100">
+                            <div id="userDropdown"
+                                class="z-50 hidden my-4 text-base list-none bg-white divide-y divide-gray-100 rounded-2xl shadow-2xl w-64 border border-gray-100">
                                 <div class="px-5 py-3.5 bg-gray-50/90 rounded-t-2xl">
-                                    <span class="block text-base font-black text-gray-900" id="dropdown-full-name">Tài khoản</span>
-                                    <span class="block text-xs text-gray-500 font-semibold truncate mt-0.5" id="dropdown-role">Vai trò: Khách hàng</span>
+                                    <span class="block text-base font-black text-gray-900" id="dropdown-full-name">Tài
+                                        khoản</span>
+                                    <span class="block text-xs text-gray-500 font-semibold truncate mt-0.5"
+                                        id="dropdown-role">Vai trò: Khách hàng</span>
                                 </div>
                                 <ul class="py-1.5 text-sm text-gray-700 font-bold" id="dropdown-role-links"></ul>
                                 <div class="py-1">
-                                    <a href="/Auth/Profile" class="block px-5 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                                    <a href="/Auth/Profile"
+                                        class="block px-5 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 flex items-center gap-2">
                                         <i class="fi fi-rr-user-pen text-gray-500"></i>
                                         <span>Hồ sơ cá nhân</span>
                                     </a>
-                                    <a href="/Auth/Logout" onclick="logoutCustomer(); return false;" class="block px-5 py-2.5 text-sm font-bold text-red-highland hover:bg-red-50 flex items-center gap-2">
+                                    <a href="/Auth/Logout" onclick="logoutCustomer(); return false;"
+                                        class="block px-5 py-2.5 text-sm font-bold text-red-highland hover:bg-red-50 flex items-center gap-2">
                                         <i class="fi fi-rr-sign-out-alt"></i>
                                         <span>Đăng xuất</span>
                                     </a>
@@ -167,7 +191,9 @@
                         </div>
                     </div>
 
-                    <button data-collapse-toggle="mobile-menu-2" type="button" class="inline-flex items-center p-2.5 ml-1 text-sm text-white rounded-xl lg:hidden hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400" aria-controls="mobile-menu-2" aria-expanded="false">
+                    <button data-collapse-toggle="mobile-menu-2" type="button"
+                        class="inline-flex items-center p-2.5 ml-1 text-sm text-white rounded-xl lg:hidden hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400"
+                        aria-controls="mobile-menu-2" aria-expanded="false">
                         <span class="sr-only">Mở menu</span>
                         <i class="fi fi-rr-menu-burger text-xl"></i>
                     </button>
@@ -175,19 +201,31 @@
 
                 <!-- Navigation Links -->
                 <div class="hidden justify-between items-center w-full lg:flex lg:w-auto lg:order-1" id="mobile-menu-2">
-                    <ul class="flex flex-col mt-4 font-bold text-base lg:text-lg lg:flex-row lg:space-x-8 lg:mt-0 items-center">
-                        <li><a asp-page="/Index" class="block py-2 pr-4 pl-3 text-white border-b border-red-700 lg:border-0 lg:p-0 hover:text-amber-200 transition">Trang chủ</a></li>
-                        <li><a href="/Index#menu" class="block py-2 pr-4 pl-3 text-white/90 border-b border-red-700 lg:border-0 lg:p-0 hover:text-amber-200 transition">Thực đơn</a></li>
+                    <ul
+                        class="flex flex-col mt-4 font-bold text-base lg:text-lg lg:flex-row lg:space-x-8 lg:mt-0 items-center">
+                        <li><a asp-page="/Index"
+                                class="block py-2 pr-4 pl-3 text-white border-b border-red-700 lg:border-0 lg:p-0 hover:text-amber-200 transition">Trang
+                                chủ</a></li>
+                        <li><a href="/Index#menu"
+                                class="block py-2 pr-4 pl-3 text-white/90 border-b border-red-700 lg:border-0 lg:p-0 hover:text-amber-200 transition">Thực
+                                đơn</a></li>
                         <li>
-                            <a asp-page="/Order" class="block py-2 pr-4 pl-3 text-amber-200 font-black border-b border-red-700 lg:border-0 lg:p-0 hover:text-white transition flex items-center gap-1.5">
+                            <a asp-page="/Order"
+                                class="block py-2 pr-4 pl-3 text-amber-200 font-black border-b border-red-700 lg:border-0 lg:p-0 hover:text-white transition flex items-center gap-1.5">
                                 <span>Đặt hàng Online</span>
-                                <span class="bg-amber-300 text-red-950 text-xs px-2 py-0.5 rounded-full font-black uppercase">Hot</span>
+                                <span
+                                    class="bg-amber-300 text-red-950 text-xs px-2 py-0.5 rounded-full font-black uppercase">Hot</span>
                             </a>
                         </li>
-                        <li><a href="/Customer/Vouchers" class="block py-2 pr-4 pl-3 text-white/90 border-b border-red-700 lg:border-0 lg:p-0 hover:text-amber-200 transition">Ưu đãi &amp; Voucher</a></li>
-                        <li><a href="/Customer/Loyalty" class="block py-2 pr-4 pl-3 text-white/90 border-b border-red-700 lg:border-0 lg:p-0 hover:text-amber-200 transition">Thành viên</a></li>
-                        <li><a href="/Index#promotions" class="block py-2 pr-4 pl-3 text-white/90 border-b border-red-700 lg:border-0 lg:p-0 hover:text-amber-200 transition">Khuyến mãi</a></li>
-                        <li><a href="/Index#news" class="block py-2 pr-4 pl-3 text-white/90 border-b border-red-700 lg:border-0 lg:p-0 hover:text-amber-200 transition">Tin tức</a></li>
+                        <li><a href="/Customer/Vouchers"
+                                class="block py-2 pr-4 pl-3 text-white/90 border-b border-red-700 lg:border-0 lg:p-0 hover:text-amber-200 transition">Ưu
+                                đãi &amp; Voucher</a></li>
+                        <li><a href="/Customer/Loyalty"
+                                class="block py-2 pr-4 pl-3 text-white/90 border-b border-red-700 lg:border-0 lg:p-0 hover:text-amber-200 transition">Thành
+                                viên</a></li>
+                        <li><a href="/Index#news"
+                                class="block py-2 pr-4 pl-3 text-white/90 border-b border-red-700 lg:border-0 lg:p-0 hover:text-amber-200 transition">Tin
+                                tức</a></li>
                     </ul>
                 </div>
             </div>
@@ -204,10 +242,12 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
                 <div>
                     <div class="flex items-center gap-3 mb-4">
-                        <img src="~/images/logo.jpg" alt="LowLand Coffee" class="w-10 h-10 object-contain rounded-full bg-amber-50 shadow-sm border border-amber-200" />
+                        <img src="~/images/logo.jpg" alt="LowLand Coffee"
+                            class="w-10 h-10 object-contain rounded-full bg-amber-50 shadow-sm border border-amber-200" />
                         <span class="text-lg font-bold tracking-wide">LowLand Coffee</span>
                     </div>
-                    <div class="inline-flex items-center gap-2 bg-red-800/80 hover:bg-red-800 px-3 py-2 rounded-lg text-xs font-medium cursor-pointer border border-red-700 transition">
+                    <div
+                        class="inline-flex items-center gap-2 bg-red-800/80 hover:bg-red-800 px-3 py-2 rounded-lg text-xs font-medium cursor-pointer border border-red-700 transition">
                         <i class="fi fi-rr-marker text-amber-300 text-sm"></i>
                         <span>Tp. Hồ Chí Minh</span>
                         <span class="text-white/60 ml-1 text-[10px]">(Change location)</span>
@@ -220,9 +260,11 @@
                 <div>
                     <h3 class="text-sm font-bold uppercase tracking-wider text-amber-200 mb-4">Về chúng tôi</h3>
                     <ul class="space-y-2.5 text-xs text-white/80">
-                        <li><a href="#" class="hover:text-white hover:underline transition">Lịch sử LowLand Coffee</a></li>
+                        <li><a href="#" class="hover:text-white hover:underline transition">Lịch sử LowLand Coffee</a>
+                        </li>
                         <li><a href="#" class="hover:text-white hover:underline transition">Hạt cà phê di sản</a></li>
-                        <li><a href="#" class="hover:text-white hover:underline transition">Sứ mệnh &amp; Giá trị cốt lõi</a></li>
+                        <li><a href="#" class="hover:text-white hover:underline transition">Sứ mệnh &amp; Giá trị cốt
+                                lõi</a></li>
                         <li><a href="#" class="hover:text-white hover:underline transition">Cơ hội nghề nghiệp</a></li>
                     </ul>
                 </div>
@@ -230,25 +272,34 @@
                 <div>
                     <h3 class="text-sm font-bold uppercase tracking-wider text-amber-200 mb-4">Dịch vụ khách hàng</h3>
                     <ul class="space-y-2.5 text-xs text-white/80">
-                        <li><a href="#" class="hover:text-white hover:underline transition">Câu chuyện thương hiệu</a></li>
-                        <li><a href="#store-locator" class="hover:text-white hover:underline transition">Hệ thống cửa hàng</a></li>
-                        <li><a href="#" class="hover:text-white hover:underline transition">Chính sách giao hàng tận nơi</a></li>
-                        <li><a href="#" class="hover:text-white hover:underline transition">Điều khoản &amp; Bảo mật thông tin</a></li>
+                        <li><a href="#" class="hover:text-white hover:underline transition">Câu chuyện thương hiệu</a>
+                        </li>
+                        <li><a href="#store-locator" class="hover:text-white hover:underline transition">Hệ thống cửa
+                                hàng</a></li>
+                        <li><a href="#" class="hover:text-white hover:underline transition">Chính sách giao hàng tận
+                                nơi</a></li>
+                        <li><a href="#" class="hover:text-white hover:underline transition">Điều khoản &amp; Bảo mật
+                                thông tin</a></li>
                     </ul>
                 </div>
 
                 <div>
                     <h3 class="text-sm font-bold uppercase tracking-wider text-amber-200 mb-4">Liên kết nhanh</h3>
                     <ul class="space-y-2.5 text-xs text-white/80">
-                        <li><a asp-page="/Order" class="hover:text-white hover:underline transition">Đặt món trực tuyến</a></li>
-                        <li><a href="/Customer/Loyalty" class="hover:text-white hover:underline transition">Thẻ thành viên &amp; Điểm thưởng</a></li>
-                        <li><a href="/Customer/Vouchers" class="hover:text-white hover:underline transition">Kho voucher ưu đãi</a></li>
-                        <li><a href="tel:19001755" class="hover:text-amber-200 font-bold transition">Tổng đài hỗ trợ: 1900 1755</a></li>
+                        <li><a asp-page="/Order" class="hover:text-white hover:underline transition">Đặt món trực
+                                tuyến</a></li>
+                        <li><a href="/Customer/Loyalty" class="hover:text-white hover:underline transition">Thẻ thành
+                                viên &amp; Điểm thưởng</a></li>
+                        <li><a href="/Customer/Vouchers" class="hover:text-white hover:underline transition">Kho voucher
+                                ưu đãi</a></li>
+                        <li><a href="tel:19001755" class="hover:text-amber-200 font-bold transition">Tổng đài hỗ trợ:
+                                1900 1755</a></li>
                     </ul>
                 </div>
             </div>
 
-            <div class="pt-8 border-t border-red-700/60 flex flex-col sm:flex-row justify-between items-center text-xs text-white/60 gap-4">
+            <div
+                class="pt-8 border-t border-red-700/60 flex flex-col sm:flex-row justify-between items-center text-xs text-white/60 gap-4">
                 <p>&copy; 2026 LowLand Coffee. Tự hào hương vị cà phê di sản Việt Nam. Tất cả quyền được bảo lưu.</p>
                 <div class="flex items-center gap-4">
                     <span class="hover:text-white cursor-pointer">Chính sách bảo mật</span>
@@ -261,20 +312,25 @@
 
     <!-- Notification Detail Modal -->
     <div id="notification-detail-modal"
-         class="hidden fixed inset-0 z-[100] items-center justify-center bg-black/50 p-4">
+        class="hidden fixed inset-0 z-[100] items-center justify-center bg-black/50 p-4">
         <div class="w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden">
             <div class="flex items-center justify-between border-b px-5 py-4">
                 <h3 class="text-lg font-black text-gray-900">Chi tiết thông báo</h3>
-                <button id="notification-detail-close" type="button" class="text-2xl text-gray-500 hover:text-red-600" aria-label="Đóng">&times;</button>
+                <button id="notification-detail-close" type="button" class="text-2xl text-gray-500 hover:text-red-600"
+                    aria-label="Đóng">&times;</button>
             </div>
             <div class="p-5">
                 <h4 id="notification-detail-title" class="text-base font-bold text-gray-900"></h4>
                 <p id="notification-detail-time" class="mt-2 text-xs text-gray-500"></p>
-                <div id="notification-detail-message" class="mt-4 whitespace-pre-line break-words text-sm leading-7 text-gray-700"></div>
+                <div id="notification-detail-message"
+                    class="mt-4 whitespace-pre-line break-words text-sm leading-7 text-gray-700"></div>
             </div>
             <div class="flex justify-end gap-3 border-t bg-gray-50 px-5 py-4">
-                <button id="notification-detail-mark-read" type="button" class="rounded-lg bg-green-600 px-4 py-2 text-sm font-bold text-white hover:bg-green-700">Đánh dấu đã đọc</button>
-                <button id="notification-detail-done" type="button" class="rounded-lg bg-gray-200 px-4 py-2 text-sm font-bold text-gray-800 hover:bg-gray-300">Đóng</button>
+                <button id="notification-detail-mark-read" type="button"
+                    class="rounded-lg bg-green-600 px-4 py-2 text-sm font-bold text-white hover:bg-green-700">Đánh dấu
+                    đã đọc</button>
+                <button id="notification-detail-done" type="button"
+                    class="rounded-lg bg-gray-200 px-4 py-2 text-sm font-bold text-gray-800 hover:bg-gray-300">Đóng</button>
             </div>
         </div>
     </div>
@@ -286,8 +342,8 @@
     @if (User.Identity?.IsAuthenticated == true)
     {
         var currentToken = User.FindFirst(CoffeeShop.WebRazorPages.Constants.AuthConstants.AccessTokenClaimType)?.Value
-                         ?? Context.Session.GetString(CoffeeShop.WebRazorPages.Constants.AuthConstants.JwtSessionKey)
-                         ?? Context.Request.Cookies["access_token"] ?? "";
+        ?? Context.Session.GetString(CoffeeShop.WebRazorPages.Constants.AuthConstants.JwtSessionKey)
+        ?? Context.Request.Cookies["access_token"] ?? "";
         var currentEmail = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "";
         var currentName = User.Identity?.Name ?? "";
         var currentRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
@@ -302,23 +358,23 @@
             roleName = currentRole
         });
         <script>
-            (function() {
-                try {
-                    const tk = @Html.Raw(serializedToken);
-                    const usr = @Html.Raw(serializedUser);
-                    if (tk) {
-                        localStorage.setItem('auth_token', tk);
-                        localStorage.setItem('access_token', tk);
-                    }
-                    localStorage.setItem('current_user', JSON.stringify(usr));
-                } catch(e) {}
-            })();
+                (function () {
+                    try {
+                        const tk = @Html.Raw(serializedToken);
+                        const usr = @Html.Raw(serializedUser);
+                        if (tk) {
+                            localStorage.setItem('auth_token', tk);
+                            localStorage.setItem('access_token', tk);
+                        }
+                        localStorage.setItem('current_user', JSON.stringify(usr));
+                    } catch (e) { }
+                })();
         </script>
     }
     else
     {
         <script>
-            (function() {
+            (function () {
                 try {
                     localStorage.removeItem('auth_token');
                     localStorage.removeItem('access_token');
@@ -330,7 +386,7 @@
                     sessionStorage.removeItem('current_user');
                     document.cookie = 'access_token=; Max-Age=0; path=/; SameSite=Lax';
                     document.cookie = 'refresh_token=; Max-Age=0; path=/; SameSite=Lax';
-                } catch(e) {}
+                } catch (e) { }
             })();
         </script>
     }
@@ -986,7 +1042,7 @@
                 sessionStorage.removeItem('refresh_token');
                 document.cookie = 'access_token=; Max-Age=0; path=/; SameSite=Lax';
                 document.cookie = 'refresh_token=; Max-Age=0; path=/; SameSite=Lax';
-            } catch (e) {}
+            } catch (e) { }
 
             if (typeof updateCartBadge === 'function') {
                 updateCartBadge();
@@ -1000,4 +1056,5 @@
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>
+
 </html>

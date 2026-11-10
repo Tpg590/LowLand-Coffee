@@ -48,7 +48,8 @@ public class EmailService : IEmailService
             using var client = new SmtpClient(smtpHost, smtpPort)
             {
                 EnableSsl = enableSsl,
-                Credentials = new NetworkCredential(userName, password)
+                UseDefaultCredentials = false,
+                Credentials = new NetworkCredential(userName, password?.Trim().Replace(" ", ""))
             };
 
             var mailMessage = new MailMessage
