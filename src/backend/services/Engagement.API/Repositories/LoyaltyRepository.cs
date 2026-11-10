@@ -4,6 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Engagement.API.Repositories;
 
+/// <summary>
+/// Triển khai repository truy xuất dữ liệu chương trình khách hàng thân thiết bằng Entity Framework Core.
+/// </summary>
 public class LoyaltyRepository : ILoyaltyRepository
 {
     private readonly EngagementDbContext _context;

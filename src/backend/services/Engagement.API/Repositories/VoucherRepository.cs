@@ -4,6 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Engagement.API.Repositories;
 
+/// <summary>
+/// Triển khai repository truy xuất dữ liệu Voucher và lượt sử dụng bằng Entity Framework Core.
+/// </summary>
 public class VoucherRepository : IVoucherRepository
 {
     private readonly EngagementDbContext _context;
@@ -69,9 +72,6 @@ public class VoucherRepository : IVoucherRepository
             .CountAsync(u => u.VoucherId == voucherId && u.UserId == userId);
     }
 
-    /// <summary>
-    /// Lấy danh sách ID các voucher mà người dùng đã từng sử dụng.
-    /// </summary>
     public async Task<IEnumerable<Guid>> GetUsedVoucherIdsByUserAsync(Guid userId)
     {
         return await _context.PromoVoucherUsages

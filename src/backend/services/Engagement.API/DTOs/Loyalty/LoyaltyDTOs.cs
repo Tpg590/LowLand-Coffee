@@ -2,6 +2,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Engagement.API.DTOs.Loyalty;
 
+/// <summary>
+/// DTO thông tin hạng thành viên và các quyền lợi.
+/// </summary>
 public class LoyaltyTierDto
 {
     public Guid Id { get; set; }
@@ -13,6 +16,9 @@ public class LoyaltyTierDto
     public string? BenefitsDescription { get; set; }
 }
 
+/// <summary>
+/// DTO hồ sơ khách hàng thân thiết kèm tiến trình nâng hạng.
+/// </summary>
 public class LoyaltyMemberProfileDto
 {
     public Guid UserId { get; set; }
@@ -27,6 +33,9 @@ public class LoyaltyMemberProfileDto
     public string? BenefitsDescription { get; set; }
 }
 
+/// <summary>
+/// DTO yêu cầu tích điểm sau khi hoàn tất đơn hàng.
+/// </summary>
 public class AddPointsRequest
 {
     [Required]
@@ -41,6 +50,9 @@ public class AddPointsRequest
     public string? Reason { get; set; }
 }
 
+/// <summary>
+/// DTO kết quả sau khi tích điểm thành công.
+/// </summary>
 public class AddPointsResponse
 {
     public Guid UserId { get; set; }
@@ -51,6 +63,9 @@ public class AddPointsResponse
     public bool DidTierUpgrade { get; set; }
 }
 
+/// <summary>
+/// DTO yêu cầu quy đổi điểm tích lũy thành tiền giảm giá.
+/// </summary>
 public class RedeemPointsRequest
 {
     [Required]
@@ -62,14 +77,20 @@ public class RedeemPointsRequest
     public int PointsToRedeem { get; set; }
 }
 
+/// <summary>
+/// DTO kết quả quy đổi điểm thành tiền giảm giá.
+/// </summary>
 public class RedeemPointsResponse
 {
     public Guid UserId { get; set; }
     public int PointsRedeemed { get; set; }
-    public decimal DiscountAmount { get; set; } // 1 điểm = 1.000 VNĐ
+    public decimal DiscountAmount { get; set; }
     public int RemainingPoints { get; set; }
 }
 
+/// <summary>
+/// DTO thông tin lịch sử giao dịch biến động điểm.
+/// </summary>
 public class PointTransactionDto
 {
     public Guid Id { get; set; }

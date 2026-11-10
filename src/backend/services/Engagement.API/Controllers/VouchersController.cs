@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Engagement.API.Controllers;
 
+/// <summary>
+/// Controller quản lý danh mục và nghiệp vụ áp dụng Voucher khuyến mãi.
+/// </summary>
 [ApiController]
 [Route("api/vouchers")]
 [Authorize]
@@ -20,8 +23,9 @@ public class VouchersController : ControllerBase
     }
 
     /// <summary>
-    /// Lấy danh sách Voucher đang còn hiệu lực công khai
+    /// Lấy danh sách các voucher đang có hiệu lực công khai.
     /// </summary>
+    /// <returns>Danh sách voucher hợp lệ để hiển thị cho khách hàng.</returns>
     [HttpGet]
     [AllowAnonymous]
     public async Task<ActionResult<ApiResponse<IEnumerable<VoucherDto>>>> GetActiveVouchers()
@@ -31,8 +35,9 @@ public class VouchersController : ControllerBase
     }
 
     /// <summary>
-    /// Lấy toàn bộ danh sách Voucher cho quản trị viên (Admin)
+    /// Lấy toàn bộ danh sách voucher trong hệ thống (dành cho Admin quản lý).
     /// </summary>
+    /// <returns>Danh sách tất cả voucher bao gồm cả mã chưa kích hoạt hoặc đã hết hạn.</returns>
     [HttpGet("all")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ApiResponse<IEnumerable<VoucherDto>>>> GetAllVouchersForAdmin()
@@ -42,8 +47,10 @@ public class VouchersController : ControllerBase
     }
 
     /// <summary>
-    /// Lấy chi tiết một Voucher theo ID
+    /// Lấy thông tin chi tiết của một voucher theo mã định danh (ID).
     /// </summary>
+    /// <param name="id">Mã định danh của voucher.</param>
+    /// <returns>Thông tin chi tiết của voucher.</returns>
     [HttpGet("{id:guid}")]
     [AllowAnonymous]
     public async Task<ActionResult<ApiResponse<VoucherDto>>> GetVoucherById(Guid id)
@@ -58,8 +65,10 @@ public class VouchersController : ControllerBase
     }
 
     /// <summary>
-    /// Tạo mới Voucher (Admin)
+    /// Tạo mới một mã voucher khuyến mãi trong hệ thống.
     /// </summary>
+    /// <param name="request">Thông tin cấu hình voucher mới.</param>
+    /// <returns>Thông tin voucher vừa được tạo.</returns>
     [HttpPost]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ApiResponse<VoucherDto>>> CreateVoucher([FromBody] CreateVoucherRequest request)
@@ -81,8 +90,11 @@ public class VouchersController : ControllerBase
     }
 
     /// <summary>
-    /// Cập nhật thông tin Voucher (Admin)
+    /// Cập nhật thông tin cấu hình của một voucher đã có.
     /// </summary>
+    /// <param name="id">Mã định danh của voucher cần cập nhật.</param>
+    /// <param name="request">Thông tin cập nhật của voucher.</param>
+    /// <returns>Thông tin voucher sau khi cập nhật.</returns>
     [HttpPut("{id:guid}")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ApiResponse<VoucherDto>>> UpdateVoucher(Guid id, [FromBody] UpdateVoucherRequest request)
@@ -102,8 +114,10 @@ public class VouchersController : ControllerBase
     }
 
     /// <summary>
-    /// Vô hiệu hóa hoặc Xóa Voucher (Admin)
+    /// Xóa hoặc vô hiệu hóa voucher khỏi hệ thống.
     /// </summary>
+    /// <param name="id">Mã định danh của voucher cần xóa.</param>
+    /// <returns>Trạng thái thực hiện xóa/vô hiệu hóa.</returns>
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ApiResponse<bool>>> DeleteVoucher(Guid id)
@@ -118,9 +132,10 @@ public class VouchersController : ControllerBase
     }
 
     /// <summary>
-    /// Kiểm tra mã Voucher hợp lệ cho đơn hàng tại màn hình Checkout hoặc quầy POS
-    /// Phân quyền bằng Annotation: Customer và Staff
+    /// Kiểm tra và thẩm định tính hợp lệ của mã voucher cho đơn hàng cụ thể.
     /// </summary>
+    /// <param name="request">Thông tin mã voucher, giá trị đơn hàng và khách hàng.</param>
+    /// <returns>Kết quả thẩm định kèm số tiền được giảm giá.</returns>
     [HttpPost("validate")]
     [Authorize(Roles = "Customer,Staff")]
     public async Task<ActionResult<ApiResponse<ValidateVoucherResponse>>> ValidateVoucher([FromBody] ValidateVoucherRequest request)
@@ -130,7 +145,6 @@ public class VouchersController : ControllerBase
             return BadRequest(ApiResponse<ValidateVoucherResponse>.Failure("Dữ liệu không hợp lệ", 400, ModelState));
         }
 
-        // Tự động gán UserId từ JWT/Header nếu request chưa truyền UserId cụ thể
         if ((!request.UserId.HasValue || request.UserId.Value == Guid.Empty) && User.Identity?.IsAuthenticated == true)
         {
             var userIdClaim = Request.Headers["X-User-Id"].FirstOrDefault()
@@ -152,9 +166,10 @@ public class VouchersController : ControllerBase
     }
 
     /// <summary>
-    /// Ghi nhận áp dụng lượt sử dụng Voucher khi tạo đơn hàng thành công
-    /// Phân quyền bằng Annotation: Customer và Staff
+    /// Ghi nhận lượt sử dụng voucher khi đơn hàng được tạo hoặc thanh toán thành công.
     /// </summary>
+    /// <param name="request">Thông tin đơn hàng và mã voucher đã áp dụng.</param>
+    /// <returns>Trạng thái ghi nhận lượt sử dụng.</returns>
     [HttpPost("apply-usage")]
     [Authorize(Roles = "Customer,Staff")]
     public async Task<ActionResult<ApiResponse<bool>>> ApplyVoucherUsage([FromBody] ApplyVoucherUsageRequest request)
@@ -174,9 +189,9 @@ public class VouchersController : ControllerBase
     }
 
     /// <summary>
-    /// Lấy danh sách ID các voucher mà người dùng hiện tại đã sử dụng.
-    /// Phân quyền bằng Annotation: Customer và Staff
+    /// Lấy danh sách ID các voucher mà người dùng hiện tại đã từng sử dụng.
     /// </summary>
+    /// <returns>Danh sách ID các voucher đã dùng.</returns>
     [HttpGet("my-used-ids")]
     [Authorize(Roles = "Customer,Staff")]
     public async Task<ActionResult<ApiResponse<IEnumerable<Guid>>>> GetMyUsedVoucherIds()
@@ -194,9 +209,10 @@ public class VouchersController : ControllerBase
     }
 
     /// <summary>
-    /// Lấy danh sách ID các voucher mà một khách hàng cụ thể (userId) đã sử dụng (Phục vụ Staff POS tra cứu SĐT).
-    /// Phân quyền bằng Annotation: Customer, Staff, Admin
+    /// Lấy danh sách ID các voucher mà một khách hàng cụ thể đã sử dụng (dành cho Nhân viên quầy tra cứu theo khách hàng).
     /// </summary>
+    /// <param name="userId">Mã định danh khách hàng.</param>
+    /// <returns>Danh sách ID các voucher khách hàng đã dùng.</returns>
     [HttpGet("used-ids/{userId:guid}")]
     [Authorize(Roles = "Customer,Staff,Admin")]
     public async Task<ActionResult<ApiResponse<IEnumerable<Guid>>>> GetUsedVoucherIdsByUser(Guid userId)

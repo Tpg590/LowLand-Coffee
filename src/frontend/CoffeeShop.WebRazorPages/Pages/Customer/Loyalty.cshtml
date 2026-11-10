@@ -677,8 +677,15 @@
         let transactionsData = [];
         let memberProfile = null;
 
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
         async function fetchFromGateway(endpoint, options = {}) {
-            const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
+            const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token') || getCookie('access_token');
             const headers = {
                 'Content-Type': 'application/json',
                 ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
@@ -686,7 +693,7 @@
             };
 
             try {
-                const res = await fetch(`${API_GATEWAY_URL}${endpoint}`, { credentials: 'omit', ...options, headers });
+                const res = await fetch(`${API_GATEWAY_URL}${endpoint}`, { credentials: 'include', ...options, headers });
                 if (res.ok) {
                     return await res.json();
                 }
@@ -721,13 +728,13 @@
             } else {
                 const defaultProfile = {
                     tierCode: 'BRONZE',
-                    tierName: 'Đồng',
-                    currentPoints: 85,
-                    totalAccumulatedPoints: 85,
+                    tierName: 'Hạng Đồng',
+                    currentPoints: 0,
+                    totalAccumulatedPoints: 0,
                     pointMultiplier: 1.0,
                     discountPercent: 0,
-                    nextTierName: 'Bạc',
-                    pointsNeededForNextTier: 415
+                    nextTierName: 'Hạng Bạc',
+                    pointsNeededForNextTier: 500
                 };
                 renderMemberProfile(defaultProfile);
             }
@@ -778,37 +785,12 @@
 
         async function loadPointTransactions() {
             const json = await fetchFromGateway('/api/loyalty/transactions?limit=20');
-            if (json && json.isSuccess && Array.isArray(json.data) && json.data.length > 0) {
+            if (json && json.isSuccess && Array.isArray(json.data)) {
                 transactionsData = json.data;
                 renderTransactionsTable(transactionsData);
             } else {
-                transactionsData = [
-                    {
-                        id: '1',
-                        transactionType: 'EARN',
-                        pointsChanged: 25,
-                        balanceAfter: 85,
-                        reason: 'Tích điểm đơn hàng hoàn tất #LL-89214',
-                        createdAt: new Date(Date.now() - 3600000 * 24).toISOString()
-                    },
-                    {
-                        id: '2',
-                        transactionType: 'REDEEM',
-                        pointsChanged: -20,
-                        balanceAfter: 60,
-                        reason: 'Đổi điểm giảm giá thanh toán đơn #LL-78103',
-                        createdAt: new Date(Date.now() - 3600000 * 48).toISOString()
-                    },
-                    {
-                        id: '3',
-                        transactionType: 'EARN',
-                        pointsChanged: 80,
-                        balanceAfter: 80,
-                        reason: 'Tích điểm đơn hàng khai trương #LL-62190',
-                        createdAt: new Date(Date.now() - 3600000 * 120).toISOString()
-                    }
-                ];
-                renderTransactionsTable(transactionsData);
+                transactionsData = [];
+                renderTransactionsTable([]);
             }
         }
 
