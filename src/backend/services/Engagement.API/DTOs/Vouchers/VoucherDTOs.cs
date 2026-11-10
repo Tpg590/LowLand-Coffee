@@ -32,6 +32,7 @@ public class CreateVoucherRequest
 {
     [Required(ErrorMessage = "Mã voucher không được để trống")]
     [MaxLength(50)]
+    [RegularExpression(@"^[A-Z0-9]+$", ErrorMessage = "Mã voucher chỉ được bao gồm chữ in hoa tiếng Anh và chữ số, không chứa khoảng trắng hay ký tự đặc biệt.")]
     public string Code { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Tiêu đề không được để trống")]

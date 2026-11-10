@@ -46,6 +46,8 @@ public class VoucherService : IVoucherService
     /// </summary>
     public async Task<VoucherDto> CreateVoucherAsync(CreateVoucherRequest request)
     {
+        request.Code = (request.Code ?? string.Empty).Trim().ToUpperInvariant();
+
         var existing = await _voucherRepository.GetVoucherByCodeAsync(request.Code);
         if (existing != null)
         {
@@ -67,6 +69,12 @@ public class VoucherService : IVoucherService
     {
         var voucher = await _voucherRepository.GetVoucherByIdAsync(id);
         if (voucher == null) return null;
+
+        // Validation nghiệp vụ: Không được giảm tổng số lượng phát hành xuống dưới số lượng đã sử dụng
+        if (request.TotalQuantity < voucher.UsedQuantity)
+        {
+            throw new InvalidOperationException($"Số lượng phát hành tối thiểu phải từ {voucher.UsedQuantity} (bằng số lượt khách đã sử dụng).");
+        }
 
         voucher.Title = request.Title.Trim();
         voucher.Description = request.Description?.Trim();

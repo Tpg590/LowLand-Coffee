@@ -104,13 +104,20 @@ public class VouchersController : ControllerBase
             return BadRequest(ApiResponse<VoucherDto>.Failure("Dữ liệu đầu vào không hợp lệ", 400, ModelState));
         }
 
-        var updated = await _voucherService.UpdateVoucherAsync(id, request);
-        if (updated == null)
+        try
         {
-            return NotFound(ApiResponse<VoucherDto>.Failure("Không tìm thấy voucher để cập nhật", 404));
-        }
+            var updated = await _voucherService.UpdateVoucherAsync(id, request);
+            if (updated == null)
+            {
+                return NotFound(ApiResponse<VoucherDto>.Failure("Không tìm thấy voucher để cập nhật", 404));
+            }
 
-        return Ok(ApiResponse<VoucherDto>.Success(updated, "Cập nhật voucher thành công"));
+            return Ok(ApiResponse<VoucherDto>.Success(updated, "Cập nhật voucher thành công"));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<VoucherDto>.Failure(ex.Message, 400));
+        }
     }
 
     /// <summary>

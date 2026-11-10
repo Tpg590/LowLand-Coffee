@@ -3,6 +3,7 @@
 @{
     Layout = "_Layout";
     ViewData["Title"] = "Kho Voucher & Ưu Đãi - LowLand Coffee";
+    var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
 }
 
 <!-- Hero Banner Section -->
@@ -71,6 +72,32 @@
 <!-- Main Body -->
 <div class="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-12 space-y-12">
 
+    @if (!isAuthenticated)
+    {
+        <!-- Guest Notice Banner -->
+        <div class="bg-gradient-to-r from-amber-50 via-orange-50 to-red-50 border-2 border-amber-300/80 rounded-3xl p-6 sm:p-8 shadow-md flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-5">
+                <div class="w-16 h-16 rounded-2xl bg-amber-400/20 text-amber-700 border border-amber-300 flex items-center justify-center text-3xl shrink-0 shadow-inner">
+                    <i class="fi fi-sr-lock"></i>
+                </div>
+                <div class="space-y-1 text-center md:text-left">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-200/60 text-amber-900 text-xs font-black uppercase tracking-wider">
+                        <i class="fi fi-sr-info"></i>
+                        <span>Yêu cầu đăng nhập</span>
+                    </div>
+                    <h3 class="text-xl sm:text-2xl font-black text-gray-900">Chức năng săn & áp dụng Voucher</h3>
+                    <p class="text-sm text-gray-600 font-medium">Chức năng này chỉ có thể dùng sau khi đăng nhập. Hãy đăng nhập tài khoản LowLand Coffee để lưu mã ưu đãi và áp dụng giảm giá trực tiếp cho đơn hàng!</p>
+                </div>
+            </div>
+            <div class="shrink-0 flex items-center gap-3 w-full md:w-auto justify-center">
+                <a href="/Auth/Login?ReturnUrl=/Customer/Vouchers" class="px-8 py-3.5 rounded-2xl bg-red-highland hover:bg-red-700 text-white font-black text-sm shadow-lg transition transform active:scale-95 flex items-center gap-2">
+                    <i class="fi fi-sr-sign-in-alt"></i>
+                    <span>Đăng Nhập Ngay</span>
+                </a>
+            </div>
+        </div>
+    }
+
     <!-- Search & Filter Controls -->
     <div class="bg-white p-5 sm:p-7 rounded-3xl border border-gray-200 shadow-sm flex flex-col md:flex-row gap-5 items-center justify-between">
         <!-- Search Input -->
@@ -93,7 +120,7 @@
                 Giảm tiền mặt
             </button>
             <button type="button" onclick="setFilterCategory('ACTIVE_ONLY')" id="filter-chip-active_only" class="px-5 py-2.5 rounded-xl text-xs font-black bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
-                Chưa sử dụng
+                Còn lượt dùng
             </button>
         </div>
     </div>
@@ -115,8 +142,41 @@
             </span>
         </div>
 
-        <!-- Grid thẻ Voucher thoáng đãng -->
-        <div id="vouchers-container" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Unified Empty State Container (Chỉ hiển thị 1 thông báo duy nhất) -->
+        <div id="vouchers-empty-state" class="@(Model.Vouchers.Any() ? "hidden" : "") bg-white rounded-3xl p-12 text-center border border-gray-200 shadow-sm space-y-4 max-w-lg mx-auto">
+            <div class="w-16 h-16 mx-auto rounded-full bg-red-50 text-red-highland flex items-center justify-center text-3xl">
+                <i class="fi fi-sr-ticket"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-lg font-black text-gray-900" id="empty-state-title">
+                    @(Model.Vouchers.Any() ? "Không có mã ưu đãi khả dụng" : "Chưa có mã ưu đãi nào")
+                </h3>
+                <p class="text-sm text-gray-500" id="empty-state-desc">
+                    @(Model.Vouchers.Any() 
+                        ? "Bạn đã sử dụng hết các voucher này hoặc không có mã nào phù hợp với điều kiện tìm kiếm." 
+                        : "Hiện tại hệ thống chưa phát hành voucher mới hoặc dịch vụ đang bảo trì. Bạn vui lòng quay lại sau nhé!")
+                </p>
+            </div>
+            <div class="pt-2">
+                @if (Model.Vouchers.Any())
+                {
+                    <button type="button" onclick="setFilterCategory('ALL'); document.getElementById('voucher-search-input').value = ''; filterVouchers();" class="px-6 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs transition">
+                        Xem tất cả
+                    </button>
+                }
+                else
+                {
+                    <button type="button" onclick="location.reload()" class="px-6 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs transition">
+                        Tải lại trang
+                    </button>
+                }
+            </div>
+        </div>
+
+        @if (Model.Vouchers.Any())
+        {
+            <!-- Grid thẻ Voucher thoáng đãng -->
+            <div id="vouchers-container" class="grid grid-cols-1 md:grid-cols-2 gap-8">
             @foreach (var v in Model.Vouchers)
             {
                 var isPercentage = v.DiscountType.Equals("PERCENTAGE", StringComparison.OrdinalIgnoreCase);
@@ -132,81 +192,92 @@
                      data-remaining="@remaining"
                      data-used="false">
 
-                    <!-- Left Ticket Column (Cuống vé thoáng rộng) -->
-                    <div class="ticket-left sm:w-56 bg-gradient-to-br from-red-highland-dark to-red-highland text-white p-7 flex flex-col justify-between items-center text-center relative shrink-0">
+                    <!-- Left Ticket Column (Cuống vé gọn gàng, chuẩn tỷ lệ) -->
+                    <div class="ticket-left w-full sm:w-36 bg-gradient-to-br from-red-highland-dark to-red-highland text-white p-5 flex flex-col justify-between items-center text-center relative shrink-0 sm:border-r sm:border-dashed sm:border-red-300/40">
                         <!-- Perforated notch circle top & bottom -->
-                        <div class="hidden sm:block absolute -top-3.5 -right-3.5 w-7 h-7 rounded-full bg-[#FBFBFB] border-b border-gray-200"></div>
-                        <div class="hidden sm:block absolute -bottom-3.5 -right-3.5 w-7 h-7 rounded-full bg-[#FBFBFB] border-t border-gray-200"></div>
+                        <div class="hidden sm:block absolute -top-3 -right-3 w-6 h-6 rounded-full bg-[#FBFBFB] border-b border-gray-200"></div>
+                        <div class="hidden sm:block absolute -bottom-3 -right-3 w-6 h-6 rounded-full bg-[#FBFBFB] border-t border-gray-200"></div>
 
-                        <div class="w-12 h-12 rounded-2xl bg-white/15 text-amber-200 flex items-center justify-center text-2xl mb-2 shadow-inner">
+                        <div class="w-10 h-10 rounded-2xl bg-white/15 text-amber-200 flex items-center justify-center text-xl mb-1 shadow-inner">
                             <i class="@(isPercentage ? "fi fi-sr-badge-percent" : "fi fi-sr-coins")"></i>
                         </div>
                         <div class="my-auto space-y-1">
-                            <span class="left-badge block text-xs font-black uppercase tracking-wider text-amber-200">ƯU ĐÃI</span>
-                            <div class="text-2xl sm:text-3xl font-black text-white leading-tight">@discountDisplay</div>
+                            <span class="left-badge block text-[11px] font-black uppercase tracking-wider text-amber-200">ƯU ĐÃI</span>
+                            <div class="text-xl sm:text-2xl font-black text-white leading-tight">@discountDisplay</div>
                             @if (isPercentage && v.MaxDiscountAmount.HasValue)
                             {
-                                <span class="block text-xs text-white/80 font-medium">Tối đa @v.MaxDiscountAmount.Value.ToString("N0")đ</span>
+                                <span class="block text-[11px] text-white/80 font-medium">Tối đa @v.MaxDiscountAmount.Value.ToString("N0")đ</span>
                             }
                         </div>
-                        <span class="text-[11px] uppercase font-black text-white/70 tracking-widest mt-2">LOWLAND COFFEE</span>
+                        <span class="text-[10px] uppercase font-black text-white/70 tracking-widest mt-2">LOWLAND</span>
                     </div>
 
-                    <!-- Right Ticket Details Column (Nội dung rộng rãi, không bị dính sát) -->
-                    <div class="ticket-right p-7 sm:p-8 flex-1 flex flex-col justify-between space-y-5">
-                        <div class="space-y-3">
-                            <div class="flex items-center justify-between gap-3">
-                                <span class="type-tag px-3 py-1 rounded-xl bg-amber-100 text-amber-900 text-xs font-black">
+                    <!-- Right Ticket Details Column (Rộng rãi, có đệm và co giãn chuẩn) -->
+                    <div class="ticket-right p-5 sm:p-6 flex-1 flex flex-col justify-between min-w-0 space-y-4">
+                        <div class="space-y-2.5">
+                            <div class="flex items-center justify-between gap-2 flex-wrap">
+                                <span class="type-tag px-2.5 py-1 rounded-xl bg-amber-100 text-amber-900 text-[11px] font-black">
                                     @(isPercentage ? "Giảm theo %" : "Giảm tiền mặt")
                                 </span>
-                                <span class="text-xs text-gray-500 font-semibold flex items-center gap-1.5">
+                                <span class="text-xs text-gray-500 font-semibold flex items-center gap-1">
                                     <i class="fi fi-rr-clock text-xs"></i>
                                     <span>HSD: @v.EndDate.ToString("dd/MM/yyyy")</span>
                                 </span>
                             </div>
 
-                            <h3 class="text-lg sm:text-xl font-black text-gray-900 group-hover:text-red-highland transition leading-snug">
+                            <h3 class="text-base sm:text-lg font-black text-gray-900 group-hover:text-red-highland transition leading-snug line-clamp-1">
                                 @v.Title
                             </h3>
 
-                            <p class="text-xs sm:text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                            <p class="text-xs text-gray-600 line-clamp-2 leading-relaxed">
                                 @(v.Description ?? "Áp dụng cho mọi đơn hàng thỏa điều kiện tối thiểu.")
                             </p>
 
-                            <div class="text-xs sm:text-sm font-semibold text-gray-700">
+                            <div class="text-xs font-semibold text-gray-700">
                                 Đơn tối thiểu: <span class="text-red-highland font-black">@v.MinOrderValue.ToString("N0") VNĐ</span>
                             </div>
                         </div>
 
                         <!-- Usage progress -->
-                        <div class="space-y-2 pt-3 border-t border-gray-100">
+                        <div class="space-y-1.5 pt-2 border-t border-gray-100">
                             <div class="flex justify-between text-xs font-bold text-gray-500">
                                 <span>Đã dùng: @v.UsedQuantity / @v.TotalQuantity</span>
                                 <span class="text-emerald-700">Còn @remaining lượt</span>
                             </div>
-                            <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                            <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
                                 <div class="bg-red-highland h-full rounded-full transition-all duration-500" style="width: @percentUsed%;"></div>
                             </div>
                         </div>
 
-                        <!-- Ticket Action Bar -->
-                        <div class="action-bar flex items-center gap-3 pt-2">
-                            <div class="flex-1 bg-gray-50 border border-dashed border-gray-300 rounded-2xl px-4 py-2.5 flex items-center justify-between">
-                                <code class="text-sm font-black text-red-highland tracking-wider">@v.Code</code>
-                                <button type="button" onclick="copyVoucherCode('@v.Code')" class="copy-btn text-xs font-bold text-gray-600 hover:text-red-highland flex items-center gap-1.5 transition" title="Sao chép">
-                                    <i class="fi fi-rr-copy"></i>
-                                    <span class="hidden sm:inline">Sao chép</span>
+                        <!-- Ticket Action Bar (Chuẩn kích thước, không bao giờ bị cắt chữ) -->
+                        <div class="action-bar flex items-center justify-between gap-2.5 pt-2">
+                            <div class="flex-1 min-w-0 bg-gray-50 border border-dashed border-gray-300 rounded-xl px-3 py-2 flex items-center justify-between gap-1">
+                                <code class="text-xs sm:text-sm font-black text-red-highland tracking-wider truncate">@v.Code</code>
+                                <button type="button" onclick="copyVoucherCode('@v.Code')" class="copy-btn text-xs font-bold text-gray-500 hover:text-red-highland flex items-center gap-1 shrink-0 p-1 rounded-lg hover:bg-gray-200 transition" title="Sao chép">
+                                    <i class="fi fi-rr-copy text-xs"></i>
+                                    <span class="hidden xl:inline text-[11px]">Chép</span>
                                 </button>
                             </div>
-                            <a href="/Order?voucher=@v.Code" class="use-btn px-5 py-2.5 rounded-2xl bg-red-highland hover:bg-red-700 text-white font-extrabold text-xs uppercase tracking-wider shadow-md transition active:scale-95 shrink-0 flex items-center gap-1.5">
-                                <span>Dùng ngay</span>
-                                <i class="fi fi-rr-arrow-right"></i>
-                            </a>
+                            @if (!isAuthenticated)
+                            {
+                                <a href="/Auth/Login?ReturnUrl=/Customer/Vouchers" class="use-btn px-4 py-2 rounded-xl bg-red-highland hover:bg-red-700 text-white font-extrabold text-xs uppercase tracking-wider shadow-sm transition active:scale-95 shrink-0 flex items-center gap-1.5 whitespace-nowrap" title="Đăng nhập để sử dụng">
+                                    <span>Đăng nhập</span>
+                                    <i class="fi fi-rr-arrow-right text-[10px]"></i>
+                                </a>
+                            }
+                            else
+                            {
+                                <a href="/Order?voucher=@v.Code" class="use-btn px-4 py-2 rounded-xl bg-red-highland hover:bg-red-700 text-white font-extrabold text-xs uppercase tracking-wider shadow-sm transition active:scale-95 shrink-0 flex items-center gap-1.5 whitespace-nowrap">
+                                    <span>Dùng ngay</span>
+                                    <i class="fi fi-rr-arrow-right text-[10px]"></i>
+                                </a>
+                            }
                         </div>
                     </div>
                 </div>
             }
         </div>
+        }
     </section>
 
 </div>
@@ -259,7 +330,7 @@
             }
         }
 
-        // Xử lý xám màu và gắn nhãn "Đã sử dụng" cho các voucher đã dùng
+        // Xử lý ẩn hoàn toàn các voucher mà người dùng đã sử dụng
         function applyUsedVouchersUI() {
             if (!usedVoucherIds || usedVoucherIds.length === 0) return;
 
@@ -268,48 +339,7 @@
                 const id = (card.dataset.id || '').toLowerCase();
                 if (usedVoucherIds.includes(id)) {
                     card.dataset.used = 'true';
-
-                    // Thêm style xám mờ
-                    card.classList.add('opacity-60', 'grayscale-[45%]', 'bg-gray-50', 'border-gray-300');
-
-                    // Đổi màu cuống vé bên trái
-                    const ticketLeft = card.querySelector('.ticket-left');
-                    if (ticketLeft) {
-                        ticketLeft.classList.remove('from-red-highland-dark', 'to-red-highland');
-                        ticketLeft.classList.add('from-gray-600', 'to-gray-700');
-                    }
-
-                    // Đổi huy hiệu
-                    const leftBadge = card.querySelector('.left-badge');
-                    if (leftBadge) {
-                        leftBadge.innerText = 'ĐÃ SỬ DỤNG';
-                        leftBadge.classList.remove('text-amber-200');
-                        leftBadge.classList.add('text-gray-300');
-                    }
-
-                    const typeTag = card.querySelector('.type-tag');
-                    if (typeTag) {
-                        typeTag.innerText = '✓ Đã sử dụng mã';
-                        typeTag.classList.remove('bg-amber-100', 'text-amber-900');
-                        typeTag.classList.add('bg-gray-200', 'text-gray-600');
-                    }
-
-                    // Thay thế nút "Dùng ngay" bằng nút xám disabled
-                    const actionBar = card.querySelector('.action-bar');
-                    if (actionBar) {
-                        const useBtn = actionBar.querySelector('.use-btn');
-                        if (useBtn) {
-                            const disabledBadge = document.createElement('span');
-                            disabledBadge.className = 'px-5 py-2.5 rounded-2xl bg-gray-200 text-gray-500 font-extrabold text-xs uppercase cursor-not-allowed select-none flex items-center gap-1.5';
-                            disabledBadge.innerHTML = '<i class="fi fi-rr-check"></i><span>Đã sử dụng</span>';
-                            useBtn.replaceWith(disabledBadge);
-                        }
-
-                        const copyBtn = actionBar.querySelector('.copy-btn');
-                        if (copyBtn) {
-                            copyBtn.classList.add('text-gray-400', 'cursor-not-allowed');
-                        }
-                    }
+                    card.remove();
                 }
             });
 
@@ -351,12 +381,18 @@
                 const title = (card.dataset.title || '').toLowerCase();
                 const type = (card.dataset.type || '').toUpperCase();
                 const remaining = Number(card.dataset.remaining || 0);
-                const isUsed = card.dataset.used === 'true';
+                const isUsed = card.dataset.used === 'true' || usedVoucherIds.includes((card.dataset.id || '').toLowerCase());
+
+                // Voucher nào đã dùng thì KHÔNG SHOW NỮA
+                if (isUsed) {
+                    card.classList.add('hidden');
+                    return;
+                }
 
                 let matchesCat = true;
                 if (currentFilterCat === 'PERCENTAGE') matchesCat = (type === 'PERCENTAGE');
                 else if (currentFilterCat === 'FIXED_AMOUNT') matchesCat = (type === 'FIXED_AMOUNT');
-                else if (currentFilterCat === 'ACTIVE_ONLY') matchesCat = (!isUsed && remaining > 0);
+                else if (currentFilterCat === 'ACTIVE_ONLY') matchesCat = (remaining > 0);
 
                 const matchesQuery = !query || code.includes(query) || title.includes(query);
 
@@ -372,10 +408,23 @@
             if (countBadge) {
                 countBadge.innerText = `Hiển thị ${visibleCount} voucher`;
             }
+
+            const emptyNotice = document.getElementById('vouchers-empty-state');
+            if (emptyNotice) {
+                if (visibleCount === 0) {
+                    emptyNotice.classList.remove('hidden');
+                } else {
+                    emptyNotice.classList.add('hidden');
+                }
+            }
         }
 
+        const isUserAuthenticated = @(isAuthenticated ? "true" : "false");
+
         document.addEventListener('DOMContentLoaded', () => {
-            loadUserUsedVouchers();
+            if (isUserAuthenticated) {
+                loadUserUsedVouchers();
+            }
         });
     </script>
 }
