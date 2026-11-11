@@ -15,7 +15,8 @@ bld/
 [Ll]og/
 [Ll]ogs/
 publish/
-dist/
+/dist/
+!src/frontend/CoffeeShop.WebRazorPages/wwwroot/lib/**/dist/
 
 ## =========================================================================
 ## 2. Package Managers & Dependencies
