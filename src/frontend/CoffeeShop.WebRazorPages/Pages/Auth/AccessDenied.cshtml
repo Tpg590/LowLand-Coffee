@@ -1,0 +1,25 @@
+@page
+@model CoffeeShop.WebRazorPages.Pages.Auth.AccessDeniedModel
+@{
+    ViewData["Title"] = "Từ chối truy cập - LowLand Coffee";
+}
+
+<div class="w-full min-h-[calc(100vh-180px)] flex items-center justify-center px-4 py-12">
+    <div class="max-w-md w-full bg-white rounded-3xl shadow-2xl border border-red-100 p-8 text-center space-y-5">
+        <div class="w-20 h-20 mx-auto rounded-full bg-red-50 text-red-highland flex items-center justify-center border border-red-200">
+            <i class="fi fi-rr-shield-exclamation text-4xl"></i>
+        </div>
+        <h1 class="text-2xl font-black text-gray-900 uppercase">Không có quyền truy cập</h1>
+        <p class="text-sm text-gray-600 leading-relaxed">
+            Tài khoản hiện tại của bạn không được cấp quyền sử dụng trang hoặc chức năng này.
+        </p>
+        <div class="pt-2">
+            <a href="@Model.ReturnTargetUrl"
+               class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-red-highland hover:bg-red-700 text-white font-bold text-sm shadow-md transition">
+                <i class="fi fi-rr-arrow-left"></i>
+                <span>Quay về trang làm việc</span>
+            </a>
+        </div>
+    </div>
+</div>
+

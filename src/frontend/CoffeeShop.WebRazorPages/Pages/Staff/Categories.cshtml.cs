@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace CoffeeShop.WebRazorPages.Pages.Staff;
 
+[Authorize(Roles = "Staff")]
 public class CategoriesModel : PageModel
 {
     private readonly IHttpClientFactory _httpClientFactory;

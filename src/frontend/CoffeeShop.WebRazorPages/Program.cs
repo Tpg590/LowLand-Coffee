@@ -4,8 +4,18 @@ using Yarp.ReverseProxy.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add Razor Pages
-builder.Services.AddRazorPages();
+// Add Authorization Policies & Razor Pages Folder Conventions
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("StaffOnly", policy => policy.RequireRole("Staff"));
+});
+
+builder.Services.AddRazorPages(options =>
+{
+    options.Conventions.AuthorizeFolder("/Admin", "AdminOnly");
+    options.Conventions.AuthorizeFolder("/Staff", "StaffOnly");
+});
 
 // Add HttpContextAccessor
 builder.Services.AddHttpContextAccessor();
@@ -101,6 +111,47 @@ app.UseRouting();
 
 app.UseSession();
 app.UseAuthentication();
+
+// Cô lập phạm vi truy cập giao diện theo Role:
+// - Admin chỉ được hoạt động trong khu vực /Admin/* (đổi URL sang trang chủ "/", "/Index", "/Order", "/Staff/*" sẽ bị điều hướng về /Admin/Users)
+// - Staff chỉ được hoạt động trong khu vực /Staff/* (đổi URL sang trang chủ "/", "/Index", "/Order", "/Admin/*" sẽ bị điều hướng về /Staff/Orders)
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path.Value ?? "/";
+
+    var isSharedSystemPath =
+        path.StartsWith("/api", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWith("/hubs", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWith("/Auth/Logout", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWith("/Auth/Profile", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWith("/Auth/AccessDenied", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWith("/Auth/Login", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWith("/Error", StringComparison.OrdinalIgnoreCase) ||
+        Path.HasExtension(path);
+
+    if (!isSharedSystemPath && context.User.Identity?.IsAuthenticated == true)
+    {
+        if (context.User.IsInRole("Admin"))
+        {
+            if (!path.StartsWith("/Admin", StringComparison.OrdinalIgnoreCase))
+            {
+                context.Response.Redirect("/Admin/Users");
+                return;
+            }
+        }
+        else if (context.User.IsInRole("Staff"))
+        {
+            if (!path.StartsWith("/Staff", StringComparison.OrdinalIgnoreCase))
+            {
+                context.Response.Redirect("/Staff/Orders");
+                return;
+            }
+        }
+    }
+
+    await next();
+});
+
 app.UseAuthorization();
 
 app.MapGet("/Staff", () => Results.Redirect("/Staff/Orders"));
