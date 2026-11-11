@@ -1,15 +1,25 @@
 using System.Collections.Concurrent;
 using Auth.API.Services.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace Auth.API.Services;
 
-public class InMemoryTokenStore : ITokenStore
+public class InMemoryTokenStore : ITokenStore, IDisposable
 {
     private record OtpRecord(string OtpCode, DateTime ExpiresAt, bool IsUsed);
 
     private readonly ConcurrentDictionary<string, RefreshTokenRecord> _refreshTokens = new();
     private readonly ConcurrentDictionary<string, DateTime> _blacklistedAccessTokens = new();
     private readonly ConcurrentDictionary<string, OtpRecord> _otps = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Timer? _cleanupTimer;
+    private readonly ILogger<InMemoryTokenStore>? _logger;
+
+    public InMemoryTokenStore(ILogger<InMemoryTokenStore>? logger = null)
+    {
+        _logger = logger;
+        // Tự động quét và dọn dẹp các token/OTP hết hạn mỗi 10 phút (lần đầu kích hoạt sau 1 phút)
+        _cleanupTimer = new Timer(_ => CleanupExpiredTokens(), null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(10));
+    }
 
     public void SaveRefreshToken(string token, Guid userId, DateTime expiresAt)
     {
@@ -20,6 +30,12 @@ public class InMemoryTokenStore : ITokenStore
     {
         if (_refreshTokens.TryGetValue(token, out var record))
         {
+            // Tự động xóa ngay lập tức nếu Refresh Token này đã hết hạn
+            if (record.ExpiresAt <= DateTime.UtcNow)
+            {
+                _refreshTokens.TryRemove(token, out _);
+                return null;
+            }
             return record;
         }
         return null;
@@ -52,14 +68,6 @@ public class InMemoryTokenStore : ITokenStore
         }
 
         var now = DateTime.UtcNow;
-        foreach (var kvp in _blacklistedAccessTokens)
-        {
-            if (kvp.Value <= now)
-            {
-                _blacklistedAccessTokens.TryRemove(kvp.Key, out _);
-            }
-        }
-
         _blacklistedAccessTokens[token.Trim()] = expiresAt > now ? expiresAt : now.AddHours(1);
     }
 
@@ -78,6 +86,7 @@ public class InMemoryTokenStore : ITokenStore
                 return true;
             }
 
+            // Tự động xóa ngay lập tức nếu Access Token trong Blacklist đã hết hạn
             _blacklistedAccessTokens.TryRemove(key, out _);
         }
 
@@ -94,12 +103,79 @@ public class InMemoryTokenStore : ITokenStore
         var key = email.Trim();
         if (_otps.TryGetValue(key, out var record))
         {
-            if (!record.IsUsed && record.ExpiresAt > DateTime.UtcNow && record.OtpCode == otpCode.Trim())
+            if (record.ExpiresAt <= DateTime.UtcNow)
             {
-                _otps[key] = record with { IsUsed = true };
+                // Tự động xóa OTP nếu đã quá hạn xác thực
+                _otps.TryRemove(key, out _);
+                return false;
+            }
+
+            if (!record.IsUsed && record.OtpCode == otpCode.Trim())
+            {
+                // Tiêu thụ OTP thành công: xóa ngay để giải phóng RAM và chống tái sử dụng
+                _otps.TryRemove(key, out _);
                 return true;
             }
         }
         return false;
+    }
+
+    /// <summary>
+    /// Quét và giải phóng toàn bộ các Refresh Token, Access Token Blacklist, và OTP đã hết hạn khỏi bộ nhớ RAM.
+    /// </summary>
+    public void CleanupExpiredTokens()
+    {
+        var now = DateTime.UtcNow;
+        int removedRefresh = 0;
+        int removedBlacklist = 0;
+        int removedOtp = 0;
+
+        // 1. Quét và giải phóng Refresh Token hết hạn hoặc token đã bị thu hồi (revoked) quá hạn
+        foreach (var kvp in _refreshTokens)
+        {
+            if (kvp.Value.ExpiresAt <= now)
+            {
+                if (_refreshTokens.TryRemove(kvp.Key, out _))
+                {
+                    removedRefresh++;
+                }
+            }
+        }
+
+        // 2. Quét và giải phóng Blacklist Access Token đã hết hạn
+        foreach (var kvp in _blacklistedAccessTokens)
+        {
+            if (kvp.Value <= now)
+            {
+                if (_blacklistedAccessTokens.TryRemove(kvp.Key, out _))
+                {
+                    removedBlacklist++;
+                }
+            }
+        }
+
+        // 3. Quét và giải phóng OTP đã hết hạn hoặc đã sử dụng
+        foreach (var kvp in _otps)
+        {
+            if (kvp.Value.ExpiresAt <= now || kvp.Value.IsUsed)
+            {
+                if (_otps.TryRemove(kvp.Key, out _))
+                {
+                    removedOtp++;
+                }
+            }
+        }
+
+        if (removedRefresh > 0 || removedBlacklist > 0 || removedOtp > 0)
+        {
+            _logger?.LogInformation(
+                "[TokenStore] Tự động giải phóng RAM: {RefreshCount} Refresh Token, {BlacklistCount} Blacklisted Token, {OtpCount} OTP hết hạn.",
+                removedRefresh, removedBlacklist, removedOtp);
+        }
+    }
+
+    public void Dispose()
+    {
+        _cleanupTimer?.Dispose();
     }
 }

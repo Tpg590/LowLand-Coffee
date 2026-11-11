@@ -14,4 +14,6 @@ public interface ITokenStore
 
     void SaveOtp(string email, string otpCode, DateTime expiresAt);
     bool ValidateAndConsumeOtp(string email, string otpCode);
+
+    void CleanupExpiredTokens();
 }
