@@ -44,24 +44,18 @@ public class LoyaltyService : ILoyaltyService
     }
 
     /// <summary>
-    /// Lấy thông tin hồ sơ khách hàng thân thiết của người dùng:
-    /// - Hạng hiện tại, điểm hiện có và tổng điểm tích lũy trọn đời.
-    /// - Tính toán hạng thành viên kế tiếp và số điểm còn thiếu để được thăng hạng.
-    /// - Tự động tạo hồ sơ mặc định nếu người dùng chưa từng tham gia.
+    /// Lấy thông tin hồ sơ khách hàng thân thiết của người dùng kèm tiến trình thăng hạng kế tiếp.
     /// </summary>
+    /// <param name="userId">Mã định danh người dùng.</param>
+    /// <returns>Hồ sơ thành viên gồm điểm khả dụng, điểm trọn đời và hạng thẻ.</returns>
     public async Task<LoyaltyMemberProfileDto> GetMemberProfileAsync(Guid userId)
     {
-        // Lấy hoặc tự động khởi tạo hồ sơ hội viên nếu chưa có
         var member = await GetOrCreateMemberAsync(userId);
-
-        // Lấy tất cả các hạng được sắp xếp theo mức điểm tối thiểu tăng dần
         var tiers = (await _loyaltyRepository.GetTiersAsync()).OrderBy(t => t.MinPoints).ToList();
 
-        // Xác định hạng kế tiếp (hạng có điểm tối thiểu cao hơn hạng hiện tại)
         var currentTier = member.Tier;
         var nextTier = tiers.FirstOrDefault(t => t.MinPoints > (currentTier?.MinPoints ?? 0));
 
-        // Tính số điểm cần tích lũy thêm để đạt hạng tiếp theo
         int? pointsNeeded = null;
         if (nextTier != null)
         {
@@ -76,19 +70,16 @@ public class LoyaltyService : ILoyaltyService
     }
 
     /// <summary>
-    /// Tích điểm cho người dùng sau khi hoàn thành đơn hàng:
-    /// 1. Tính điểm cơ bản: [Giá trị đơn hàng] / [Tỉ lệ chuẩn 10.000 VNĐ].
-    /// 2. Áp dụng hệ số nhân điểm (Multiplier) theo hạng thẻ hiện tại của khách hàng.
-    /// 3. Cộng dồn vào điểm khả dụng (CurrentPoints) và điểm tích lũy trọn đời (TotalAccumulatedPoints).
-    /// 4. Kiểm tra điều kiện thăng hạng dựa trên tổng điểm trọn đời.
-    /// 5. Ghi nhận giao dịch biến động điểm (EARN) vào bảng lịch sử.
+    /// Tích điểm thành viên từ đơn hàng theo hệ số nhân của hạng thẻ hiện tại và tự động xét nâng hạng.
     /// </summary>
+    /// <param name="request">Thông tin đơn hàng và số tiền thanh toán.</param>
+    /// <returns>Kết quả tích điểm và trạng thái thăng hạng.</returns>
     public async Task<AddPointsResponse> AddPointsAsync(AddPointsRequest request)
     {
         var member = await GetOrCreateMemberAsync(request.UserId);
         var currentTier = member.Tier;
 
-        // Chống cộng trùng điểm cho cùng một đơn hàng (Idempotency check theo OrderId)
+        // Kiểm tra chống tích trùng điểm cho cùng một đơn hàng
         if (request.OrderId != Guid.Empty)
         {
             var existingTx = await _loyaltyRepository.GetTransactionByOrderAndTypeAsync(member.Id, request.OrderId, "EARN");
@@ -106,12 +97,10 @@ public class LoyaltyService : ILoyaltyService
             }
         }
 
-        // Tính số điểm tích được: (OrderAmount / 10.000) * hệ số nhân của hạng thẻ (Đồng x1.0, Bạc x1.1, Vàng x1.2, Kim Cương x1.3)
         decimal basePoints = request.OrderAmount / VND_PER_STANDARD_POINT;
         decimal multiplier = currentTier?.PointMultiplier ?? 1.0m;
         int pointsEarned = (int)Math.Round(basePoints * multiplier, 0, MidpointRounding.AwayFromZero);
 
-        // Đảm bảo đơn hợp lệ luôn được ít nhất 1 điểm thưởng
         if (pointsEarned <= 0)
         {
             pointsEarned = 1;
@@ -119,16 +108,14 @@ public class LoyaltyService : ILoyaltyService
 
         var tierLabel = currentTier?.TierName ?? "Hạng Đồng";
 
-        // Cập nhật số dư điểm khả dụng và tổng điểm tích lũy trọn đời
         member.CurrentPoints += pointsEarned;
         member.TotalAccumulatedPoints += pointsEarned;
         member.UpdatedAt = DateTime.UtcNow;
 
-        // Kiểm tra xem có đủ điều kiện thăng hạng dựa vào tổng điểm trọn đời (TotalAccumulatedPoints) không
+        // Xét duyệt thăng hạng dựa trên tổng điểm tích lũy trọn đời
         var qualifyingTier = await _loyaltyRepository.GetTierForPointsAsync(member.TotalAccumulatedPoints);
         bool didUpgrade = false;
 
-        // Chỉ nâng hạng khi hạng mới cao hơn hạng hiện tại
         if (qualifyingTier != null && qualifyingTier.Id != member.TierId && qualifyingTier.MinPoints > (currentTier?.MinPoints ?? 0))
         {
             member.TierId = qualifyingTier.Id;
@@ -138,7 +125,6 @@ public class LoyaltyService : ILoyaltyService
 
         await _loyaltyRepository.UpdateMemberAsync(member);
 
-        // Ghi lại lịch sử giao dịch tích điểm kèm thông tin hạng thẻ và hệ số nhân
         var baseReason = string.IsNullOrWhiteSpace(request.Reason)
             ? $"Tích {pointsEarned} điểm từ đơn hàng"
             : request.Reason.Trim();
@@ -173,12 +159,10 @@ public class LoyaltyService : ILoyaltyService
     }
 
     /// <summary>
-    /// Đổi điểm tích lũy thành tiền giảm giá cho đơn hàng:
-    /// 1. Kiểm tra tính hợp lệ của số điểm yêu cầu đổi và số dư hiện có.
-    /// 2. Trừ điểm khỏi tài khoản thành viên (CurrentPoints).
-    /// 3. Quy đổi điểm ra số tiền giảm giá (1 điểm = 1.000 VNĐ).
-    /// 4. Ghi nhận giao dịch tiêu điểm (REDEEM) vào bảng lịch sử.
+    /// Quy đổi điểm tích lũy thành số tiền giảm giá cho đơn hàng.
     /// </summary>
+    /// <param name="request">Thông tin yêu cầu quy đổi điểm.</param>
+    /// <returns>Số điểm đã quy đổi và số tiền được giảm trừ.</returns>
     public async Task<RedeemPointsResponse> RedeemPointsAsync(RedeemPointsRequest request)
     {
         var member = await GetOrCreateMemberAsync(request.UserId);
@@ -193,15 +177,12 @@ public class LoyaltyService : ILoyaltyService
             throw new InvalidOperationException($"Số dư điểm không đủ. Bạn hiện có {member.CurrentPoints} điểm nhưng yêu cầu đổi {request.PointsToRedeem} điểm.");
         }
 
-        // Trừ điểm khả dụng
         member.CurrentPoints -= request.PointsToRedeem;
         member.UpdatedAt = DateTime.UtcNow;
         await _loyaltyRepository.UpdateMemberAsync(member);
 
-        // Tính số tiền giảm giá tương ứng
         decimal discountAmount = request.PointsToRedeem * REDEEM_VND_PER_POINT;
 
-        // Ghi lại lịch sử giao dịch tiêu điểm
         var transaction = new LoyaltyPointTransactions
         {
             Id = Guid.NewGuid(),
@@ -229,6 +210,9 @@ public class LoyaltyService : ILoyaltyService
     /// <summary>
     /// Lấy danh sách lịch sử biến động điểm gần nhất của người dùng.
     /// </summary>
+    /// <param name="userId">Mã định danh người dùng.</param>
+    /// <param name="limit">Số lượng giao dịch tối đa cần lấy.</param>
+    /// <returns>Danh sách lịch sử giao dịch điểm.</returns>
     public async Task<IEnumerable<PointTransactionDto>> GetPointTransactionsAsync(Guid userId, int limit = 20)
     {
         var member = await _loyaltyRepository.GetMemberByUserIdAsync(userId);
@@ -241,10 +225,6 @@ public class LoyaltyService : ILoyaltyService
         return _mapper.Map<IEnumerable<PointTransactionDto>>(transactions);
     }
 
-    /// <summary>
-    /// Phương thức hỗ trợ (Private): Lấy thông tin hội viên theo UserId, hoặc tự động khởi tạo hồ sơ mới
-    /// với hạng mặc định là "Đồng" (Bronze) nếu người dùng truy cập lần đầu (Lazy Initialization).
-    /// </summary>
     private async Task<LoyaltyMembers> GetOrCreateMemberAsync(Guid userId)
     {
         var member = await _loyaltyRepository.GetMemberByUserIdAsync(userId);
@@ -253,7 +233,6 @@ public class LoyaltyService : ILoyaltyService
             return member;
         }
 
-        // Lazy Init: Tự động khởi tạo thành viên với Tier Đồng (Bronze) khi người dùng truy cập lần đầu
         var tiers = await _loyaltyRepository.GetTiersAsync();
         var bronzeTier = tiers.OrderBy(t => t.MinPoints).FirstOrDefault();
 

@@ -46,6 +46,8 @@ public class VoucherService : IVoucherService
     /// </summary>
     public async Task<VoucherDto> CreateVoucherAsync(CreateVoucherRequest request)
     {
+        request.Code = (request.Code ?? string.Empty).Trim().ToUpperInvariant();
+
         var existing = await _voucherRepository.GetVoucherByCodeAsync(request.Code);
         if (existing != null)
         {
@@ -68,6 +70,12 @@ public class VoucherService : IVoucherService
         var voucher = await _voucherRepository.GetVoucherByIdAsync(id);
         if (voucher == null) return null;
 
+        // Validation nghiệp vụ: Không được giảm tổng số lượng phát hành xuống dưới số lượng đã sử dụng
+        if (request.TotalQuantity < voucher.UsedQuantity)
+        {
+            throw new InvalidOperationException($"Số lượng phát hành tối thiểu phải từ {voucher.UsedQuantity} (bằng số lượt khách đã sử dụng).");
+        }
+
         voucher.Title = request.Title.Trim();
         voucher.Description = request.Description?.Trim();
         voucher.DiscountType = request.DiscountType.ToUpper();
@@ -87,16 +95,17 @@ public class VoucherService : IVoucherService
     }
 
     /// <summary>
-    /// Xóa hoặc vô hiệu hóa voucher khỏi hệ thống:
-    /// - Nếu voucher ĐÃ CÓ người sử dụng (UsedQuantity > 0): Thực hiện Soft-Delete bằng cách đặt IsActive = false để bảo toàn toàn vẹn dữ liệu đơn hàng cũ.
-    /// - Nếu voucher CHƯA TỪNG được sử dụng: Xóa cứng hoàn toàn khỏi cơ sở dữ liệu.
+    /// Xóa hoặc vô hiệu hóa voucher khỏi hệ thống.
+    /// Nếu voucher đã có lượt sử dụng thì thực hiện vô hiệu hóa (IsActive = false) để bảo đảm toàn vẹn dữ liệu đơn hàng.
+    /// Nếu voucher chưa từng sử dụng thì xóa cứng khỏi cơ sở dữ liệu.
     /// </summary>
+    /// <param name="id">Mã định danh voucher cần xóa.</param>
+    /// <returns>True nếu xóa/vô hiệu hóa thành công, ngược lại False.</returns>
     public async Task<bool> DeleteVoucherAsync(Guid id)
     {
         var voucher = await _voucherRepository.GetVoucherByIdAsync(id);
         if (voucher == null) return false;
 
-        // Vô hiệu hóa (Soft-Delete) thay vì xóa cứng nếu đã có người sử dụng
         if (voucher.UsedQuantity > 0)
         {
             voucher.IsActive = false;
@@ -105,7 +114,6 @@ public class VoucherService : IVoucherService
         }
         else
         {
-            // Xóa cứng an toàn khi voucher chưa phát sinh lịch sử sử dụng
             await _voucherRepository.DeleteVoucherAsync(voucher);
         }
 
@@ -114,15 +122,10 @@ public class VoucherService : IVoucherService
     }
 
     /// <summary>
-    /// Kiểm tra tính hợp lệ và thẩm định mã voucher cho một đơn hàng cụ thể:
-    /// 1. Kiểm tra sự tồn tại của mã voucher.
-    /// 2. Kiểm tra trạng thái hoạt động (IsActive).
-    /// 3. Kiểm tra khung thời gian hiệu lực (StartDate <= Hiện tại <= EndDate).
-    /// 4. Kiểm tra giới hạn số lượng phát hành toàn hệ thống (UsedQuantity &lt; TotalQuantity).
-    /// 5. Kiểm tra giá trị đơn hàng tối thiểu (OrderSubtotal &gt;= MinOrderValue).
-    /// 6. Kiểm tra giới hạn mỗi khách hàng chỉ được dùng voucher 1 lần (nếu đã đăng nhập).
-    /// 7. Tính toán số tiền được giảm giá theo PERCENTAGE (kèm MaxDiscount) hoặc FIXED_AMOUNT.
+    /// Kiểm tra tính hợp lệ và thẩm định mã voucher cho một đơn hàng cụ thể.
     /// </summary>
+    /// <param name="request">Thông tin mã voucher, tổng tiền đơn hàng và khách hàng.</param>
+    /// <returns>Kết quả thẩm định kèm số tiền được giảm giá.</returns>
     public async Task<ValidateVoucherResponse> ValidateVoucherAsync(ValidateVoucherRequest request)
     {
         var voucher = await _voucherRepository.GetVoucherByCodeAsync(request.VoucherCode);
@@ -135,7 +138,6 @@ public class VoucherService : IVoucherService
             };
         }
 
-        // 1. Kiểm tra trạng thái kích hoạt của voucher
         if (!voucher.IsActive)
         {
             return new ValidateVoucherResponse
@@ -145,7 +147,6 @@ public class VoucherService : IVoucherService
             };
         }
 
-        // 2. Kiểm tra ngày bắt đầu có hiệu lực
         var now = DateTime.UtcNow;
         if (now < voucher.StartDate)
         {
@@ -156,7 +157,6 @@ public class VoucherService : IVoucherService
             };
         }
 
-        // 3. Kiểm tra hạn sử dụng
         if (now > voucher.EndDate)
         {
             return new ValidateVoucherResponse
@@ -166,7 +166,6 @@ public class VoucherService : IVoucherService
             };
         }
 
-        // 4. Kiểm tra tổng số lượt sử dụng còn lại
         if (voucher.UsedQuantity >= voucher.TotalQuantity)
         {
             return new ValidateVoucherResponse
@@ -176,7 +175,6 @@ public class VoucherService : IVoucherService
             };
         }
 
-        // 5. Kiểm tra giá trị đơn hàng tối thiểu
         if (request.OrderSubtotal < voucher.MinOrderValue)
         {
             return new ValidateVoucherResponse
@@ -186,7 +184,6 @@ public class VoucherService : IVoucherService
             };
         }
 
-        // 6. Kiểm tra giới hạn 1 lần dùng cho mỗi người dùng (nếu có thông tin UserId)
         if (request.UserId.HasValue)
         {
             var usageCount = await _voucherRepository.GetUserUsageCountAsync(voucher.Id, request.UserId.Value);
@@ -200,13 +197,10 @@ public class VoucherService : IVoucherService
             }
         }
 
-        // 7. Tính số tiền giảm giá theo loại voucher
         decimal discountAmount = 0m;
         if (voucher.DiscountType.Equals("PERCENTAGE", StringComparison.OrdinalIgnoreCase))
         {
-            // Giảm theo % giá trị đơn
             discountAmount = request.OrderSubtotal * (voucher.DiscountValue / 100m);
-            // Áp dụng mức giảm tối đa nếu có cấu hình
             if (voucher.MaxDiscountAmount.HasValue && discountAmount > voucher.MaxDiscountAmount.Value)
             {
                 discountAmount = voucher.MaxDiscountAmount.Value;
@@ -214,11 +208,9 @@ public class VoucherService : IVoucherService
         }
         else if (voucher.DiscountType.Equals("FIXED_AMOUNT", StringComparison.OrdinalIgnoreCase))
         {
-            // Giảm số tiền cố định (không vượt quá tổng tiền đơn)
             discountAmount = Math.Min(voucher.DiscountValue, request.OrderSubtotal);
         }
 
-        // Tính tổng tiền cần thanh toán sau khi trừ giảm giá (không để âm)
         var finalTotal = Math.Max(0, request.OrderSubtotal - discountAmount);
 
         return new ValidateVoucherResponse
@@ -236,10 +228,10 @@ public class VoucherService : IVoucherService
     }
 
     /// <summary>
-    /// Ghi nhận việc sử dụng voucher khi đơn hàng được tạo/thanh toán thành công:
-    /// - Thêm bản ghi lịch sử vào bảng <see cref="PromoVoucherUsages"/>.
-    /// - Tăng số lượt đã sử dụng (UsedQuantity) của voucher lên 1.
+    /// Ghi nhận việc sử dụng voucher khi đơn hàng được tạo hoặc thanh toán thành công.
     /// </summary>
+    /// <param name="request">Thông tin đơn hàng và mã voucher đã áp dụng.</param>
+    /// <returns>True nếu ghi nhận thành công, ngược lại False.</returns>
     public async Task<bool> ApplyVoucherUsageAsync(ApplyVoucherUsageRequest request)
     {
         var voucher = await _voucherRepository.GetVoucherByIdAsync(request.VoucherId);
@@ -248,7 +240,6 @@ public class VoucherService : IVoucherService
             return false;
         }
 
-        // Khởi tạo bản ghi lịch sử áp dụng voucher
         var usage = new PromoVoucherUsages
         {
             Id = Guid.NewGuid(),
@@ -261,7 +252,6 @@ public class VoucherService : IVoucherService
 
         await _voucherRepository.AddUsageAsync(usage);
 
-        // Tăng số lượt đã sử dụng của voucher
         voucher.UsedQuantity += 1;
         voucher.UpdatedAt = DateTime.UtcNow;
         await _voucherRepository.UpdateVoucherAsync(voucher);
@@ -273,6 +263,8 @@ public class VoucherService : IVoucherService
     /// <summary>
     /// Lấy danh sách ID các voucher mà khách hàng đã từng sử dụng.
     /// </summary>
+    /// <param name="userId">Mã định danh khách hàng.</param>
+    /// <returns>Danh sách ID các voucher đã dùng.</returns>
     public async Task<IEnumerable<Guid>> GetUsedVoucherIdsByUserAsync(Guid userId)
     {
         return await _voucherRepository.GetUsedVoucherIdsByUserAsync(userId);
