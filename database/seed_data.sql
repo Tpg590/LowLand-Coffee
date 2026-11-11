@@ -53,9 +53,10 @@ IF NOT EXISTS (SELECT 1 FROM dbo.auth_users WHERE id = @AdminUserId)
 BEGIN
     INSERT INTO dbo.auth_users (id, role_id, email, password_hash, full_name, phone_number, avatar_url, address, is_active, created_at, updated_at)
     VALUES 
-    (@AdminUserId, @AdminRoleId, 'admin@lowlandcoffee.com', '$2a$11$dbMvRxSU6tmWeR8q4A.P4O1exj54XyuhgY9wkycQSmb7VepqCgw0S', N'Quản Trị Viên', '0901122334', 'https://placehold.co/150', N'123 Nguyễn Huệ, Q.1, TP.HCM', 1, GETDATE(), GETDATE()),
-    (@StaffUserId, @StaffRoleId, 'staff@lowlandcoffee.com', '$2a$11$dbMvRxSU6tmWeR8q4A.P4O1exj54XyuhgY9wkycQSmb7VepqCgw0S', N'Thu Ngân 01', '0902233445', 'https://placehold.co/150', N'LowLand Landmark 81, Bình Thạnh', 1, GETDATE(), GETDATE()),
-    (@CustomerUserId, @CustomerRoleId, 'customer@gmail.com', '$2a$11$dbMvRxSU6tmWeR8q4A.P4O1exj54XyuhgY9wkycQSmb7VepqCgw0S', N'Nguyễn Văn Khách', '0903344556', 'https://placehold.co/150', N'456 Lê Lợi, Q.1, TP.HCM', 1, GETDATE(), GETDATE());
+    (@AdminUserId, @AdminRoleId, 'admin@lowlandcoffee.com', '$2a$11$dbMvRxSU6tmWeR8q4A.P4O1exj54XyuhgY9wkycQSmb7VepqCgw0S', N'Quản Trị Viên', '0901122334', 'https://res.cloudinary.com/dgpqn9na2/image/upload/v1794324148/prestige-money-miser-mordekaiser-icon-emote-chroma-border-v0-3mse4yuomnpg1_bkussb.webp', N'Địa ngục ục ục ục', 1, GETDATE(), GETDATE()),
+    (@StaffUserId, @StaffRoleId, 'staff@lowlandcoffee.com', '$2a$11$dbMvRxSU6tmWeR8q4A.P4O1exj54XyuhgY9wkycQSmb7VepqCgw0S', N'Thu Ngân 01', '0902233445', 'https://res.cloudinary.com/dgpqn9na2/image/upload/v1794324297/peter_rsg5gy.webp', N'The Backroom', 1, GETDATE(), GETDATE()),
+    (@CustomerUserId, @CustomerRoleId, 'customer@gmail.com', '$2a$11$dbMvRxSU6tmWeR8q4A.P4O1exj54XyuhgY9wkycQSmb7VepqCgw0S', N'Ăng Trí Gei', '0903344556', 'https://res.cloudinary.com/dgpqn9na2/image/upload/v1794324413/96104306-f82d-4c87-8362-74ac62a15032_hhtzun.jpg', N'Vực Gió Hú', 1, GETDATE(), GETDATE()),
+    ('66666666-6666-6666-6666-666666666666', @CustomerRoleId, 'vuminhkhang2004@gmail.com', '$2a$11$dbMvRxSU6tmWeR8q4A.P4O1exj54XyuhgY9wkycQSmb7VepqCgw0S', N'Khangnghien', '0985456111', 'https://res.cloudinary.com/dgpqn9na2/image/upload/v1777731621/z7181279224580_c7eb30b51086c83b4ae368330371db0c_sdxkv8.jpg', N'Vực Gió Hú', 1, GETDATE(), GETDATE());
 END
 GO
 
@@ -90,13 +91,13 @@ DECLARE @ProdMousse UNIQUEIDENTIFIER = '20000000-0000-0000-0000-000000000007';
 IF NOT EXISTS (SELECT 1 FROM dbo.product_products WHERE id = @ProdPhinSua)
 BEGIN
     INSERT INTO dbo.product_products (id, category_id, name, description, base_price, image_url, is_available, is_deleted, created_at, updated_at) VALUES
-    (@ProdPhinSua, @CatCoffee, 'Phin Sua Da LowLand', N'Cà phê phin đậm đà hòa quyện sữa đặc béo ngậy ngọt ngào', 29000.00, 'https://placehold.co/300', 1, 0, GETDATE(), GETDATE()),
-    (@ProdPhinDen, @CatCoffee, 'Phin Den Da', N'Hương vị cà phê nguyên chất thanh lịch dành cho người sành gu', 25000.00, 'https://placehold.co/300', 1, 0, GETDATE(), GETDATE()),
-    (@ProdBacXiu, @CatCoffee, 'Bac Xiu Sua Tuoi', N'Nhiều sữa ít cà phê, béo thơm dịu nhẹ khởi đầu ngày mới', 32000.00, 'https://placehold.co/300', 1, 0, GETDATE(), GETDATE()),
-    (@ProdTraSen, @CatTea, N'Tra Sen Vang Hạt Sen', N'Trà ô long thanh khiết kết hợp hạt sen bùi ngậy và củ năng giòn', 45000.00, 'https://placehold.co/300', 1, 0, GETDATE(), GETDATE()),
-    (@ProdTraDao, @CatTea, 'Tra Dao Cam Sa', N'Vị đào mọng nước hòa quyện cam tươi mát và hương sả nồng nàn', 45000.00, 'https://placehold.co/300', 1, 0, GETDATE(), GETDATE()),
-    (@ProdFreezeMatcha, @CatFreeze, 'Freeze Tra Xanh Matcha', N'Matcha Nhật Bản xay đá nhuyễn kèm thạch matcha mát lạnh', 49000.00, 'https://placehold.co/300', 1, 0, GETDATE(), GETDATE()),
-    (@ProdMousse, @CatCake, 'Banh Mousse Cacao', N'Bánh mousse mềm mịn tan ngay trong miệng với vị đắng ngọt dịu', 35000.00, 'https://placehold.co/300', 1, 0, GETDATE(), GETDATE());
+    (@ProdPhinSua, @CatCoffee, 'Phin Sua Da LowLand', N'Cà phê phin đậm đà hòa quyện sữa đặc béo ngậy ngọt ngào', 29000.00, 'https://res.cloudinary.com/dgpqn9na2/image/upload/v1794324849/PHIN_SUA_DA_upmfuq.jpg', 1, 0, GETDATE(), GETDATE()),
+    (@ProdPhinDen, @CatCoffee, 'Phin Den Da', N'Hương vị cà phê nguyên chất thanh lịch dành cho người sành gu', 25000.00, 'https://res.cloudinary.com/dgpqn9na2/image/upload/v1794324849/PHIN_SUA_DA_upmfuq.jpg', 1, 0, GETDATE(), GETDATE()),
+    (@ProdBacXiu, @CatCoffee, 'Bac Xiu Sua Tuoi', N'Nhiều sữa ít cà phê, béo thơm dịu nhẹ khởi đầu ngày mới', 32000.00, 'https://res.cloudinary.com/dgpqn9na2/image/upload/v1794324901/bac-siu-1698982665917_sz8dfq.jpg', 1, 0, GETDATE(), GETDATE()),
+    (@ProdTraSen, @CatTea, N'Tra Sen Vang Hạt Sen', N'Trà ô long thanh khiết kết hợp hạt sen bùi ngậy và củ năng giòn', 45000.00, 'https://res.cloudinary.com/dgpqn9na2/image/upload/v1794324910/hlc-new-logo-5-1-products-socola-nongtsv-1697198629657_iiqflg.jpg', 1, 0, GETDATE(), GETDATE()),
+    (@ProdTraDao, @CatTea, 'Tra Dao Cam Sa', N'Vị đào mọng nước hòa quyện cam tươi mát và hương sả nồng nàn', 45000.00, 'https://res.cloudinary.com/dgpqn9na2/image/upload/v1794324919/hlc-new-logo-5-1-products-socola-nongtthachdao-1697198590955_fana0w.webp', 1, 0, GETDATE(), GETDATE()),
+    (@ProdFreezeMatcha, @CatFreeze, 'Freeze Tra Xanh Matcha', N'Matcha Nhật Bản xay đá nhuyễn kèm thạch matcha mát lạnh', 49000.00, 'https://res.cloudinary.com/dgpqn9na2/image/upload/v1794324927/FREEZE_TRA_XANH_ykyfza.jpg', 1, 0, GETDATE(), GETDATE()),
+    (@ProdMousse, @CatCake, 'Banh Mousse Cacao', N'Bánh mousse mềm mịn tan ngay trong miệng với vị đắng ngọt dịu', 35000.00, 'https://res.cloudinary.com/dgpqn9na2/image/upload/v1794324927/FREEZE_TRA_XANH_ykyfza.jpg', 1, 0, GETDATE(), GETDATE());
 
     -- Options cho Phin Sữa Đá
     INSERT INTO dbo.product_options (product_id, option_type, name, extra_price, is_available) VALUES
