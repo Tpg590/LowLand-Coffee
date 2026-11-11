@@ -156,10 +156,20 @@
 
             const $btnSubmit = $('#btn-login-submit');
 
+            function isAutofilled(selector) {
+                try {
+                    return $(selector).is(':-webkit-autofill') || $(selector).is(':autofill');
+                } catch (e) {
+                    return false;
+                }
+            }
+
             function updateSubmitButtonState() {
                 const idVal = $('#login-identifier').val() ? $('#login-identifier').val().trim() : '';
                 const passVal = $('#login-password').val() ? $('#login-password').val().trim() : '';
-                if (idVal !== '' && passVal !== '') {
+                const idFilled = idVal !== '' || isAutofilled('#login-identifier');
+                const passFilled = passVal !== '' || isAutofilled('#login-password');
+                if (idFilled && passFilled) {
                     $btnSubmit.prop('disabled', false);
                 } else {
                     $btnSubmit.prop('disabled', true);
@@ -183,13 +193,17 @@
             }
 
             updateSubmitButtonState();
+            setTimeout(updateSubmitButtonState, 200);
+            setTimeout(updateSubmitButtonState, 600);
+            setTimeout(updateSubmitButtonState, 1200);
 
             const debounceTimers = {};
-            $form.find('input:not([type="checkbox"])').on('input', function () {
+            $form.find('input:not([type="checkbox"])').on('input change keyup', function () {
                 const input = this;
                 const fieldName = input.name;
                 const val = $(input).val() ? $(input).val().trim() : '';
 
+                updateSubmitButtonState();
                 clearTimeout(debounceTimers[fieldName]);
 
                 // Nếu không nhập gì: không báo lỗi, xóa lỗi cũ nếu có, reset border về bình thường
