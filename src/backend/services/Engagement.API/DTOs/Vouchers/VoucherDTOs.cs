@@ -2,13 +2,16 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Engagement.API.DTOs.Vouchers;
 
+/// <summary>
+/// DTO thông tin chi tiết của một mã voucher khuyến mãi.
+/// </summary>
 public class VoucherDto
 {
     public Guid Id { get; set; }
     public string Code { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public string DiscountType { get; set; } = "PERCENTAGE"; // PERCENTAGE hoặc FIXED_AMOUNT
+    public string DiscountType { get; set; } = "PERCENTAGE";
     public decimal DiscountValue { get; set; }
     public decimal? MaxDiscountAmount { get; set; }
     public decimal MinOrderValue { get; set; }
@@ -22,10 +25,14 @@ public class VoucherDto
     public DateTime CreatedAt { get; set; }
 }
 
+/// <summary>
+/// DTO yêu cầu tạo mới một mã voucher khuyến mãi.
+/// </summary>
 public class CreateVoucherRequest
 {
     [Required(ErrorMessage = "Mã voucher không được để trống")]
     [MaxLength(50)]
+    [RegularExpression(@"^[A-Z0-9]+$", ErrorMessage = "Mã voucher chỉ được bao gồm chữ in hoa tiếng Anh và chữ số, không chứa khoảng trắng hay ký tự đặc biệt.")]
     public string Code { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Tiêu đề không được để trống")]
@@ -57,6 +64,9 @@ public class CreateVoucherRequest
     public bool IsActive { get; set; } = true;
 }
 
+/// <summary>
+/// DTO yêu cầu cập nhật thông tin voucher.
+/// </summary>
 public class UpdateVoucherRequest
 {
     [Required(ErrorMessage = "Tiêu đề không được để trống")]
@@ -88,6 +98,9 @@ public class UpdateVoucherRequest
     public bool IsActive { get; set; } = true;
 }
 
+/// <summary>
+/// DTO yêu cầu thẩm định tính hợp lệ của mã voucher cho đơn hàng.
+/// </summary>
 public class ValidateVoucherRequest
 {
     [Required(ErrorMessage = "Mã voucher không được để trống")]
@@ -99,6 +112,9 @@ public class ValidateVoucherRequest
     public Guid? UserId { get; set; }
 }
 
+/// <summary>
+/// DTO kết quả thẩm định voucher kèm số tiền được giảm trừ.
+/// </summary>
 public class ValidateVoucherResponse
 {
     public bool IsValid { get; set; }
@@ -112,6 +128,9 @@ public class ValidateVoucherResponse
     public decimal FinalTotal { get; set; }
 }
 
+/// <summary>
+/// DTO yêu cầu ghi nhận lượt sử dụng voucher khi tạo đơn hàng.
+/// </summary>
 public class ApplyVoucherUsageRequest
 {
     [Required]

@@ -28,8 +28,8 @@
         </div>
     </div>
 
-    <!-- 4 Overview Metric Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+    <!-- 3 Overview Metric Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
         <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
             <div>
                 <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Tổng số Voucher</span>
@@ -59,16 +59,6 @@
                 <i class="fi fi-rr-shopping-cart-check"></i>
             </span>
         </div>
-
-        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
-            <div>
-                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Ước Tính Tiết Kiệm</span>
-                <div class="text-2xl sm:text-3xl font-black text-red-highland mt-1" id="stat-discount-total">0đ</div>
-            </div>
-            <span class="w-12 h-12 rounded-2xl bg-red-50 text-red-highland flex items-center justify-center text-xl">
-                <i class="fi fi-rr-badge-percent"></i>
-            </span>
-        </div>
     </div>
 
     <!-- Search & Filter Controls -->
@@ -89,7 +79,10 @@
 
             <select id="status-filter" onchange="filterVouchersTable()" class="bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-sm font-bold text-gray-800 focus:ring-2 focus:ring-red-highland">
                 <option value="ALL">Tất cả trạng thái</option>
-                <option value="ACTIVE">Đang kích hoạt</option>
+                <option value="ACTIVE">Đang hoạt động</option>
+                <option value="EXPIRED">Đã hết hạn</option>
+                <option value="OUT_OF_STOCK">Hết lượt dùng</option>
+                <option value="UPCOMING">Sắp mở</option>
                 <option value="INACTIVE">Tạm dừng</option>
             </select>
         </div>
@@ -160,7 +153,8 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-black uppercase text-gray-700 mb-1">Mã Voucher *</label>
-                    <input type="text" id="form-code" required placeholder="VD: LOWLAND20" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-black text-red-highland uppercase focus:ring-2 focus:ring-red-highland" />
+                    <input type="text" id="form-code" required maxlength="30" placeholder="VD: LOWLAND20" pattern="^[A-Z0-9]+$" oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '')" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-black text-red-highland uppercase tracking-wider focus:ring-2 focus:ring-red-highland" />
+                    <span class="block text-[11px] text-gray-400 mt-1">Chỉ gồm chữ cái tiếng Anh in hoa và số, không khoảng cách hay ký tự đặc biệt.</span>
                 </div>
                 <div>
                     <label class="block text-xs font-black uppercase text-gray-700 mb-1">Loại Giảm Giá *</label>
@@ -200,6 +194,7 @@
                 <div>
                     <label class="block text-xs font-black uppercase text-gray-700 mb-1">Số Lượng Phát Hành *</label>
                     <input type="number" id="form-total-quantity" required min="1" value="100" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-red-highland" />
+                    <span id="form-total-qty-hint" class="block text-[11px] text-gray-400 mt-1">Tổng số lượng phát hành cho voucher này.</span>
                 </div>
             </div>
 
@@ -354,19 +349,27 @@
             filterVouchersTable();
         }
 
+        function getVoucherStatus(v) {
+            if (!v.isActive) return 'INACTIVE';
+            const now = new Date();
+            if (v.endDate && new Date(v.endDate) < now) return 'EXPIRED';
+            if (v.totalQuantity > 0 && v.usedQuantity >= v.totalQuantity) return 'OUT_OF_STOCK';
+            if (v.startDate && new Date(v.startDate) > now) return 'UPCOMING';
+            return 'ACTIVE';
+        }
+
         function updateMetrics() {
             const total = adminVouchers.length;
-            const active = adminVouchers.filter(v => v.isActive).length;
+            const active = adminVouchers.filter(v => getVoucherStatus(v) === 'ACTIVE').length;
             const used = adminVouchers.reduce((sum, v) => sum + (v.usedQuantity || 0), 0);
-            const savedEstimate = adminVouchers.reduce((sum, v) => {
-                const avgDiscount = v.discountType === 'PERCENTAGE' ? (v.maxDiscountAmount || 30000) : v.discountValue;
-                return sum + ((v.usedQuantity || 0) * avgDiscount);
-            }, 0);
 
-            document.getElementById('stat-total-vouchers').innerText = total;
-            document.getElementById('stat-active-vouchers').innerText = active;
-            document.getElementById('stat-used-count').innerText = used.toLocaleString('vi-VN');
-            document.getElementById('stat-discount-total').innerText = (savedEstimate / 1000000).toFixed(1) + 'M đ';
+            const elTotal = document.getElementById('stat-total-vouchers');
+            const elActive = document.getElementById('stat-active-vouchers');
+            const elUsed = document.getElementById('stat-used-count');
+
+            if (elTotal) elTotal.innerText = total;
+            if (elActive) elActive.innerText = active;
+            if (elUsed) elUsed.innerText = used.toLocaleString('vi-VN');
         }
 
         function filterVouchersTable() {
@@ -377,7 +380,8 @@
             const filtered = adminVouchers.filter(v => {
                 const matchesQuery = !query || v.code.toLowerCase().includes(query) || v.title.toLowerCase().includes(query);
                 const matchesType = (typeFilter === 'ALL') || (v.discountType === typeFilter);
-                const matchesStatus = (statusFilter === 'ALL') || (statusFilter === 'ACTIVE' && v.isActive) || (statusFilter === 'INACTIVE' && !v.isActive);
+                const currentStatus = getVoucherStatus(v);
+                const matchesStatus = (statusFilter === 'ALL') || (statusFilter === currentStatus);
                 return matchesQuery && matchesType && matchesStatus;
             });
 
@@ -411,9 +415,19 @@
                     ? `<span class="font-black text-red-highland">${v.discountValue}%</span>${v.maxDiscountAmount ? `<span class="block text-[11px] text-gray-500">Tối đa ${Number(v.maxDiscountAmount).toLocaleString('vi-VN')}đ</span>` : ''}`
                     : `<span class="font-black text-emerald-700">${Number(v.discountValue).toLocaleString('vi-VN')} VNĐ</span>`;
 
-                const statusBadge = v.isActive
-                    ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Đang hoạt động</span>`
-                    : `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-gray-100 text-gray-600"><span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span> Tạm dừng</span>`;
+                const st = getVoucherStatus(v);
+                let statusBadge = '';
+                if (st === 'ACTIVE') {
+                    statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Đang hoạt động</span>`;
+                } else if (st === 'EXPIRED') {
+                    statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-red-100 text-red-700"><span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Hết hạn</span>`;
+                } else if (st === 'OUT_OF_STOCK') {
+                    statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-800"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Hết lượt</span>`;
+                } else if (st === 'UPCOMING') {
+                    statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-blue-100 text-blue-800"><span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Sắp mở</span>`;
+                } else {
+                    statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-gray-100 text-gray-600"><span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span> Tạm dừng</span>`;
+                }
 
                 const percentUsed = v.totalQuantity > 0 ? Math.min(100, Math.round((v.usedQuantity / v.totalQuantity) * 100)) : 0;
 
@@ -423,7 +437,7 @@
                 return `
                     <tr class="hover:bg-gray-50/80 transition">
                         <td class="py-4 px-6">
-                            <span class="inline-block px-3 py-1.5 rounded-xl bg-red-50 text-red-highland border border-red-200 font-black text-xs uppercase tracking-wider">
+                            <span class="inline-block px-3 py-1.5 rounded-xl bg-red-50 text-red-highland border border-red-200 font-black text-xs uppercase tracking-wider font-mono">
                                 ${v.code}
                             </span>
                         </td>
@@ -439,7 +453,7 @@
                                 <span>${percentUsed}%</span>
                             </div>
                             <div class="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                                <div class="bg-red-highland h-full rounded-full" style="width: ${percentUsed}%;"></div>
+                                <div class="${percentUsed >= 100 ? 'bg-red-highland' : 'bg-emerald-600'} h-full rounded-full transition-all duration-300" style="width: ${percentUsed}%;"></div>
                             </div>
                         </td>
                         <td class="py-4 px-6 text-xs text-gray-600 font-semibold whitespace-nowrap">
@@ -485,7 +499,14 @@
             document.getElementById('modal-form-title').innerText = 'Tạo Mã Giảm Giá Mới';
             document.getElementById('form-voucher-id').value = '';
             document.getElementById('form-code').disabled = false;
+            document.getElementById('form-code').value = '';
             document.getElementById('voucher-form').reset();
+
+            const qtyInput = document.getElementById('form-total-quantity');
+            qtyInput.min = 1;
+            qtyInput.value = 100;
+            const hint = document.getElementById('form-total-qty-hint');
+            if (hint) hint.innerText = 'Tổng số lượng phát hành cho voucher này.';
 
             // Default dates
             const now = new Date();
@@ -508,14 +529,25 @@
             document.getElementById('modal-form-title').innerText = `Chỉnh Sửa Voucher "${v.code}"`;
             document.getElementById('form-voucher-id').value = v.id;
             document.getElementById('form-code').value = v.code;
-            document.getElementById('form-code').disabled = true; // Code usually locked once created
+            document.getElementById('form-code').disabled = true; // Code locked once created
             document.getElementById('form-title').value = v.title;
             document.getElementById('form-description').value = v.description || '';
             document.getElementById('form-discount-type').value = v.discountType;
             document.getElementById('form-discount-value').value = v.discountValue;
             document.getElementById('form-max-discount').value = v.maxDiscountAmount || '';
             document.getElementById('form-min-order').value = v.minOrderValue;
-            document.getElementById('form-total-quantity').value = v.totalQuantity;
+
+            // Số lượng phát hành: ràng buộc tối thiểu phải bằng số lượng đã dùng
+            const qtyInput = document.getElementById('form-total-quantity');
+            const minAllowed = v.usedQuantity || 1;
+            qtyInput.min = minAllowed;
+            qtyInput.value = v.totalQuantity;
+            const hint = document.getElementById('form-total-qty-hint');
+            if (hint) {
+                hint.innerText = v.usedQuantity > 0 
+                    ? `Đã có ${v.usedQuantity} lượt sử dụng. Số lượng phát hành tối thiểu phải từ ${minAllowed}.`
+                    : 'Tổng số lượng phát hành cho voucher này.';
+            }
 
             if (v.startDate) document.getElementById('form-start-date').value = new Date(v.startDate).toISOString().slice(0, 16);
             if (v.endDate) document.getElementById('form-end-date').value = new Date(v.endDate).toISOString().slice(0, 16);
@@ -536,7 +568,14 @@
             const id = document.getElementById('form-voucher-id').value;
             const isEdit = !!id;
 
-            const code = document.getElementById('form-code').value.trim().toUpperCase();
+            const codeRaw = document.getElementById('form-code').value.trim().toUpperCase();
+            // Validate Mã Voucher: Chỉ chấp nhận tiếng Anh in hoa và số, không khoảng cách, không ký tự đặc biệt
+            const codeClean = codeRaw.replace(/[^A-Z0-9]/g, '');
+            if (!codeClean || codeClean !== codeRaw) {
+                showToast('Mã voucher không hợp lệ', 'Mã voucher chỉ được bao gồm chữ cái in hoa tiếng Anh và chữ số, không khoảng trắng hay ký tự đặc biệt.', 'error');
+                return;
+            }
+
             const title = document.getElementById('form-title').value.trim();
             const description = document.getElementById('form-description').value.trim();
             const discountType = document.getElementById('form-discount-type').value;
@@ -548,8 +587,23 @@
             const endDate = new Date(document.getElementById('form-end-date').value).toISOString();
             const isActive = document.getElementById('form-is-active').checked;
 
+            // Validate ngày kết thúc phải sau ngày bắt đầu
+            if (new Date(endDate) <= new Date(startDate)) {
+                showToast('Thời hạn không hợp lệ', 'Ngày kết thúc (HSD) phải diễn ra sau ngày bắt đầu có hiệu lực.', 'error');
+                return;
+            }
+
+            // Validate số lượng không được nhỏ hơn số lượt đã dùng
+            if (isEdit) {
+                const currentV = adminVouchers.find(x => x.id === id);
+                if (currentV && totalQty < currentV.usedQuantity) {
+                    showToast('Số lượng không hợp lệ', `Số lượng phát hành tối thiểu phải từ ${currentV.usedQuantity} (bằng số khách đã sử dụng).`, 'error');
+                    return;
+                }
+            }
+
             const payload = {
-                code,
+                code: codeClean,
                 title,
                 description,
                 discountType,
@@ -574,8 +628,10 @@
                 showToast('Thành công', isEdit ? 'Cập nhật voucher thành công!' : 'Tạo mới voucher thành công!', 'success');
                 closeVoucherFormModal();
                 await loadAdminVouchers();
+            } else if (res && !res.isSuccess) {
+                showToast('Lỗi thao tác', res.message || 'Không thể lưu dữ liệu voucher.', 'error');
             } else {
-                // Fallback update in local state if offline/mock
+                // Fallback update in local state if offline
                 if (isEdit) {
                     const idx = adminVouchers.findIndex(x => x.id === id);
                     if (idx !== -1) {
@@ -591,7 +647,7 @@
                 updateMetrics();
                 filterVouchersTable();
                 closeVoucherFormModal();
-                showToast('Lưu thành công', `Đã lưu voucher "${code}" vào hệ thống.`, 'success');
+                showToast('Lưu thành công', `Đã lưu voucher "${codeClean}" vào hệ thống.`, 'success');
             }
         }
 

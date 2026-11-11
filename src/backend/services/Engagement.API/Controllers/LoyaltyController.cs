@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Engagement.API.Controllers;
 
+/// <summary>
+/// Controller quản lý chương trình khách hàng thân thiết và tích điểm (Loyalty Program).
+/// </summary>
 [ApiController]
 [Route("api/loyalty")]
 [Authorize]
@@ -20,8 +23,9 @@ public class LoyaltyController : ControllerBase
     }
 
     /// <summary>
-    /// Lấy danh sách 4 Hạng thẻ thành viên và các đặc quyền (Public / Customer / Staff / Admin)
+    /// Lấy danh sách tất cả các hạng thành viên và quyền lợi tương ứng.
     /// </summary>
+    /// <returns>Danh sách các hạng thành viên.</returns>
     [HttpGet("tiers")]
     [AllowAnonymous]
     public async Task<ActionResult<ApiResponse<IEnumerable<LoyaltyTierDto>>>> GetTiers()
@@ -31,9 +35,9 @@ public class LoyaltyController : ControllerBase
     }
 
     /// <summary>
-    /// Xem điểm tích lũy & hạng thẻ của Khách hàng hiện tại
-    /// Hỗ trợ endpoint: GET /api/loyalty/me
+    /// Lấy thông tin hồ sơ hạng thành viên và điểm tích lũy của người dùng hiện tại.
     /// </summary>
+    /// <returns>Hồ sơ thành viên gồm điểm khả dụng, điểm trọn đời và tiến trình nâng hạng.</returns>
     [HttpGet("me")]
     [Authorize(Roles = "Customer,Staff,Admin")]
     public async Task<ActionResult<ApiResponse<LoyaltyMemberProfileDto>>> GetMyTier()
@@ -49,8 +53,10 @@ public class LoyaltyController : ControllerBase
     }
 
     /// <summary>
-    /// Xem điểm tích lũy & hạng thẻ theo UserId cụ thể (Dành cho Staff POS tra cứu khách / Order.API / Admin)
+    /// Lấy thông tin hồ sơ hạng thành viên theo mã định danh người dùng (dành cho Nhân viên/Admin tra cứu).
     /// </summary>
+    /// <param name="userId">Mã định danh người dùng cần tra cứu.</param>
+    /// <returns>Hồ sơ thành viên của người dùng tương ứng.</returns>
     [HttpGet("user/{userId:guid}")]
     [Authorize(Roles = "Customer,Staff,Admin")]
     public async Task<ActionResult<ApiResponse<LoyaltyMemberProfileDto>>> GetUserProfile(Guid userId)
@@ -60,9 +66,10 @@ public class LoyaltyController : ControllerBase
     }
 
     /// <summary>
-    /// Tích điểm thành viên khi đơn hàng hoàn thành (Gọi từ Order.API hoặc Nhân viên quầy)
-    /// Nhân hệ số điểm (PointMultiplier) tự động theo hạng thẻ của khách (Đồng x1.0, Bạc x1.1, Vàng x1.2, Kim Cương x1.3)
+    /// Tích điểm thành viên khi đơn hàng hoàn thành và tự động xét duyệt nâng hạng theo hệ số nhân điểm.
     /// </summary>
+    /// <param name="request">Thông tin đơn hàng và số tiền thanh toán.</param>
+    /// <returns>Kết quả tích điểm và trạng thái thăng hạng.</returns>
     [HttpPost("add-points")]
     [Authorize(Roles = "Customer,Staff,Admin")]
     public async Task<ActionResult<ApiResponse<AddPointsResponse>>> AddPoints([FromBody] AddPointsRequest request)
@@ -88,8 +95,10 @@ public class LoyaltyController : ControllerBase
     }
 
     /// <summary>
-    /// Quy đổi điểm tích lũy để trừ tiền hóa đơn tại quầy hoặc lúc Checkout (1 điểm = 1.000 VNĐ)
+    /// Quy đổi điểm tích lũy thành số tiền giảm giá trực tiếp cho đơn hàng.
     /// </summary>
+    /// <param name="request">Thông tin yêu cầu quy đổi điểm.</param>
+    /// <returns>Kết quả quy đổi và số tiền được giảm trừ.</returns>
     [HttpPost("redeem")]
     [Authorize(Roles = "Customer,Staff,Admin")]
     public async Task<ActionResult<ApiResponse<RedeemPointsResponse>>> RedeemPoints([FromBody] RedeemPointsRequest request)
@@ -124,8 +133,10 @@ public class LoyaltyController : ControllerBase
     }
 
     /// <summary>
-    /// Lấy lịch sử giao dịch điểm tích lũy của người dùng hiện tại
+    /// Lấy lịch sử giao dịch biến động điểm của người dùng hiện tại.
     /// </summary>
+    /// <param name="limit">Số lượng giao dịch tối đa cần lấy (mặc định 20).</param>
+    /// <returns>Danh sách lịch sử giao dịch điểm.</returns>
     [HttpGet("transactions")]
     [Authorize(Roles = "Customer,Staff,Admin")]
     public async Task<ActionResult<ApiResponse<IEnumerable<PointTransactionDto>>>> GetMyPointTransactions([FromQuery] int limit = 20)
@@ -141,8 +152,11 @@ public class LoyaltyController : ControllerBase
     }
 
     /// <summary>
-    /// Lấy lịch sử giao dịch điểm theo UserId cụ thể (Staff / Admin)
+    /// Lấy lịch sử giao dịch điểm theo mã người dùng cụ thể (dành cho Nhân viên/Admin tra cứu).
     /// </summary>
+    /// <param name="userId">Mã định danh người dùng.</param>
+    /// <param name="limit">Số lượng giao dịch tối đa cần lấy (mặc định 20).</param>
+    /// <returns>Danh sách lịch sử giao dịch điểm.</returns>
     [HttpGet("transactions/{userId:guid}")]
     [Authorize(Roles = "Staff,Admin")]
     public async Task<ActionResult<ApiResponse<IEnumerable<PointTransactionDto>>>> GetUserPointTransactions(Guid userId, [FromQuery] int limit = 20)

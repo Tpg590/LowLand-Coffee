@@ -73,9 +73,8 @@ public class ProfileModel : PageModel
             return RedirectToPage(AuthConstants.LoginRoute);
         }
 
-        ModelState.Remove("PasswordInput.CurrentPassword");
-        ModelState.Remove("PasswordInput.NewPassword");
-        ModelState.Remove("PasswordInput.ConfirmPassword");
+        ModelState.Clear();
+        TryValidateModel(ProfileInput, nameof(ProfileInput));
 
         if (!ModelState.IsValid)
         {
@@ -130,8 +129,8 @@ public class ProfileModel : PageModel
             return RedirectToPage(AuthConstants.LoginRoute);
         }
 
-        ModelState.Remove("ProfileInput.FullName");
-        ModelState.Remove("ProfileInput.PhoneNumber");
+        ModelState.Clear();
+        TryValidateModel(PasswordInput, nameof(PasswordInput));
 
         if (!ModelState.IsValid)
         {
