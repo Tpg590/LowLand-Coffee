@@ -217,7 +217,7 @@ public class UserHttpService : IUserHttpService
                 return ApiResponse<IEnumerable<UserViewModel>>.Success(Array.Empty<UserViewModel>());
             }
 
-            var endpoint = $"{AuthConstants.UsersEndpoint}/search?q={Uri.EscapeDataString(query.Trim())}";
+            var endpoint = $"{AuthConstants.UsersEndpoint}/search?q={Uri.EscapeDataString(query.Trim())}&pageSize=20";
             using var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
             if (!string.IsNullOrWhiteSpace(accessToken))
             {
@@ -227,8 +227,21 @@ public class UserHttpService : IUserHttpService
             var response = await _httpClient.SendAsync(request, cancellationToken);
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
-            var result = JsonSerializer.Deserialize<ApiResponse<IEnumerable<UserViewModel>>>(content, JsonOptions);
-            return result ?? ApiResponse<IEnumerable<UserViewModel>>.Failure("Không thể đọc kết quả tìm kiếm khách hàng từ máy chủ.", (int)response.StatusCode);
+            var result = JsonSerializer.Deserialize<ApiResponse<PagedResult<UserViewModel>>>(content, JsonOptions);
+            if (result == null)
+            {
+                return ApiResponse<IEnumerable<UserViewModel>>.Failure("Không thể đọc kết quả tìm kiếm khách hàng từ máy chủ.", (int)response.StatusCode);
+            }
+
+            if (!result.IsSuccess)
+            {
+                return ApiResponse<IEnumerable<UserViewModel>>.Failure(result.Message, result.StatusCode, result.Errors);
+            }
+
+            return ApiResponse<IEnumerable<UserViewModel>>.Success(
+                result.Data?.Items ?? Enumerable.Empty<UserViewModel>(),
+                result.Message,
+                result.StatusCode);
         }
         catch (Exception ex)
         {

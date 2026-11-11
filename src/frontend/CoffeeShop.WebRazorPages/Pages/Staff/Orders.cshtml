@@ -837,7 +837,18 @@
             if (msgEl) msgEl.innerHTML = '<span class="text-slate-500 font-semibold">Đang kiểm tra tài khoản thành viên...</span>';
 
             try {
-                const res = await fetch(`/Staff/Orders?handler=LookupCustomer&phone=${encodeURIComponent(phone)}&orderAmount=${subtotal}`);
+                const res = await fetch(`/Staff/Orders?handler=LookupCustomer&phone=${encodeURIComponent(phone)}&orderAmount=${subtotal}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (res.redirected && res.url && res.url.includes('/Auth/Login')) {
+                    if (msgEl) msgEl.innerHTML = '<span class="text-red-600 font-bold">Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.</span>';
+                    return;
+                }
+                const contentType = res.headers.get('content-type') || '';
+                if (!res.ok || !contentType.includes('application/json')) {
+                    if (msgEl) msgEl.innerHTML = `<span class="text-red-600 font-bold">Không thể tra cứu số điện thoại (HTTP ${res.status}).</span>`;
+                    return;
+                }
                 const data = await res.json();
 
                 if (data.isSuccess && data.customer) {

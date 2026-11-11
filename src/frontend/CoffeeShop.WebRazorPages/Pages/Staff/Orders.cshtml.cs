@@ -4,11 +4,13 @@ using CoffeeShop.WebRazorPages.Constants;
 using CoffeeShop.WebRazorPages.Services;
 using CoffeeShop.WebRazorPages.ViewModels.Engagement;
 using CoffeeShop.WebRazorPages.ViewModels.Order;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace CoffeeShop.WebRazorPages.Pages.Staff;
 
+[Authorize(Roles = "Staff")]
 public class OrdersModel : PageModel
 {
     private readonly IOrderHttpService _orderHttpService;
@@ -117,7 +119,7 @@ public class OrdersModel : PageModel
         var role = GetCurrentRole(token);
         if (!string.Equals(role, "Staff", StringComparison.OrdinalIgnoreCase))
         {
-            return RedirectToPage("/AccessDenied");
+            return RedirectToPage("/Auth/AccessDenied");
         }
 
         // Xử lý khi cổng VNPay redirect về /Staff/Orders
@@ -661,6 +663,17 @@ public class OrdersModel : PageModel
         var cleanPhone = phone.Trim();
 
         var searchRes = await _userHttpService.SearchCustomersAsync(cleanPhone, token);
+        if (!searchRes.IsSuccess)
+        {
+            return new JsonResult(new
+            {
+                isSuccess = false,
+                message = string.IsNullOrWhiteSpace(searchRes.Message)
+                    ? "Không thể tra cứu tài khoản khách hàng lúc này."
+                    : searchRes.Message
+            });
+        }
+
         var users = searchRes.Data?.ToList() ?? new List<CoffeeShop.WebRazorPages.ViewModels.Auth.UserViewModel>();
 
         var matchedUser = users.FirstOrDefault(u =>

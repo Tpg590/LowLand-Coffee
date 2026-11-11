@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using CoffeeShop.WebRazorPages.Services;
 using CoffeeShop.WebRazorPages.ViewModels.Engagement;
 
 namespace CoffeeShop.WebRazorPages.Pages.Admin;
 
+[Authorize(Roles = "Admin")]
 public class VouchersModel : PageModel
 {
     private readonly IEngagementHttpService _engagementService;
